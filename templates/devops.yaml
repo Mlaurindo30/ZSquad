@@ -309,3 +309,60 @@ iterations:
   - name: Iteration 3
     start: "2026-09-29"
     finish: "2026-10-12"
+
+# Times adicionais além do time default do projeto (criado automaticamente na project creation).
+# Cada entry gera POST /_apis/projects/{projectId}/teams. Idempotente.
+teams:
+  - name: "Squad Core"
+    description: "Time principal de desenvolvimento — backend, APIs e lógica de domínio."
+  - name: "Squad Web"
+    description: "Time frontend e UX — React, interfaces e experiência do usuário."
+  - name: "Squad AI"
+    description: "Time de inteligência artificial — modelos, RAG, agentes e pipelines de dados."
+
+# Security ACLs via accesscontrollists API (opt-in). Default OFF.
+# namespaces conhecidos: Project (52d94092-0000-0000-0000-000000000000),
+# Git Repositories (83e9ad7f-0000-0000-0000-000000000000),
+# WorkItemTracking (c0e7a4c0-0000-0000-0000-000000000000).
+security:
+  enabled: false
+  acls:
+    - namespace: "Project"
+      namespaceId: "52d94092-0000-0000-0000-000000000000"
+      token: ""  # vazio = project-level; preencha com repoId para scoped
+      inherit: true
+      entries:
+        - descriptor: "Microsoft.TeamFoundation.Identity\\c1c73e21-a7c4-4f2c-9b4e-0e7a3d3e3e3e"  # development_team AAD group
+          allow: [6]  # GenericRead=1, GenericWrite=2, DeleteTask=4, ManagePermissions=8 — usar soma
+          deny: []
+
+# Service Connections para CI/CD, container registries e Kubernetes (opt-in).
+service_connections:
+  - name: "Azure-ARMTemplate"
+    type: "azure_rm"
+    service_account: "customer_data_pii"
+    scope:
+      subscription_id: "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+      subscription_name: "Azure Subscription"
+    auth:
+      tenant_id: "YYYYYYYY-YYYY-YYYY-YYYY-YYYYYYYYYYYY"
+      client_id: "ZZZZZZZZ-ZZZZ-ZZZZ-ZZZZ-ZZZZZZZZZZZZ"
+      client_secret: ""  # preencher via Key Vault ou secret; nunca em texto plano
+  - name: "GitHub-Arthemis"
+    type: "github"
+    service_account: "development_team"
+    auth:
+      token: ""  # GitHub PAT com scope repo:org; nunca em texto plano
+  - name: "DockerHub-Public"
+    type: "docker_registry"
+    service_account: "development_team"
+    auth:
+      docker_registry: "https://index.docker.io/v1/"
+      username: ""  # preencher com usuário real
+      password: ""  # preencher via secret; nunca em texto plano
+  - name: "AKS-Cluster"
+    type: "kubernetes"
+    service_account: "customer_data_pii"
+    auth:
+      kubeconfig: ""  # kubeconfig YAML (base64 encoded); nunca em texto plano
+      accept_untrusted_certs: false

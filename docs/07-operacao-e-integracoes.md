@@ -84,7 +84,40 @@ python scripts/sync_mcp_servers.py
 python scripts/azure_devops_project_setup.py --apply --json
 ```
 
-### E. Execução e Testes com Docker Compose
+### D. Azure DevOps — Projeto Novo (Lote 5, 2026-09-02)
+```powershell
+# Ligar um projeto existente ao squad e aplicar configuração DevOps completa:
+# 1.азводит проект DevOps (create → polling wellFormed)
+# 2. Importa repositório Git externo (GitHub/GitLab/Bitbucket)
+# 3. Aplica toda a configuração (áreas, iterações, políticas, board, teams, etc.)
+python scripts/agent_squad.py init-project --project-name MeuProjeto --project-root C:\dev\meu-projeto --devops
+
+# Modo dry-run — apenas imprime o plano sem executar:
+python scripts/agent_squad.py init-project --project-name MeuProjeto --project-root C:\dev\meu-projeto --devops --dry-run
+
+# Apenas vincular (.agents_squad/config/project.yaml), sem DevOps:
+python scripts/agent_squad.py init-project --project-name MeuProjeto --project-root C:\dev\meu-projeto
+```
+
+### E. Azure DevOps — Scripts Individuais (Lote 5)
+
+| Script | Responsabilidade |
+|---|---|
+| `azure_devops_project_creator.py` | Criar projeto DevOps via POST /_apis/projects com polling até `wellFormed` |
+| `azure_devops_repo_importer.py` | Importar repositório Git externo via POST /git/repositories (isImport) |
+| `azure_devops_lifecycle.py` | Orquestrador create → import → configure com rollback seletivo |
+| `azure_devops_project_setup.py` | Configurar projeto existente (áreas, iterações, board, políticas, wiki, dashboards, etc.) |
+
+**Extensões adicionadas em Lote 5:**
+
+| Capacidade | API | Limitação |
+|---|---|---|
+| Team creation | `POST /_apis/projects/{id}/teams` | — |
+| Board swimlanes | WIQL saved queries | Azure DevOps **não expõe REST API** para swimlanes — implementado via query alternativa |
+| Security ACLs | `POST /_apis/accesscontrollists/{namespaceId}` | Opt-in (`security.enabled: false` default) |
+| Service connections | `POST /_apis/serviceEndpoints` | Segredos em Key Vault/env vars — nunca em plain text |
+
+### F. Execução e Testes com Docker Compose
 ```powershell
 # Iniciar stack Docker com limites rígidos de recursos
 docker compose up -d

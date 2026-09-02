@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "integrations"))
+sys.path.insert(0, str(ROOT / "integrations" / "experimental"))
 
 import clone_or_update_repos
 from clone_or_update_repos import RepoSpec, clone_or_update
@@ -141,7 +141,7 @@ class TestCloneOrUpdateRepos:
 
     def test_script_entry_point_uses_sys_argv(self, tmp_path):
         result = SimpleNamespace(returncode=0, stdout="", stderr="")
-        script = ROOT / "integrations" / "clone_or_update_repos.py"
+        script = ROOT / "integrations" / "experimental" / "clone_or_update_repos.py"
         argv = [str(script), "--vendor-dir", str(tmp_path), "--repo", "boostprompt"]
 
         with (

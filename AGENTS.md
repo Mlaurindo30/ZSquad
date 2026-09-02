@@ -25,6 +25,8 @@ commands:
     description: Pull tasks or sync state with Azure DevOps, Jira, or GitHub Projects.
   - name: create-pr-handoff
     description: Generate feature branch and Pull Request template with automated CI evidence.
+  - name: init-project
+    description: Link a target repository to the squad runtime and optionally run the full Azure DevOps lifecycle (create project, import repo, configure all objects).
 ```
 
 ## 1. Shared Runtime and Project Context
@@ -124,3 +126,97 @@ modelo SoD-compliant)". Summary:
 
 Persona routes in §3 reference squads, not voting accounts — see the contract
 for the canonical mapping.
+
+---
+
+## 9. Git Hygiene & Conventional Commits
+
+Every commit follows [Conventional Commits](https://www.conventionalcommits.org/) v1.0.0.
+
+### Commit Format
+
+```
+<type>(<scope>): <short summary>
+[optional body]
+[optional footer(s)]
+```
+
+| Type | When |
+|---|---|
+| `feat` | New feature or agent capability |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, no code change |
+| `refactor` | Non-breaking restructure |
+| `perf` | Performance improvement |
+| `test` | Adding or correcting tests |
+| `chore` | Maintenance (deps, CI, config) |
+| `hotfix` | Urgent production fix |
+| `revert` | Reverts a previous commit |
+
+**Scope:** `agent_squad`, `devops`, `schema`, `workflow`, `cycles`, `tests`, `docs`, etc.
+
+**Examples:** `feat(devops): add azure_devops_project_creator`, `fix(lifecycle): correct rollback precedence`, `test(lote5): add 39 tests for new scripts`, `chore(ci): add pip-audit to verify.yml`
+
+### Branch Naming
+
+```
+feature/<work-id>-<description>
+bugfix/<work-id>-<description>
+hotfix/<work-id>-<description>
+release/<version>
+docs/<work-id>-<description>
+```
+
+### Pre-Commit Checklist
+
+1. **Secrets scan**: No `.env`, API keys, PATs in staged files.
+2. **Heavy files**: No binaries (>5 MB), `.venv/`, `node_modules/`.
+3. **Working tree clean**: `git status` shows only intentional changes.
+4. **Tests green**: `python -m pytest scripts/tests/test_lote5_scripts.py -q` passes.
+5. **Structure valid**: `python scripts/validate_structure.py` returns VALID.
+6. **Scope discipline**: One commit = one logical change.
+
+**Forbidden:**
+```
+❌ git add .
+❌ commit -m "fixes and improvements"
+❌ committing .env, .env.local, *.db, *.pyc
+❌ committing .venv/, node_modules/, dist/
+```
+
+### CODEOWNERS
+
+```
+/scripts/azure_devops*.py    @arthemis/code-reviewer
+/.github/workflows/          @arthemis/code-reviewer
+/auth/ /crypto/ /iac/        @arthemis/security-reviewer @cyber_red/offensive-cyber-operator
+/contracts/ /config/         @arthemis/governance-auditor
+/scripts/tests/ /tests/      @arthemis/qa-engineer
+*                            @squads/development-team
+```
+
+### PR Template
+
+```markdown
+## What does this PR do?
+
+## Work Item <!-- link to Azure DevOps -->
+
+## Type <!-- feat|fix|docs|refactor|test|hotfix -->
+
+## Story Points <!-- Fibonacci: 1, 2, 3, 5, or 8 -->
+
+## Verification <!-- commands run + output -->
+
+## Evidence <!-- screenshots, test output -->
+
+## Risks & Mitigations
+```
+
+### Rollback Protocol
+
+1. Notify `#incidents` with `severity: high|critical`
+2. `git revert <sha>`
+3. Open incident work item in `incident` cycle
+4. Hotfixes go through PR — no direct push to `main`

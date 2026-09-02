@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 import sys
-sys.path.insert(0, str(ROOT / "integrations"))
+sys.path.insert(0, str(ROOT / "integrations" / "experimental"))
 
 from gitingest import ingest as gitingest_ingest
 from toon import dumps as toon_dumps, loads as toon_loads

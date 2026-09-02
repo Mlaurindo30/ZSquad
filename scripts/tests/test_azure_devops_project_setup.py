@@ -669,3 +669,297 @@ def test_apply_dashboards():
     statuses2 = {r["step"]: r["status"] for r in setup2.results}
     assert all(s == "skip" for s in statuses2.values()), f"todos devem ser skip, got {statuses2}"
     assert not [c for c in captured2 if c[0] == "POST"], "idempotente não deve recriar"
+
+
+def test_create_team():
+    """Novos times são criados via POST /_apis/projects/{projectId}/teams.
+
+    Verifica:
+    - Default: sem times configurados → skip.
+    - Criação: times novos geram POST com name + description.
+    - Idempotência: time já existente → skip.
+    """
+    cfg = _cfg()
+    cfg["teams"] = [
+        {"name": "Squad Core", "description": "Backend team"},
+        {"name": "Squad AI", "description": "AI team"},
+    ]
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-1"
+    setup.results = []
+    captured: list[tuple[str, str, object]] = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        if method == "POST":
+            return {"id": "team-new", "name": (body or {}).get("name")}
+        return {"id": "ok"}
+
+    def fake_get(url):
+        if "/teams?" in url:
+            return {"value": [{"name": "Squad Core"}]}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.create_team()
+
+    posts = [c for c in captured if c[0] == "POST"]
+    assert len(posts) == 1, f"esperado 1 POST (Squad AI), got {len(posts)}"
+    assert posts[0][2]["name"] == "Squad AI"
+    assert posts[0][2]["description"] == "AI team"
+    statuses = {r["step"]: r["status"] for r in setup.results}
+    assert statuses["teams.Squad Core"] == "skip"
+    assert statuses["teams.Squad AI"] == "ok"
+
+    # --- idempotente: ambos já existem
+    setup2 = _build_setup(cfg)
+    setup2.project_id = "proj-1"
+    setup2.results = []
+
+    def fake_get2(url):
+        if "/teams?" in url:
+            return {"value": [{"name": "Squad Core"}, {"name": "Squad AI"}]}
+        return {}
+
+    captured2: list[tuple[str, str, object]] = []
+    with patch.object(setup2, "get", side_effect=fake_get2), \
+         patch.object(setup2, "send", side_effect=lambda m, u, b=None, ct="application/json": captured2.append((m, u, b)) or {"id": "x"}):
+        setup2.create_team()
+
+    statuses2 = {r["step"]: r["status"] for r in setup2.results}
+    assert statuses2["teams.Squad Core"] == "skip"
+    assert statuses2["teams.Squad AI"] == "skip"
+    assert not [c for c in captured2 if c[0] == "POST"], "idempotente não deve POSTar"
+
+
+def test_apply_swimlanes_not_found_then_wiql():
+    """apply_swimlanes documenta 404 na API direta e implementa via WIQL.
+
+    GAP (2026-09-02): POST /_apis/work/boards/{board}/swimlanes retorna
+    404 Not Found — Azure DevOps não expõe swimlanes como REST API pública.
+    A implementação alternativa grava cada swimlane como saved query em
+    Shared/Agents Squad/SWIMLANES/{name} com a WIQL clause do template.
+
+    Verifica:
+    - board.swimlanes ausente → skip.
+    - board.swimlanes presente → cria folder SWIMLANES + queries por lane.
+    - Idempotência: query já existe → skip.
+    """
+    cfg = _cfg()
+    cfg["board"]["swimlanes"] = [
+        {"name": "Squad Core", "query": "System.Tags CONTAINS 'squad-core'"},
+        {"name": "Without Squad", "query": "NOT (System.Tags CONTAINS 'squad-')"},
+    ]
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-1"
+    setup.results = []
+    captured: list[tuple[str, str, object]] = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        if method == "POST" and "isFolder" in (body or {}):
+            return {"id": "folder-1"}
+        if method == "POST" and "wiql" in (body or {}):
+            return {"id": "q-1", "name": (body or {}).get("name")}
+        return {"id": "ok"}
+
+    def fake_get(url):
+        if "_apis/projects/" in url and "api-version" in url:
+            return {"id": "proj-1"}
+        if "/wit/queries?" in url:
+            return {"value": []}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_swimlanes()
+
+    posts = [c for c in captured if c[0] == "POST"]
+    assert len(posts) == 3, f"esperado 3 POSTs (1 folder + 2 queries), got {len(posts)}"
+    query_posts = [c for c in posts if "wiql" in (c[2] or {})]
+    assert len(query_posts) == 2
+    names = {(c[2] or {}).get("name") for c in query_posts}
+    assert names == {"Squad Core", "Without Squad"}
+    for c in query_posts:
+        wiql = (c[2] or {}).get("wiql", "")
+        assert "System.TeamProject" in wiql
+        assert wiql.startswith("SELECT [System.Id] FROM WorkItems WHERE")
+    statuses = {r["step"]: r["status"] for r in setup.results}
+    assert statuses["swimlanes.folder"] == "ok"
+    assert statuses["swimlanes.Squad Core"] == "ok"
+    assert statuses["swimlanes.Without Squad"] == "ok"
+
+    # --- idempotente: query já existe
+    setup2 = _build_setup(cfg)
+    setup2.project_id = "proj-1"
+    setup2.results = []
+
+    def fake_get2(url):
+        if "_apis/projects/" in url and "api-version" in url:
+            return {"id": "proj-1"}
+        if "/wit/queries?" in url:
+            return {"value": [{"name": "Squad Core"}]}
+        return {}
+
+    captured2: list[tuple[str, str, object]] = []
+    with patch.object(setup2, "get", side_effect=fake_get2), \
+         patch.object(setup2, "send", side_effect=lambda m, u, b=None, ct="application/json": captured2.append((m, u, b)) or {"id": "x"}):
+        setup2.apply_swimlanes()
+
+    statuses2 = {r["step"]: r["status"] for r in setup2.results}
+    assert statuses2["swimlanes.Squad Core"] == "skip"
+    assert statuses2["swimlanes.Without Squad"] == "ok"
+
+
+def test_apply_security_acls():
+    """apply_security_acls cria ACLs via POST /_apis/accesscontrollists/{namespaceId}.
+
+    Verifica:
+    - security.enabled=false → skip.
+    - ACLs criados com namespace, token e entries corretas.
+    - ACL já existente → skip (sem overwrite).
+    """
+    cfg = _cfg()
+    cfg["security"] = {
+        "enabled": True,
+        "acls": [
+            {
+                "namespace": "Project",
+                "namespaceId": "52d94092-0000-0000-0000-000000000000",
+                "token": "proj-1",
+                "inherit": True,
+                "entries": [
+                    {"descriptor": "Microsoft.TeamFoundation.Identity\\c1c73e21-a7c4-4f2c-9b4e-0e7a3d3e3e3e", "allow": [6], "deny": []}
+                ]
+            }
+        ]
+    }
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-1"
+    setup.results = []
+    captured: list[tuple[str, str, object]] = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        if method == "POST":
+            return {"count": 1, "value": [{}]}
+        return {"id": "ok"}
+
+    def fake_get(url):
+        if "accesscontrollists" in url and "token=" in url:
+            return {"count": 0, "value": []}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_security_acls()
+
+    posts = [c for c in captured if c[0] == "POST"]
+    assert len(posts) == 1
+    assert posts[0][1].startswith("https://cbvgas.visualstudio.com/_apis/accesscontrollists/")
+    assert posts[0][2]["token"] == "proj-1"
+    assert posts[0][2]["inherit"] is True
+    assert len(posts[0][2]["contributor"]) == 1
+    statuses = {r["step"]: r["status"] for r in setup.results}
+    assert statuses["security.acls.Project.proj-1"] == "ok"
+
+    # --- ACL já existe: skip
+    setup2 = _build_setup(cfg)
+    setup2.project_id = "proj-1"
+    setup2.results = []
+
+    def fake_get2(url):
+        if "accesscontrollists" in url:
+            return {"count": 1, "value": [{"descriptor": "Microsoft.TeamFoundation.Identity\\c1c73e21"}]}
+        return {}
+
+    captured2: list[tuple[str, str, object]] = []
+    with patch.object(setup2, "get", side_effect=fake_get2), \
+         patch.object(setup2, "send", side_effect=lambda m, u, b=None, ct="application/json": captured2.append((m, u, b)) or {"id": "x"}):
+        setup2.apply_security_acls()
+
+    statuses2 = {r["step"]: r["status"] for r in setup2.results}
+    assert statuses2["security.acls.Project.proj-1"] == "skip"
+    assert not [c for c in captured2 if c[0] == "POST"], "skip não deve POSTar ACL existente"
+
+    # --- security.enabled=false: skip
+    cfg_off = _cfg()
+    cfg_off["security"] = {"enabled": False}
+    setup3 = _build_setup(cfg_off)
+    captured3: list[tuple[str, str, object]] = []
+    with patch.object(setup3, "send", side_effect=lambda m, u, b=None, ct="application/json": captured3.append((m, u, b)) or {"id": "x"}):
+        setup3.apply_security_acls()
+    assert {r["step"]: r["status"] for r in setup3.results}["security.acls"] == "skip"
+
+
+def test_create_service_connections():
+    """create_service_connections cria via POST /_apis/serviceEndpoints.
+
+    Verifica:
+    - Nenhum service_connection configurado → skip.
+    - Azure RM, GitHub, Docker, Kubernetes geram POSTs com payloads corretos.
+    - Idempotência: já existente → skip.
+    """
+    cfg = _cfg()
+    cfg["service_connections"] = [
+        {"name": "Azure-ARMTemplate", "type": "azure_rm", "scope": {"subscription_id": "sub-1"}, "auth": {"tenant_id": "t-1", "client_id": "c-1", "client_secret": "s-1"}},
+        {"name": "GitHub-Arthemis", "type": "github", "auth": {"token": "ghp_xxx"}},
+        {"name": "DockerHub", "type": "docker_registry", "auth": {"docker_registry": "https://index.docker.io/v1/", "username": "user", "password": "pass"}},
+        {"name": "AKS-Cluster", "type": "kubernetes", "auth": {"kubeconfig": "YXNkZGFzZA=="}},
+    ]
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-1"
+    setup.results = []
+    captured: list[tuple[str, str, object]] = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        if method == "POST":
+            return {"id": "sc-new", "name": (body or {}).get("name")}
+        return {"id": "ok"}
+
+    def fake_get(url):
+        if "serviceConnections?" in url:
+            return {"value": []}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.create_service_connections()
+
+    posts = [c for c in captured if c[0] == "POST"]
+    assert len(posts) == 4, f"esperado 4 POSTs, got {len(posts)}"
+    types = {(c[2] or {}).get("type") for c in posts}
+    assert types == {"Azure Resource Manager", "GitHub", "DockerRegistry", "Kubernetes"}
+    names = {(c[2] or {}).get("name") for c in posts}
+    assert names == {"Azure-ARMTemplate", "GitHub-Arthemis", "DockerHub", "AKS-Cluster"}
+    for c in posts:
+        body = c[2] or {}
+        assert "authorization" in body
+        assert body.get("is_shared") is False
+        assert body.get("owner") == "Library"
+    statuses = {r["step"]: r["status"] for r in setup.results}
+    assert all(v == "ok" for v in statuses.values()), f"todos ok, got {statuses}"
+
+    # --- idempotente: Azure-ARMTemplate já existe
+    setup2 = _build_setup(cfg)
+    setup2.project_id = "proj-1"
+    setup2.results = []
+
+    def fake_get2(url):
+        if "serviceConnections?" in url:
+            return {"value": [{"name": "Azure-ARMTemplate"}]}
+        return {}
+
+    captured2: list[tuple[str, str, object]] = []
+    with patch.object(setup2, "get", side_effect=fake_get2), \
+         patch.object(setup2, "send", side_effect=lambda m, u, b=None, ct="application/json": captured2.append((m, u, b)) or {"id": "x"}):
+        setup2.create_service_connections()
+
+    statuses2 = {r["step"]: r["status"] for r in setup2.results}
+    assert statuses2["service_connections.Azure-ARMTemplate"] == "skip"
+    assert statuses2["service_connections.GitHub-Arthemis"] == "ok"
+    # apenas Azure-ARMTemplate é skip, as outras 3 são criadas
+    ok_count = sum(1 for s in statuses2.values() if s == "ok")
+    assert ok_count == 3, f"esperado 3 ok (novos), got {ok_count}"

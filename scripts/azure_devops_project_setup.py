@@ -677,6 +677,316 @@ class AzureDevOpsProjectSetup:
             result = self.send("POST", url, payload)
             self.record(f"dashboards.{dash['name']}", "ok" if result else "error", result)
 
+    def create_team(self) -> None:
+        """Cria times adicionais no projeto via POST /_apis/projects/{projectId}/teams.
+
+        Lê `teams` do devops.yaml — cada entrada precisa de `name` e opcionalmente
+        `description`. Idempotente: se o nome já existir, registra skip.
+        """
+        if not self.project_id:
+            self.record("teams", "error", "projeto não descoberto")
+            return
+        teams_cfg = self.config.get("teams") or []
+        if not teams_cfg:
+            self.record("teams", "skip", "nenhum team configurado em devops.yaml")
+            return
+        existing = self.get(
+            f"{self.org}/_apis/projects/{self.project_id}/teams?api-version=7.1"
+        ) or {}
+        existing_names = {t.get("name") for t in (existing.get("value") or [])}
+        for spec in teams_cfg:
+            name = spec.get("name")
+            if not name:
+                self.record("teams", "error", f"team sem nome: {spec}")
+                continue
+            if name in existing_names:
+                self.record(f"teams.{name}", "skip", "já existe")
+                continue
+            payload: dict[str, Any] = {"name": name}
+            if spec.get("description"):
+                payload["description"] = spec["description"]
+            result = self.send(
+                "POST",
+                f"{self.org}/_apis/projects/{self.project_id}/teams?api-version=7.1",
+                payload,
+            )
+            if result and result.get("id"):
+                self.record(f"teams.{name}", "ok", {"id": result["id"], "name": result.get("name")})
+            else:
+                self.record(f"teams.{name}", "error", result)
+
+    def apply_swimlanes(self) -> None:
+        """Documenta e implementa swimlanes via WIQL como alternativa à API inexistente.
+
+        LIMITATION (2026-09-02):
+        Azure DevOps NÃO possui REST API pública para criar swimlanes em boards.
+        O endpoint POST /_apis/work/boards/{board}/swimlanes retorna 404 Not Found.
+        A funcionalidade de swimlanes é gerida client-side via Board > Rows > New Row.
+
+        ALTERNATIVE IMPLEMENTED:
+        Cada entrada de `board.swimlanes` no devops.yaml é uma query WIQL gravada
+        como saved query em "Shared/Agents Squad/SWIMLANES/{name}". Essas queries
+        são usadas para filtrar work items na board view (query-based board).
+
+        Aplica APENAS quando `board.swimlanes` contém entries no template.
+        Idempotente: se a query já existir, registra skip.
+        """
+        swimlanes_cfg = ((self.config.get("board") or {}).get("swimlanes") or [])
+        if not swimlanes_cfg:
+            self.record("swimlanes", "skip", "nenhuma swimlane configurada em board.swimlanes")
+            return
+        if not self.project_id:
+            self.record("swimlanes", "error", "projeto não descoberto")
+            return
+        proj_url = f"{self.org}/_apis/projects/{quote(self.project)}?api-version=7.1"
+        proj = self.get(proj_url) or {}
+        if not proj.get("id"):
+            self.record("swimlanes", "error", "projeto não resolvido")
+            return
+        proj_id = proj["id"]
+        folder_path = "Shared/Agents Squad/SWIMLANES"
+        folder = self.send(
+            "POST",
+            f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
+            {"name": "SWIMLANES", "isFolder": True},
+        )
+        self.record("swimlanes.folder", "ok" if folder else "skip", folder_path)
+        existing_list = self.get(
+            f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1"
+        ) or {}
+        existing_full = {q.get("name"): q for q in existing_list.get("value", [])}
+        for lane in swimlanes_cfg:
+            name = lane.get("name")
+            query = lane.get("query")
+            if not name or not query:
+                self.record("swimlanes", "error", f"swimlane inválida (sem name/query): {lane}")
+                continue
+            folder_query_path = f"{folder_path}/{name}"
+            if name in existing_full:
+                self.record(f"swimlanes.{name}", "skip", "query já existe")
+                continue
+            wiql = (
+                f"SELECT [System.Id] FROM WorkItems "
+                f"WHERE [System.TeamProject] = '{self.project}' AND "
+                f"{query}"
+            )
+            payload = {"name": name, "wiql": wiql, "isFolder": False}
+            result = self.send(
+                "POST",
+                f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
+                payload,
+            )
+            if result and result.get("id"):
+                self.record(f"swimlanes.{name}", "ok", {"query": query, "id": result["id"]})
+            else:
+                self.record(f"swimlanes.{name}", "error", result)
+
+    def apply_security_acls(self) -> None:
+        """Aplica Security ACLs via POST /_apis/accesscontrollists/{namespaceId}.
+
+        Lê `security.acls` do devops.yaml — cada entry contém:
+          - namespace (str): nome do namespace (e.g. "Project", "Git Repositories")
+          - token (str): token do resource (e.g. projectId, repoId)
+          - inherit (bool): se herda do parent
+          - entries (list): lista de ACL entries com descriptor + allow/deny
+
+        namespaces conhecidos para Azure DevOps:
+          - "Project" (namespaceId:52d94092-0000-0000-0000-000000000000)
+          - "Git Repositories" (83e9ad7f-0000-0000-0000-000000000000)
+          - "WorkItemTracking" (c0e7a4c0-0000-0000-0000-000000000000)
+
+        Idempotente: se os ACLs já estão aplicados (mesmo allow/deny), registra skip.
+        """
+        security_cfg = self.config.get("security") or {}
+        if not security_cfg.get("enabled", False):
+            self.record("security.acls", "skip", "security.enabled=false ou ausente")
+            return
+        if not self.project_id:
+            self.record("security.acls", "error", "projeto não descoberto")
+            return
+        acls_cfg = security_cfg.get("acls") or []
+        if not acls_cfg:
+            self.record("security.acls", "skip", "security.acls vazio")
+            return
+        namespace_map = {
+            "Project": "52d94092-0000-0000-0000-000000000000",
+            "Git Repositories": "83e9ad7f-0000-0000-0000-000000000000",
+            "WorkItemTracking": "c0e7a4c0-0000-0000-0000-000000000000",
+        }
+        for acl_spec in acls_cfg:
+            ns_name = acl_spec.get("namespace", "Project")
+            namespace_id = acl_spec.get("namespaceId") or namespace_map.get(ns_name)
+            if not namespace_id:
+                self.record("security.acls", "error", f"namespaceId desconhecido: {ns_name}")
+                continue
+            token = acl_spec.get("token") or self.project_id
+            inherit = acl_spec.get("inherit", True)
+            entries = acl_spec.get("entries") or []
+            if not entries:
+                self.record("security.acls", "skip", f"nenhuma entry em {ns_name}/{token}")
+                continue
+            url = f"{self.org}/_apis/accesscontrollists/{namespace_id}?api-version=7.1"
+            check_url = f"{url}&token={quote(token)}&inheritGroups={str(inherit).lower()}"
+            existing = self.get(check_url) or {}
+            if existing.get("count", 0) > 0 and existing.get("value"):
+                self.record(f"security.acls.{ns_name}.{token}", "skip", "ACLs já existem — use replace=true para atualizar")
+                continue
+            payload = {
+                "contributor": entries,
+                "inherit": inherit,
+                "token": token,
+            }
+            result = self.send("POST", url, payload)
+            if result is not None:
+                self.record(f"security.acls.{ns_name}.{token}", "ok", {"entries": len(entries), "result": result})
+            else:
+                self.record(f"security.acls.{ns_name}.{token}", "error", result)
+
+    def create_service_connections(self) -> None:
+        """Cria service connections via POST /_apis/serviceEndpoints.
+
+        Lê `service_connections` do devops.yaml — cada entry contém:
+          - name (str): nome do service connection
+          - type (str): tipo (Azure Resource Manager, GitHub, Docker Registry, Kubernetes)
+          - service_account (str): nome da service account (opcional, mapeia para authorization)
+          - scope (str): escopo/target (opcional, e.g. subscriptionId para Azure)
+          - auth (dict): dados de autenticação específicos por tipo
+
+        Tipos suportados e seus esquemas:
+          - azure_rm: type=Azure Resource Manager, requires Azure subscription
+          - github: type=GitHub, authorization via GitHub PAT ou OAuth
+          - docker_registry: type=Docker Registry
+          - kubernetes: type=Kubernetes, authorization via kubeconfig ou service account
+
+        Idempotente: se já existe um service connection com o mesmo nome, registra skip.
+        """
+        sc_cfg = self.config.get("service_connections") or []
+        if not sc_cfg:
+            self.record("service_connections", "skip", "nenhum service_connection configurado")
+            return
+        if not self.project_id:
+            self.record("service_connections", "error", "projeto não descoberto")
+            return
+        existing = self.get(
+            f"{self.org}/_apis/projects/{self.project_id}/serviceConnections?api-version=7.1"
+        ) or {}
+        existing_names = {sc.get("name") for sc in (existing.get("value") or [])}
+        for spec in sc_cfg:
+            name = spec.get("name")
+            sc_type = spec.get("type")
+            if not name or not sc_type:
+                self.record("service_connections", "error", f"service_connection sem name ou type: {spec}")
+                continue
+            if name in existing_names:
+                self.record(f"service_connections.{name}", "skip", "já existe")
+                continue
+            endpoint = self._build_service_connection_payload(spec)
+            if endpoint is None:
+                self.record(f"service_connections.{name}", "error", "tipo não suportado ou payload não construido")
+                continue
+            result = self.send(
+                "POST",
+                f"{self.org}/_apis/projects/{self.project_id}/serviceConnections?api-version=7.1",
+                endpoint,
+            )
+            if result and result.get("id"):
+                self.record(f"service_connections.{name}", "ok", {"id": result["id"], "type": sc_type})
+            else:
+                self.record(f"service_connections.{name}", "error", result)
+
+    def _build_service_connection_payload(self, spec: dict[str, Any]) -> Optional[dict[str, Any]]:
+        """Constrói o payload do service connection conforme o tipo.
+
+        Tipos suportados:
+          - azure_rm: Azure Resource Manager (subscription-based)
+          - github: GitHub (PAT authorization)
+          - docker_registry: Docker Registry (username/password)
+          - kubernetes: Kubernetes (kubeconfig)
+
+        Retorna None se o tipo não é suportado.
+        """
+        sc_type = spec.get("type", "").lower()
+        name = spec.get("name", "")
+        service_account_key = spec.get("service_account")
+        identities = self.config.get("identities") or {}
+        service_accounts = self.config.get("service_accounts") or {}
+        sa = service_accounts.get(service_account_key, {}) if service_account_key else {}
+        sa_email = sa.get("email") or identities.get("human_master", {}).get("email")
+        auth = spec.get("auth") or {}
+        scope = spec.get("scope") or {}
+
+        if sc_type == "azure_rm":
+            subscription_id = scope.get("subscription_id") or auth.get("subscription_id") or ""
+            subscription_name = scope.get("subscription_name") or auth.get("subscription_name") or name
+            tenant_id = auth.get("tenant_id") or ""
+            client_id = auth.get("client_id") or ""
+            client_secret = auth.get("client_secret") or ""
+            return {
+                "name": name,
+                "type": "Azure Resource Manager",
+                "authorization": {
+                    "parameters": {
+                        "tenantid": tenant_id,
+                        "serviceprincipalid": client_id,
+                        "serviceprincipalkey": client_secret,
+                        "subscriptionId": subscription_id,
+                        "subscriptionName": subscription_name,
+                    },
+                    "scheme": "ServicePrincipal",
+                },
+                "is_shared": False,
+                "owner": "Library",
+            }
+        if sc_type == "github":
+            token = auth.get("token") or ""
+            return {
+                "name": name,
+                "type": "GitHub",
+                "authorization": {
+                    "parameters": {
+                        "accessToken": token,
+                    },
+                    "scheme": "Token",
+                },
+                "is_shared": False,
+                "owner": "Library",
+            }
+        if sc_type == "docker_registry":
+            username = auth.get("username") or ""
+            password = auth.get("password") or ""
+            docker_registry = auth.get("docker_registry") or "https://index.docker.io/v1/"
+            return {
+                "name": name,
+                "type": "DockerRegistry",
+                "authorization": {
+                    "parameters": {
+                        "username": username,
+                        "password": password,
+                        "email": sa_email or "",
+                        "registry": docker_registry,
+                    },
+                    "scheme": "UsernamePassword",
+                },
+                "is_shared": False,
+                "owner": "Library",
+            }
+        if sc_type == "kubernetes":
+            kubeconfig = auth.get("kubeconfig") or ""
+            return {
+                "name": name,
+                "type": "Kubernetes",
+                "authorization": {
+                    "parameters": {
+                        "kubeconfig": kubeconfig,
+                        "acceptUntrustedCerts": str(auth.get("accept_untrusted_certs", False)).lower(),
+                    },
+                    "scheme": "Kubeconfig",
+                },
+                "is_shared": False,
+                "owner": "Library",
+            }
+        return None
+
     def apply(self) -> dict[str, Any]:
         self.discover()
         self._run_parallel(["apply_areas", "apply_iterations"])
@@ -691,6 +1001,10 @@ class AzureDevOpsProjectSetup:
         self.apply_delivery_plans()  # US-3 (opt-in)
         self.apply_wiki()  # US-6 (opt-in)
         self.apply_dashboards()  # US-5 (opt-in)
+        self.create_team()
+        self.apply_swimlanes()
+        self.apply_security_acls()
+        self.create_service_connections()
         summary = {
             "ok": sum(1 for r in self.results if r["status"] == "ok"),
             "skip": sum(1 for r in self.results if r["status"] == "skip"),

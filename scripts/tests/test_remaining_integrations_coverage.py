@@ -7,7 +7,7 @@ from unittest import mock
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "integrations"))
+sys.path.insert(0, str(ROOT / "integrations" / "experimental"))
 
 import gitingest
 import procedural_skill_engine

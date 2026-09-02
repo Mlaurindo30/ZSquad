@@ -354,6 +354,71 @@ class AgentSquad:
         artifact.write_text(content, encoding="utf-8")
         return artifact
 
+    def init_project(
+        self,
+        project_name: str,
+        project_root: Path,
+        *,
+        devops: bool = False,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """Cria .agents_squad/config/project.yaml no projeto alvo e, opcionalmente,
+        executa o ciclo de setup Azure DevOps (create → import → configure).
+
+        Args:
+            project_name: identificador do projeto (deve casar ``AGENT_RE``).
+            project_root: raiz do projeto consumidor.
+            devops: se True, chama azure_devops_lifecycle.run() após o vínculo.
+            dry_run: se True, apenas retorna o plano sem alterar arquivos.
+
+        Returns:
+            dict com chaves: ``linked`` (bool), ``marker`` (Path|None),
+            ``devops`` (bool), ``dry_run`` (bool).
+        """
+        if not AGENT_RE.fullmatch(project_name):
+            raise SquadError(f"project_name inválido para AGENT_RE: {project_name}")
+        project_root = Path(project_root).resolve()
+        marker_dir = project_root / ".agents_squad" / "config"
+        marker_path = marker_dir / "project.yaml"
+
+        plan: dict[str, Any] = {
+            "linked": False,
+            "marker": None,
+            "devops": devops,
+            "dry_run": dry_run,
+            "project_name": project_name,
+            "project_root": str(project_root),
+        }
+
+        if dry_run:
+            plan["marker"] = str(marker_path)
+            return plan
+
+        if marker_path.exists():
+            raise SquadError(f"marcador já existe: {marker_path}")
+
+        marker_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "version": 2,
+            "runtime": str(self.root),
+            "project_id": project_name,
+            "project_name": project_name,
+            "project_root": str(project_root),
+            "work_dir": str(self.root / "work" / project_name),
+            "db_path": str(self.root / "banco" / "squad.db"),
+            "overrides": {},
+        }
+        from governed_io import atomic_write_yaml
+        atomic_write_yaml(marker_path, payload)
+
+        if devops:
+            from azure_devops_lifecycle import run as azure_devops_run
+            azure_devops_run(project_name=project_name, project_root=project_root, dry_run=dry_run)
+
+        plan["linked"] = True
+        plan["marker"] = str(marker_path)
+        return plan
+
     def check_timebox(self, item: Path | str) -> dict[str, Any]:
         """Verifica se a fase atual excedeu o timebox definido no workflow."""
         item_path = self._item(item)
@@ -1049,10 +1114,21 @@ class AgentSquad:
         return db.evaluate_quorum(status["id"], gate, threshold=threshold)
 
     def run_integration_engine(self, engine: str, **kwargs: Any) -> dict[str, Any]:
-        """Executa um motor de integração do diretório integrations/ com validação de path."""
+        """Executa um motor de integração do diretório integrations/ com validação de path.
+        Procura em integrations/{engine}.py E integrations/experimental/{engine}.py.
+        """
         engines_dir = (self.root / "integrations").resolve()
-        script = (engines_dir / f"{engine}.py").resolve()
-        if engines_dir not in script.parents or not script.is_file():
+        # Check both integrations/ root and integrations/experimental/
+        candidates = [
+            (engines_dir / f"{engine}.py").resolve(),
+            (engines_dir / "experimental" / f"{engine}.py").resolve(),
+        ]
+        script = None
+        for candidate in candidates:
+            if candidate.is_file():
+                script = candidate
+                break
+        if script is None:
             return {"status": "error", "error": f"motor não encontrado ou inválido: {engine}"}
         try:
             args = ["python", str(script)]
@@ -1208,6 +1284,13 @@ def _build_parser() -> argparse.ArgumentParser:
 
     ins = sub.add_parser("insights")
     ins.add_argument("--project-id", dest="project_id", default=None)
+
+    init_proj = sub.add_parser("init-project")
+    init_proj.add_argument("--project-name", required=True)
+    init_proj.add_argument("--project-root", required=True, type=Path)
+    init_proj.add_argument("--devops", action="store_true")
+    init_proj.add_argument("--dry-run", action="store_true")
+
     return parser
 
 
@@ -1339,6 +1422,14 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
         if args.project_id:
             argv += ["--project", args.project_id]
         return insights_main(argv)
+    elif args.command == "init-project":
+        result = squad.init_project(
+            args.project_name,
+            args.project_root,
+            devops=args.devops,
+            dry_run=args.dry_run,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
 
