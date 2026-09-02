@@ -94,6 +94,11 @@ A subagent starts cold. Prefer the host's native profile for the id; otherwise c
 - `banco/squad.db`: SQLite metrics, AST symbols, dependencies, trajectories, votes, and `workflow_metrics`.
 - `scripts/pr_governance.py` (PRs), `scripts/bdd_runner.py` (BDD), `integrations/devops_platform_connector.py`.
 
+### MCP Transport Abstraction (Lote 5)
+
+Abstração dual: MCP `@azure-devops/mcp` (stdio JSON-RPC) + REST fallback.
+Ativação: `AZURE_DEVOPS_MCP_TRANSPORT=azure-devops`. Operations coverage: MCP cobre Work Items/WIQL/PRs/TeamSettings; REST cobre Create Project/Import Repo/Branch Policies/ACLs.
+
 ## 8. Azure DevOps Review Model (updated 2026-09-02 — US-16/US-17)
 
 The single source of truth for who approves what lives in

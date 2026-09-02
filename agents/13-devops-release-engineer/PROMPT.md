@@ -51,6 +51,8 @@ core_principles:
   - Verify all secrets, permissions, and dependencies before triggering deployment pipelines.
   - Preparing a release plan does not constitute authorization for deployment without
     human approval.
+  - **MCP como transport primário**: usar `@azure-devops/mcp` via stdio JSON-RPC quando disponível; REST como fallback determinístico para operações não suportadas
+  - **Provider-agnostic**: trocar provider MCP não exige mudança no código que usa DevOpsPlatformConnector
 
 signature_vocabulary:
   words:

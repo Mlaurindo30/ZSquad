@@ -31,6 +31,9 @@ banco/*.db-wal
 # buzz-squad etc.) — nunca commitar isso junto num repo de cliente específico.
 work/
 
+# Artefatos SDD locais — não versionar
+.superpowers/
+
 # Lixo da máquina local — não versionar
 .temp-prior-user-requests.txt
 INTEGRATION_TEST_REPORT.md

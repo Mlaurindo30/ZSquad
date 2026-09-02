@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from integrations.devops_platform_connector import (  # noqa: E402
     AzureDevOpsClient,
+    BaseDevOpsClient,
     DevOpsPlatformConnector,
     load_devops_config,
 )
@@ -50,7 +51,7 @@ def _now() -> str:
 class AzureDevOpsProjectSetup:
     """Aplica o contrato devops.yaml no projeto Azure DevOps alvo."""
 
-    def __init__(self, client: AzureDevOpsClient, config: dict[str, Any]):
+    def __init__(self, client: BaseDevOpsClient, config: dict[str, Any]):
         self.client = client
         self.config = config
         # Extrai o org a partir do hostname da base_url — funciona com GUID e com project name

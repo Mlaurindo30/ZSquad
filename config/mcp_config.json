@@ -11,7 +11,9 @@
         "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
         "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
       },
-      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
+      "transport": "stdio",
+      "version": "@azure-devops/mcp@latest",
+      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests via transport stdio JSON-RPC."
     },
     "codebase-memory": {
       "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",

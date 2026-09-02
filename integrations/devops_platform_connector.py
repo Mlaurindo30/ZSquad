@@ -14,6 +14,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import subprocess
 import urllib.request
 import urllib.parse
 import urllib.error
@@ -122,6 +123,31 @@ class BaseDevOpsClient(ABC):
                              description: str = "", work_item_ids: Optional[list[str]] = None) -> Optional[dict[str, Any]]:
         """Cria uma Pull Request no provider. Default: não suportado (ex: Jira não hospeda repositório)."""
         raise NotImplementedError(f"{type(self).__name__} não suporta criação de Pull Request")
+
+    @abstractmethod
+    def apply_iterations(self, iterations: list[dict]) -> dict[str, Any]:
+        """Aplica nós de iteração ao projeto (POST /wit/classificationNodes/iterations)."""
+        pass
+
+    @abstractmethod
+    def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
+        """Vincula uma iteração a um team (POST /work/teamsettings/iterations)."""
+        pass
+
+    @abstractmethod
+    def get_project_info(self) -> dict[str, Any]:
+        """Retorna info do projeto: id, name, state, capabilities."""
+        pass
+
+    @abstractmethod
+    def create_project(self, name: str, process_type: str) -> dict[str, Any]:
+        """Cria projeto Azure DevOps via REST API (não suportado pelo MCP)."""
+        pass
+
+    @abstractmethod
+    def import_repository(self, repo_name: str, remote_url: str, credentials: dict) -> dict[str, Any]:
+        """Importa repositório Git para o projeto (não suportado pelo MCP)."""
+        pass
 
 
 class _RetryableHTTPError(Exception):
@@ -379,6 +405,21 @@ class AzureDevOpsClient(BaseDevOpsClient):
         url = f"{self.base_url}/git/repositories/{urllib.parse.quote(self.repo)}/pullrequests?api-version={self.API_VERSION}"
         return self._request("POST", url, body)
 
+    def apply_iterations(self, iterations: list[dict]) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.apply_iterations: usar MCP ou scripts azure_devops_lifecycle.py")
+
+    def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
+        raise NotImplementedError(f"{type(self).__name__}.assign_iteration_to_team: usar MCP ou scripts azure_devops_lifecycle.py")
+
+    def get_project_info(self) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.get_project_info: usar MCP ou scripts azure_devops_lifecycle.py")
+
+    def create_project(self, name: str, process_type: str) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.create_project: usar scripts azure_devops_project_creator.py")
+
+    def import_repository(self, repo_name: str, remote_url: str, credentials: dict) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.import_repository: usar scripts azure_devops_repo_importer.py")
+
 
 class JiraClient(BaseDevOpsClient):
     """Cliente REST API para Jira Software Cloud (v3)."""
@@ -405,6 +446,21 @@ class JiraClient(BaseDevOpsClient):
     def create_split_stories(self, parent_item_id: str, split_stories: list[dict[str, Any]]) -> list[DevOpsWorkItem]:
         logger.info(f"[Jira] Quebrando issue {parent_item_id} em {len(split_stories)} sub-stories...")
         return []
+
+    def apply_iterations(self, iterations: list[dict]) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.apply_iterations: não suportado pelo Jira")
+
+    def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
+        raise NotImplementedError(f"{type(self).__name__}.assign_iteration_to_team: não suportado pelo Jira")
+
+    def get_project_info(self) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.get_project_info: não suportado pelo Jira")
+
+    def create_project(self, name: str, process_type: str) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.create_project: não suportado pelo Jira")
+
+    def import_repository(self, repo_name: str, remote_url: str, credentials: dict) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.import_repository: não suportado pelo Jira")
 
 
 class LocalFilesystemFallbackClient(BaseDevOpsClient):
@@ -479,6 +535,21 @@ class LocalFilesystemFallbackClient(BaseDevOpsClient):
             ))
         return created
 
+    def apply_iterations(self, iterations: list[dict]) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.apply_iterations: não suportado pelo fallback local")
+
+    def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
+        raise NotImplementedError(f"{type(self).__name__}.assign_iteration_to_team: não suportado pelo fallback local")
+
+    def get_project_info(self) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.get_project_info: não suportado pelo fallback local")
+
+    def create_project(self, name: str, process_type: str) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.create_project: não suportado pelo fallback local")
+
+    def import_repository(self, repo_name: str, remote_url: str, credentials: dict) -> dict[str, Any]:
+        raise NotImplementedError(f"{type(self).__name__}.import_repository: não suportado pelo fallback local")
+
 
 class DevOpsPlatformConnector:
     """Gerenciador central de conexão com plataformas DevOps (MCP e REST Fallback)."""
@@ -489,16 +560,35 @@ class DevOpsPlatformConnector:
         self.client = self._resolve_client()
 
     def _resolve_client(self) -> BaseDevOpsClient:
-        # 1. Verifica se credenciais do Azure DevOps estão presentes no ambiente
         if os.getenv("AZURE_DEVOPS_PAT") and os.getenv("AZURE_DEVOPS_ORG") and os.getenv("AZURE_DEVOPS_PROJECT"):
             config = load_devops_config(self.root_path)
+
+            if os.getenv("AZURE_DEVOPS_MCP_TRANSPORT") == "azure-devops":
+                if self._mcp_binary_available():
+                    try:
+                        from integrations.mcp_devops_client import McpDevOpsClient
+                        rest_client = AzureDevOpsClient(
+                            organization=os.environ["AZURE_DEVOPS_ORG"],
+                            project=os.environ["AZURE_DEVOPS_PROJECT"],
+                            pat_token=os.environ["AZURE_DEVOPS_PAT"],
+                            config=config,
+                        )
+                        return McpDevOpsClient(
+                            organization=os.environ["AZURE_DEVOPS_ORG"],
+                            project=os.environ["AZURE_DEVOPS_PROJECT"],
+                            pat_token=os.environ["AZURE_DEVOPS_PAT"],
+                            config=config,
+                            rest_client=rest_client,
+                        )
+                    except ImportError:
+                        logger.info("[DevOpsPlatformConnector] McpDevOpsClient não disponível, usando REST")
+
             return AzureDevOpsClient(
                 organization=os.environ["AZURE_DEVOPS_ORG"],
                 project=os.environ["AZURE_DEVOPS_PROJECT"],
                 pat_token=os.environ["AZURE_DEVOPS_PAT"],
                 config=config,
             )
-        # 2. Verifica se credenciais do Jira estão presentes
         if os.getenv("JIRA_API_TOKEN") and os.getenv("JIRA_DOMAIN") and os.getenv("JIRA_EMAIL"):
             return JiraClient(
                 domain=os.environ["JIRA_DOMAIN"],
@@ -506,8 +596,22 @@ class DevOpsPlatformConnector:
                 api_token=os.environ["JIRA_API_TOKEN"],
                 project_key=os.getenv("JIRA_PROJECT_KEY", "SQUAD")
             )
-        # 3. Fallback padrão seguro para arquivos locais em work/
         return LocalFilesystemFallbackClient(self.root_path)
+
+    def _mcp_binary_available(self) -> bool:
+        """Verifica se npx pode executar @azure-devops/mcp."""
+        import shutil
+        if shutil.which("npx") is None:
+            return False
+        try:
+            result = subprocess.run(
+                ["npx", "--yes", "@azure-devops/mcp@1.0.0", "--help"],
+                capture_output=True,
+                timeout=15,
+            )
+            return result.returncode == 0
+        except Exception:
+            return False
 
     def pull_ready_items(self, squad_name: Optional[str] = None) -> list[DevOpsWorkItem]:
         return self.client.pull_ready_items(squad_name)
