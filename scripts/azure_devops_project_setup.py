@@ -174,19 +174,23 @@ class AzureDevOpsProjectSetup:
     def apply_team_iterations(self) -> None:
         """US-1 (2026-09-02): vincula cada nó de iteração ao team, tornando-o
         sprint backlog visível. Sem isso, as iterações existem no projeto mas
-        não aparecem no board do team."""
+        não aparecem no board do team.TF400497 ocorre quando backlogIteration
+        (defaultIteration) está null/invalid — a correção é PATCH /work/teamsettings
+        com defaultIteration antes de POSTar iterações."""
         if not self.project_id or not self.team_id:
             self.record("team.iterations", "skip", "projeto/time não descobertos")
             return
         if not self.config.get("iterations"):
             self.record("team.iterations", "skip", "nenhuma iteração configurada")
             return
-        url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings/iterations?api-version=7.1"
-        existing = self.get(url) or {}
+        iterations_spec = self.config.get("iterations") or []
+        team_iterations_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings/iterations?api-version=7.1"
+        existing = self.get(team_iterations_url) or {}
         existing_ids = {(it.get("identification") or {}).get("id") for it in existing.get("value", [])}
         existing_names = {(it.get("identification") or {}).get("name") for it in existing.get("value", [])}
         identifiers: list[dict[str, Any]] = []
-        for spec in self.config.get("iterations") or []:
+        first_iteration_path: str | None = None
+        for spec in iterations_spec:
             node = self.get(
                 f"{self.client.base_url}/wit/classificationnodes/iterations/{quote(spec['name'])}?api-version=7.1"
             )
@@ -194,19 +198,27 @@ class AzureDevOpsProjectSetup:
                 self.record(f"team.iterations.{spec['name']}", "error", "nó de iteração ausente")
                 continue
             nid = node["identifier"]
+            node_path = node.get("path", "")
             if nid in existing_ids or spec["name"] in existing_names:
                 self.record(f"team.iterations.{spec['name']}", "skip", "já vinculado ao team")
-                continue
-            identifiers.append({"id": nid, "includeChildren": False})
+            else:
+                identifiers.append({"id": nid, "includeChildren": False})
+            if first_iteration_path is None and node_path:
+                parts = node_path.strip("\\").split("\\")
+                first_iteration_path = "\\" + parts[-1]
         if not identifiers:
             self.record("team.iterations", "ok", "nada novo a vincular")
             return
-        # POST uma iteração de cada vez para adicioná-la ao team's iteration list
+        if first_iteration_path:
+            teamsettings_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings?api-version=7.1"
+            patch_body = {"defaultIteration": first_iteration_path}
+            patch_result = self.send("PATCH", teamsettings_url, patch_body)
+            self.record("teamsettings.backlog_iteration", "ok" if patch_result else "error", patch_result or first_iteration_path)
         results = []
         for ident in identifiers:
             result = self.send(
                 "POST",
-                url,
+                team_iterations_url,
                 {"id": ident["id"], "includeChildren": False},
             )
             results.append(result)
@@ -239,7 +251,7 @@ class AzureDevOpsProjectSetup:
         if parent_folder_path not in existing_paths:
             parent_folder = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{parent_folder_path}?api-version=7.1",
                 {"name": parent_folder_path, "isFolder": True},
             )
             if parent_folder and parent_folder.get("id"):
@@ -249,8 +261,8 @@ class AzureDevOpsProjectSetup:
         if folder_path not in existing_paths:
             folder = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
-                {"name": "Agents Squad", "isFolder": True, "path": parent_folder_path},
+                f"{self.org}/{proj_name}/_apis/wit/queries/{parent_folder_path}?api-version=7.1",
+                {"name": "Agents Squad", "isFolder": True},
             )
             if folder and folder.get("id"):
                 existing_paths[folder_path] = folder
@@ -318,10 +330,10 @@ class AzureDevOpsProjectSetup:
             if query_full_path in full_query_path:
                 skipped += 1
                 continue
-            payload = {"name": q["name"], "wiql": q["wiql"], "isFolder": False, "path": folder_path}
+            payload = {"name": q["name"], "wiql": q["wiql"]}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{folder_path}?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -914,7 +926,7 @@ class AzureDevOpsProjectSetup:
             self.record("service_connections", "error", "projeto não descoberto")
             return
         existing = self.get(
-            f"{self.org}/_apis/serviceConnections?api-version=7.1&projectId={self.project_id}"
+            f"{self.org}/_apis/serviceendpoint/endpoints?api-version=7.1&projectId={self.project_id}"
         ) or {}
         existing_names = {sc.get("name") for sc in (existing.get("value") or [])}
         for spec in sc_cfg:
@@ -932,7 +944,7 @@ class AzureDevOpsProjectSetup:
                 continue
             result = self.send(
                 "POST",
-                f"{self.org}/_apis/serviceConnections?api-version=7.1&projectId={self.project_id}",
+                f"{self.org}/_apis/serviceendpoint/endpoints?api-version=7.1",
                 endpoint,
             )
             if result and result.get("id"):
@@ -969,19 +981,36 @@ class AzureDevOpsProjectSetup:
             client_secret = auth.get("client_secret") or ""
             return {
                 "name": name,
-                "type": "Azure Resource Manager",
+                "type": "AzureRM",
+                "url": "https://management.azure.com/",
+                "data": {
+                    "subscriptionId": subscription_id,
+                    "subscriptionName": subscription_name,
+                    "environment": "AzureCloud",
+                    "scopeLevel": "Subscription",
+                    "creationMode": "Manual",
+                },
                 "authorization": {
                     "parameters": {
                         "tenantid": tenant_id,
                         "serviceprincipalid": client_id,
+                        "authenticationType": "spnKey",
                         "serviceprincipalkey": client_secret,
-                        "subscriptionId": subscription_id,
-                        "subscriptionName": subscription_name,
                     },
                     "scheme": "ServicePrincipal",
                 },
-                "is_shared": False,
+                "isShared": False,
+                "isReady": True,
                 "owner": "Library",
+                "serviceEndpointProjectReferences": [
+                    {
+                        "projectReference": {
+                            "id": self.project_id,
+                            "name": self.project,
+                        },
+                        "name": name,
+                    }
+                ],
             }
         if sc_type == "github":
             token = auth.get("token") or ""
@@ -994,7 +1023,7 @@ class AzureDevOpsProjectSetup:
                     },
                     "scheme": "Token",
                 },
-                "is_shared": False,
+                "isShared": False,
                 "owner": "Library",
             }
         if sc_type == "docker_registry":
@@ -1013,7 +1042,7 @@ class AzureDevOpsProjectSetup:
                     },
                     "scheme": "UsernamePassword",
                 },
-                "is_shared": False,
+                "isShared": False,
                 "owner": "Library",
             }
         if sc_type == "kubernetes":
@@ -1028,7 +1057,7 @@ class AzureDevOpsProjectSetup:
                     },
                     "scheme": "Kubeconfig",
                 },
-                "is_shared": False,
+                "isShared": False,
                 "owner": "Library",
             }
         return None

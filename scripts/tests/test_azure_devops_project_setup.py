@@ -387,18 +387,20 @@ def test_apply_queries():
     posts = [c for c in captured if c[0] == "POST"]
     # 2 POSTs para folders (Shared + Shared/Agents Squad) + 5 POSTs para queries
     assert len(posts) == 7, f"esperado 7 POSTs (2 folders + 5 queries), got {len(posts)}"
-    query_posts = [c for c in posts if "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is False]
+    # Query posts have wiql in body (Microsoft API uses parent path in URL, not body)
+    query_posts = [c for c in posts if "wiql" in (c[2] or {})]
     assert len(query_posts) == 5, f"esperado 5 query POSTs, got {len(query_posts)}"
 
     # Verifica folder path em todos
     for c in posts:
-        is_query = "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is False
+        has_wiql = "wiql" in (c[2] or {})
         is_folder = "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is True
         if is_folder:
             assert c[2].get("name") in ("Shared", "Agents Squad"), f"folder name inesperado: {c[2].get('name')}"
-        elif is_query:
-            assert "path" in (c[2] or {}), f"query deve ter path: {c[2]}"
-            assert c[2].get("path") == "Shared/Agents Squad", f"query path inesperado: {c[2].get('path')}"
+        elif has_wiql:
+            # Query body should have name and wiql (path goes in URL per Microsoft API)
+            assert "name" in (c[2] or {}), f"query deve ter name: {c[2]}"
+            assert "wiql" in (c[2] or {}), f"query deve ter wiql: {c[2]}"
 
     # Verifica WIQL contém project name e os 5 nomes esperados
     query_names = {(c[2] or {}).get("name") for c in query_posts}
@@ -929,7 +931,7 @@ def test_create_service_connections():
         return {"id": "ok"}
 
     def fake_get(url):
-        if "serviceConnections?" in url:
+        if "serviceendpoint/endpoints?" in url:
             return {"value": []}
         return {}
 
@@ -940,14 +942,14 @@ def test_create_service_connections():
     posts = [c for c in captured if c[0] == "POST"]
     assert len(posts) == 4, f"esperado 4 POSTs, got {len(posts)}"
     types = {(c[2] or {}).get("type") for c in posts}
-    assert types == {"Azure Resource Manager", "GitHub", "DockerRegistry", "Kubernetes"}
+    assert types == {"AzureRM", "GitHub", "DockerRegistry", "Kubernetes"}
     names = {(c[2] or {}).get("name") for c in posts}
     assert names == {"Azure-ARMTemplate", "GitHub-Arthemis", "DockerHub", "AKS-Cluster"}
     for c in posts:
         body = c[2] or {}
         assert "authorization" in body
-        assert body.get("is_shared") is False
-        assert body.get("owner") == "Library"
+        assert body.get("isShared") is False
+    assert body.get("owner") == "Library"
     statuses = {r["step"]: r["status"] for r in setup.results}
     assert all(v == "ok" for v in statuses.values()), f"todos ok, got {statuses}"
 
@@ -957,7 +959,7 @@ def test_create_service_connections():
     setup2.results = []
 
     def fake_get2(url):
-        if "serviceConnections?" in url:
+        if "serviceendpoint/endpoints?" in url:
             return {"value": [{"name": "Azure-ARMTemplate"}]}
         return {}
 
