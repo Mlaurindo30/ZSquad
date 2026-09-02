@@ -189,7 +189,7 @@ class AzureDevOpsProjectSetup:
         existing_ids = {(it.get("identification") or {}).get("id") for it in existing.get("value", [])}
         existing_names = {(it.get("identification") or {}).get("name") for it in existing.get("value", [])}
         identifiers: list[dict[str, Any]] = []
-        first_iteration_path: str | None = None
+        first_iteration_id: str | None = None
         for spec in iterations_spec:
             node = self.get(
                 f"{self.client.base_url}/wit/classificationnodes/iterations/{quote(spec['name'])}?api-version=7.1"
@@ -198,22 +198,23 @@ class AzureDevOpsProjectSetup:
                 self.record(f"team.iterations.{spec['name']}", "error", "nó de iteração ausente")
                 continue
             nid = node["identifier"]
-            node_path = node.get("path", "")
             if nid in existing_ids or spec["name"] in existing_names:
                 self.record(f"team.iterations.{spec['name']}", "skip", "já vinculado ao team")
             else:
                 identifiers.append({"id": nid, "includeChildren": False})
-            if first_iteration_path is None and node_path:
-                parts = node_path.strip("\\").split("\\")
-                first_iteration_path = "\\" + parts[-1]
+            if first_iteration_id is None:
+                first_iteration_id = nid
         if not identifiers:
             self.record("team.iterations", "ok", "nada novo a vincular")
             return
-        if first_iteration_path:
+        if first_iteration_id:
+            # TF400497: PATCH backlogIteration com UUID (não path).
+            # A API TeamSettings.Update espera string (uuid), não path string.
+            # https://learn.microsoft.com/en-us/rest/api/azure/devops/work/teamsettings/update
             teamsettings_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings?api-version=7.1"
-            patch_body = {"defaultIteration": first_iteration_path}
+            patch_body = {"backlogIteration": first_iteration_id}
             patch_result = self.send("PATCH", teamsettings_url, patch_body)
-            self.record("teamsettings.backlog_iteration", "ok" if patch_result else "error", patch_result or first_iteration_path)
+            self.record("teamsettings.backlog_iteration", "ok" if patch_result else "error", patch_result or first_iteration_id)
         results = []
         for ident in identifiers:
             result = self.send(

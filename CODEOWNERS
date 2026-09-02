@@ -1,0 +1,22 @@
+# CODEOWNERS — Agents Squad Azure DevOps Governance
+# Alinhado a AGENTS.md §9 e ao contrato OPERATING_CONTRACT.md
+# Revisão SoD: arthemis@ (code/security/qa/performance/governance) ≠ squads@
+
+# Scripts Azure DevOps — code-reviewer obrigatório
+/scripts/azure_devops*.py    @arthemis/code-reviewer
+
+# GitHub Actions
+/.github/workflows/          @arthemis/code-reviewer
+
+# Paths sensíveis — duplo sign-off cross-account
+# cyber_red@ (offensive-cyber-operator) + arthemis@ (security-reviewer)
+/auth/ /crypto/ /iac/       @arthemis/security-reviewer @cyber_red/offensive-cyber-operator
+
+# Contratos e configuração — governance-auditor
+/contracts/ /config/         @arthemis/governance-auditor
+
+# Testes — qa-engineer
+/scripts/tests/ /tests/      @arthemis/qa-engineer
+
+# Padrão — development team
+*                            @squads/development-team
