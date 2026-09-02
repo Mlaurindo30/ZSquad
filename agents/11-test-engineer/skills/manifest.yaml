@@ -10,7 +10,7 @@ assigned:
 - path: skills/testing/bdd/behavior-driven-development
 - path: skills/testing/e2e-testing-patterns
 - path: skills/testing/test-fixing
-- path: integrations/toon.py
+- path: integrations/experimental/toon.py
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
@@ -19,3 +19,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/test-engineer.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

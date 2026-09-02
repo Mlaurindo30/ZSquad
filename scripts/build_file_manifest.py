@@ -22,12 +22,12 @@ from typing import Any
 
 
 SOURCE_REVISION = "UNVERIFIED"
-CURRENT_EPIC = "work/EPIC-SQUAD-EVOLUTION-20260818/"
+CURRENT_EPIC = "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/"
 VOLATILE_EVIDENCE_PREFIXES = (
-    "work/EPIC-SQUAD-EVOLUTION-20260818/documentation/",
-    "work/EPIC-SQUAD-EVOLUTION-20260818/gate-decisions/",
-    "work/EPIC-SQUAD-EVOLUTION-20260818/traceability/",
-    "work/EPIC-SQUAD-EVOLUTION-20260818/memory/",
+    "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/documentation/",
+    "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/gate-decisions/",
+    "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/traceability/",
+    "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/memory/",
 )
 SELF_OUTPUTS = {
     "distribution/source-snapshot.json",

@@ -987,6 +987,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - agile-coach
   - delivery-orchestrator
   load: on-demand
   folder_sha256: b377d4586925992a6d52b2c63807d3fffca594312ec0ec3ec5fb5a965fc270e4
@@ -1037,6 +1038,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - agile-coach
   - delivery-orchestrator
   - skill-curator
   load: on-demand
@@ -1093,7 +1095,10 @@ catalog:
   provenance: verified-third-party
   license_status: MIT
   assigned_to:
+  - cloud-architect
   - delivery-orchestrator
+  - fullstack-engineer
+  - mobile-engineer
   - software-engineer
   load: on-demand
   folder_sha256: 5e93ddf8a1370fe1b4cff924f3547953aa8e223e08abe5605fb268211aac2e1e
@@ -1107,6 +1112,7 @@ catalog:
   provenance: verified-third-party
   license_status: MIT
   assigned_to:
+  - agile-coach
   - delivery-orchestrator
   load: on-demand
   folder_sha256: 5f5bb23bc3dc7c5f901621048947c32c455a41486d086692824edc13e6669310
@@ -1120,6 +1126,7 @@ catalog:
   provenance: verified-third-party
   license_status: MIT
   assigned_to:
+  - agile-coach
   - delivery-orchestrator
   load: on-demand
   folder_sha256: 59e7f516e6e7da196dbfdd5b13672946471791487cec7c4f0528e8298db4788f
@@ -1232,6 +1239,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - backend-engineer
+  - fullstack-engineer
   - integration-engineer
   load: on-demand
   folder_sha256: 47286d5c24924a67c1e04cae9f0acd43f98d85bc67bce1f3fac006daa13293ab
@@ -1259,6 +1267,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - backend-engineer
+  - fullstack-engineer
   load: on-demand
   folder_sha256: a2b9eae80e9c7537e0f8a2a79a3402fc34fa862451e2bbf26077b5a14e561bf3
   description: You are a senior backend engineer operating production-grade services
@@ -1273,6 +1282,8 @@ catalog:
   license_status: internal-use
   assigned_to:
   - backend-engineer
+  - fullstack-engineer
+  - mobile-engineer
   - software-engineer
   load: on-demand
   folder_sha256: 87f3c05afdf303682e521a9491c024715ed6f1fcd8b96fe5d8018818765bf1a4
@@ -1299,6 +1310,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - fullstack-engineer
   - software-engineer
   load: on-demand
   folder_sha256: f18a7b4244d53220cc7cd7e31f75209de730a1cc6861f44646d2506d5e6ec2b7
@@ -1325,6 +1337,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - fullstack-engineer
   - software-engineer
   - test-engineer
   load: on-demand
@@ -1340,6 +1353,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - code-reviewer
+  - fullstack-engineer
   - governance-auditor
   - qa-engineer
   - software-engineer
@@ -1358,8 +1372,11 @@ catalog:
   license_status: proprietary
   assigned_to:
   - backend-engineer
+  - cloud-architect
   - code-reviewer
   - frontend-engineer
+  - fullstack-engineer
+  - mobile-engineer
   - software-engineer
   load: on-demand
   folder_sha256: 14f37a4cfb16c176bca986e4d78ab66e8033843c60e1e8c1684a50ea2254c6e9
@@ -1406,7 +1423,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
-  - ux-ui-designer
+  - ui-designer
   load: on-demand
   folder_sha256: 28d4a88278184fbe0db3a14feb7b15b4931effdf0e70668570d0eae4728c371c
   description: You are a frontend designer-engineer, not a layout generator.
@@ -1432,6 +1449,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
+  - fullstack-engineer
   load: on-demand
   folder_sha256: c7e9c1ce76820dcbbc1827a3d900375ca37771b8abb312cda0471f07fd454a1a
   description: Next.js App Router principles. Server Components, data fetching, routing
@@ -1445,6 +1463,8 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
+  - fullstack-engineer
+  - mobile-engineer
   load: on-demand
   folder_sha256: 7d500c420c6678ee3e9a9afb030b81a42ce678f789f577dab7a0dc11193b78ff
   description: Comprehensive performance optimization guide for React and Next.js
@@ -1460,7 +1480,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
-  - ux-ui-designer
+  - mobile-engineer
   load: on-demand
   folder_sha256: db14dde238e54748601334a58e4c2586e44503edcb0df17425367271dbc58e21
   description: (Mobile-First · Touch-First · Platform-Respectful)
@@ -1473,6 +1493,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
+  - mobile-engineer
   - software-engineer
   load: on-demand
   folder_sha256: 8721b6b852f1b7f2f7e7e6c5e4ef710613ac103839c5a191ece7110d7514f0a9
@@ -1514,7 +1535,8 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
-  - ux-ui-designer
+  - ui-designer
+  - ux-researcher
   load: on-demand
   folder_sha256: a072dc4c5064332dfad56654d0a9f7db5ff6a604c98094f776c4a83334f41784
   description: You are an accessibility expert specializing in WCAG compliance, inclusive
@@ -1529,7 +1551,8 @@ catalog:
   license_status: internal-use
   assigned_to:
   - brand-strategist
-  - ux-ui-designer
+  - ui-designer
+  - ux-researcher
   load: on-demand
   folder_sha256: a36fb67a07e0fd42a2a98ff7078162e2b22c27e8a54bfeeb8bc678d663f999ba
   description: 'Comprehensive design skill: brand identity, design tokens, UI styling,
@@ -1548,7 +1571,7 @@ catalog:
   provenance: mixed-local-and-third-party
   license_status: internal-use
   assigned_to:
-  - ux-ui-designer
+  - ui-designer
   load: on-demand
   folder_sha256: 50928afc271d56c7e20add7cd709011be76e1da1fed5e9dadeedc79d890cd95a
   description: Token architecture, component specifications, and slide generation.
@@ -1564,7 +1587,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - frontend-engineer
-  - ux-ui-designer
+  - ui-designer
   load: on-demand
   folder_sha256: f8b8f2779e3f10ff9b16ab432535e5ce8a946531b6ab444a52ebb67a6f385dd3
   description: Create beautiful, accessible user interfaces with shadcn/ui components
@@ -1583,7 +1606,7 @@ catalog:
   license_status: internal-use
   assigned_to:
   - brand-strategist
-  - ux-ui-designer
+  - ui-designer
   load: on-demand
   folder_sha256: f57cb739bab92df18cafe63f071e6f65a657478229524ec2c58a7b0ba9934f03
   description: Comprehensive design guide for web and mobile applications. Use when
@@ -1598,10 +1621,12 @@ catalog:
   license_status: internal-use
   assigned_to:
   - agent-rag-engineer
+  - agile-coach
   - ai-analyst
   - ai-engineer
   - backend-engineer
   - brand-strategist
+  - cloud-architect
   - code-reviewer
   - data-ai-architect
   - data-architect
@@ -1611,11 +1636,13 @@ catalog:
   - devops-release-engineer
   - direct-response-copywriter
   - frontend-engineer
+  - fullstack-engineer
   - governance-auditor
   - growth-marketing-strategist
   - integration-engineer
   - ml-engineer
   - mlops-llmops-engineer
+  - mobile-engineer
   - offensive-cyber-operator
   - performance-engineer
   - platform-engineer
@@ -1632,7 +1659,8 @@ catalog:
   - swarm-consensus-coordinator
   - technical-writer
   - test-engineer
-  - ux-ui-designer
+  - ui-designer
+  - ux-researcher
   load: on-demand
   folder_sha256: ae506b7cdeaa627ab8436ee0aab71d8894b8e90f05cf7681368abb11de221e94
   description: A hybrid memory system that provides persistent, searchable knowledge
@@ -1690,6 +1718,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - cloud-architect
   - devops-release-engineer
   - platform-engineer
   load: on-demand
@@ -1720,6 +1749,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - cloud-architect
   - devops-release-engineer
   - platform-engineer
   load: on-demand
@@ -1969,6 +1999,7 @@ catalog:
   provenance: user-local-import
   license_status: internal-use
   assigned_to:
+  - cloud-architect
   - security-reviewer
   - solution-architect
   load: on-demand
@@ -2020,20 +2051,21 @@ catalog:
   description: Systematically identify and fix all failing tests using smart grouping
     strategies. Use when explicitly asks to fix tests (
 - name: blast_radius_analyzer
-  path: integrations/blast_radius_analyzer.py
+  path: integrations/experimental/blast_radius_analyzer.py
   domain: integration-engines
   specialization: blast-radius
   source: squad-internal
   provenance: internal-original
   license_status: proprietary
   assigned_to:
+  - fullstack-engineer
   - software-engineer
   load: on-demand
   folder_sha256: bc1f123e71b38bfa8a86de12f17441c14c26e98c45fe363c91f939c01db42f26
   description: OBRIGATORIO antes de alterar producao/schema/credencial/dado sensivel.
     Identifica afetados pelo change e calcula raio de explosao.
 - name: code_health_analyzer
-  path: integrations/code_health_analyzer.py
+  path: integrations/experimental/code_health_analyzer.py
   domain: integration-engines
   specialization: code-health
   source: squad-internal
@@ -2041,13 +2073,14 @@ catalog:
   license_status: proprietary
   assigned_to:
   - data-ai-architect
+  - fullstack-engineer
   - software-engineer
   load: on-demand
   folder_sha256: 31335f9c3f8eb207712ac10ca05cf154522858fa0a30870d9e2e398b5d95a077
   description: Auditoria periodica de divida, duplicacao, complexidade e hotspots
     do codigo.
 - name: codebase_knowledge_graph
-  path: integrations/codebase_knowledge_graph.py
+  path: integrations/experimental/codebase_knowledge_graph.py
   domain: integration-engines
   specialization: knowledge-graph
   source: squad-internal
@@ -2061,7 +2094,7 @@ catalog:
   folder_sha256: 0c4350680432625f2dc7329c3225776575e4855934ebafd90f10e1b546cc68c3
   description: Popula grafo de entidades/apis/tests do projeto para navegacao e impacto.
 - name: procedural_skill_engine
-  path: integrations/procedural_skill_engine.py
+  path: integrations/experimental/procedural_skill_engine.py
   domain: integration-engines
   specialization: procedural-skill
   source: squad-internal
@@ -2075,7 +2108,7 @@ catalog:
   description: Aplica skill procedural a um processo repetivel com entradas/saidas
     validadas.
 - name: prompt_quality_optimizer
-  path: integrations/prompt_quality_optimizer.py
+  path: integrations/experimental/prompt_quality_optimizer.py
   domain: integration-engines
   specialization: prompt-quality
   source: squad-internal
@@ -2088,7 +2121,7 @@ catalog:
   description: Avalia e otimiza prompts de agentes antes do deploy usando metricas
     de qualidade.
 - name: trajectory_refinement_engine
-  path: integrations/trajectory_refinement_engine.py
+  path: integrations/experimental/trajectory_refinement_engine.py
   domain: integration-engines
   specialization: trajectory-refinement
   source: squad-internal
@@ -2102,7 +2135,7 @@ catalog:
   description: Refina trajetorias de agentes apos execucao real para reduzir retrabalho
     e custo.
 - name: sdlc_role_mapper
-  path: integrations/sdlc_role_mapper.py
+  path: integrations/experimental/sdlc_role_mapper.py
   domain: integration-engines
   specialization: sdlc-role-mapping
   source: squad-internal
@@ -2115,7 +2148,7 @@ catalog:
   folder_sha256: 6b17c8292c590d82d670c4a2be538791b664a38cc0628adef4415f37c20796d8
   description: Mapeia papeis SDLC para perfis de agente e valida cobertura do squad.
 - name: contextual_ast_chunker
-  path: integrations/contextual_ast_chunker.py
+  path: integrations/experimental/contextual_ast_chunker.py
   domain: integration-engines
   specialization: ast-chunking
   source: squad-internal
@@ -2129,7 +2162,7 @@ catalog:
   description: Fragmenta codigo em chunks contextuais usando AST para RAG e analise
     semantica.
 - name: clone_or_update_repos
-  path: integrations/clone_or_update_repos.py
+  path: integrations/experimental/clone_or_update_repos.py
   domain: integration-engines
   specialization: repo-sync
   source: squad-internal
@@ -2150,16 +2183,16 @@ catalog:
   provenance: internal-original
   license_status: proprietary
   assigned_to:
-  - test-engineer
   - product-owner
   - qa-engineer
+  - test-engineer
   load: on-demand
   folder_sha256: 48175fc74157cd027d6b11ec147be85e39f0b7dd8debe8181335b0d41f370068
   description: BDD com Gherkin. Use when the user asks for BDD, Given/When/Then, acceptance
     criteria, Gherkin scenarios, feature files, behavior specifications, or wants
     to bridge business requirements and executable tests.
 - name: gitingest
-  path: integrations/gitingest.py
+  path: integrations/experimental/gitingest.py
   domain: integration-engines
   specialization: repo-ingest
   source: squad-internal
@@ -2171,11 +2204,22 @@ catalog:
   - software-engineer
   load: on-demand
   folder_sha256: af0989101a0da6bb255451559374f8fe1bda38fdad7a6a86ebeb8de730a1b178
+- name: devops_platform_connector
+  path: integrations/devops_platform_connector.py
+  domain: integration-engines
+  specialization: devops-platform
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  load: on-demand
+  folder_sha256: e0795ab19d9ba4eaf5e923610a5f87fb31610c6a17d5d928fdcaca8a320dd431
   description: Compacta repositorios/diretorios em texto estruturado para contexto
     de LLM, reduzindo tokens em blast_radius_analyzer, codebase_knowledge_graph e
     code_health_analyzer.
 - name: toon
-  path: integrations/toon.py
+  path: integrations/experimental/toon.py
   domain: integration-engines
   specialization: compact-serialization
   source: squad-internal
@@ -2192,7 +2236,7 @@ catalog:
   description: Serializa/decoida metadados de skills/catalog/handoffs em formato TOON
     compacto para economia de tokens em prompts e saídas de engines.
 - name: zcode-subagents
-  path: integrations/zcode_subagents.py
+  path: integrations/experimental/zcode_subagents.py
   domain: integration-engines
   specialization: zcode-native-subagents
   source: squad-internal
@@ -2209,3 +2253,4 @@ policy:
   quarantine_is_not_loadable: true
   every_active_skill_requires_assigned_agent: true
 discovery: config/discovery-policy.yaml
+

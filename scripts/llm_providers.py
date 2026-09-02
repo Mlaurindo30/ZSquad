@@ -37,6 +37,13 @@ from typing import Any, Optional
 
 import requests
 
+from scripts.error_classifier import (
+    ClassifiedError,
+    ErrorClassifier,
+    FailoverReason,
+    classify_error,
+)
+
 OMNIROUTE_BASE_URL = "http://localhost:20128"
 OLLAMA_BASE_URL = "http://localhost:11434"
 
@@ -221,8 +228,16 @@ class LLMRouter:
     Dependências & Imports: ``requests.RequestException``, ``json.loads``.
     """
 
-    def __init__(self, providers: list[LLMProvider]) -> None:
+    def __init__(
+        self,
+        providers: list[LLMProvider],
+        *,
+        classifier: ErrorClassifier | None = None,
+        sleeper: Optional[Any] = None,
+    ) -> None:
         self.providers = list(providers)
+        self._classifier = classifier or ErrorClassifier()
+        self._sleep = sleeper if sleeper is not None else time.sleep
 
     def complete(
         self,
@@ -233,20 +248,9 @@ class LLMRouter:
     ) -> dict:
         """Tenta cada provedor em ordem (1 retry cada) e devolve o primeiro sucesso.
 
-        O que é: ponto único de entrada resiliente da camada LLM.
-
-        Responsabilidade: sequenciar tentativas, validar JSON quando pedido e
-        acumular erros por provedor/tentativa para diagnóstico.
-
-        Pra que serve: degradar com controle — provedor primário fora? O segundo
-        assume automaticamente.
-
-        Comportamento em falha: após esgotar todos os provedores, levanta
-        ``ProviderError`` cuja mensagem lista cada erro (provedor, modelo e causa).
-
-        Conexões: delega a cada ``LLMProvider.complete``.
-
-        Dependências & Imports: ``json.loads``, ``requests.RequestException``.
+        Política de classificação: causas permanentes (auth, billing, ssl)
+        abortam o provider sem retry; rate limit e overloaded aplicam
+        backoff curto entre tentativas; demais erros seguem a cascata.
         """
         errors: list[str] = []
         for provider in self.providers:
@@ -261,11 +265,83 @@ class LLMRouter:
                     return result
                 except requests.RequestException as exc:
                     errors.append(f"{label}: {type(exc).__name__}: {exc}")
+                    classified = self._classifier.classify(
+                        exc=exc,
+                        provider=provider.config.name,
+                    )
+                    if not classified.retryable:
+                        break
+                    if classified.should_backoff and attempt == 1:
+                        self._sleep(min(2 ** attempt, 4))
                 except json.JSONDecodeError as exc:
                     errors.append(f"{label}: conteúdo não é JSON válido: {exc}")
         raise ProviderError(
             "Todos os provedores falharam — " + " | ".join(errors)
         )
+
+    def complete_with_policy(
+        self,
+        messages: list[dict[str, str]],
+        *,
+        expect_json: bool = False,
+    ) -> dict:
+        """Completa respeitando compressão por overflow de contexto.
+
+        Em caso de erro contendo "context length", aplica ``compress_messages``
+        uma vez e tenta novamente. Demais erros propagam.
+        """
+        attempts = 0
+        compressed = False
+        while True:
+            attempts += 1
+            if attempts > 3:
+                raise ProviderError("complete_with_policy: limite de tentativas excedido")
+            system = next(
+                (m["content"] for m in messages if m.get("role") == "system"),
+                "",
+            )
+            user_payload = "\n".join(
+                m.get("content", "") for m in messages if m.get("role") != "system"
+            )
+            try:
+                return self.complete(system, user_payload, expect_json=expect_json)
+            except ProviderError as exc:
+                if not compressed and "context length" in str(exc):
+                    messages = compress_messages(messages)
+                    compressed = True
+                    continue
+                raise
+
+
+def compress_messages(
+    messages: list[dict[str, str]],
+    *,
+    keep_last: int = 4,
+    max_chars: int = 20_000,
+) -> list[dict[str, str]]:
+    """Trunca histórico para reduzir o consumo de contexto.
+
+    Preserva ``system``; mantém as últimas ``keep_last`` mensagens inteiras;
+    comprime mensagens intermediárias truncando a ``max_chars`` por mensagem
+    com prefixo ``[compressed]``.
+    """
+    if not messages:
+        return list(messages)
+    system = [m for m in messages if m.get("role") == "system"]
+    rest = [m for m in messages if m.get("role") != "system"]
+    if len(rest) <= keep_last:
+        return system + rest
+    head = rest[: -keep_last]
+    tail = rest[-keep_last:]
+    compressed: list[dict[str, str]] = []
+    for msg in head:
+        content = msg.get("content", "")
+        if isinstance(content, str) and len(content) > max_chars:
+            content = "[compressed] " + content[:max_chars]
+        new_msg = dict(msg)
+        new_msg["content"] = content
+        compressed.append(new_msg)
+    return system + compressed + tail
 
 
 def OmniRoute(  # noqa: N802 — nome de fábrica no estilo do domínio.

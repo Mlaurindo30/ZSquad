@@ -1,0 +1,15 @@
+agent: ux-researcher
+native:
+- path: agents/20-ux-researcher/skills/native/ux-researcher-native
+assigned:
+- path: skills/engineering/ui-ux/accessibility-compliance-accessibility-audit
+- path: skills/engineering/ui-ux/design
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/ux-researcher.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

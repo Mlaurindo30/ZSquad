@@ -140,3 +140,11 @@ Exploratory testing, session-based test management (SBTM), boundary value analys
 - **Primary Artifacts**: `reports/qa-report.md`, `gate-decisions/G5-quality.yaml`, `findings/BUG-*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G5-quality`
+
+## Azure DevOps Review Model (US-16/US-17)
+
+- **Azure AD account**: `arthemis@` (Required reviewer — qa-engineer)
+- **Voting scope**: Voto em PRs quando path ∈ {`tests/`, `bdd/`, `features/`, `specs/`, `acceptance/`}; G5 owner
+- **Thread tag**: `[12-qa-engineer] approve|reject`
+- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
+- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

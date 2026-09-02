@@ -7,7 +7,7 @@
   "required": ["decision_id", "gate_id", "work_item_id", "decision", "decider", "criteria", "evidence", "human_approval", "decided_at"],
   "properties": {
     "decision_id": {"type": "string", "pattern": "^GD-[A-Z0-9-]+$"},
-    "gate_id": {"enum": ["G1-product", "G2-design", "G3-readiness", "G4-code-security", "G5-quality", "G6-governance-release"]},
+    "gate_id": {"enum": ["GT-entry", "GT-design-review", "GT-done", "G1-product", "G2-design", "G4-code-security", "G5-quality", "G6-governance-release"]},
     "work_item_id": {"type": "string"},
     "decision": {"enum": ["approved", "conditionally_approved", "changes_requested", "rejected", "blocked"]},
     "decider": {"type": "string"},

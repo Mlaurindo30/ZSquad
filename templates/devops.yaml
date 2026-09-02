@@ -1,0 +1,311 @@
+# Marcador por projeto: qual organização/projeto Azure DevOps este PROJECT_ROOT usa.
+# Copie para <project_root>/.agents_squad/config/devops.yaml e ajuste os valores —
+# nenhum destes valores fica hardcoded em código compartilhado do squad.
+#
+# Exemplo de referência usado durante o desenho deste template: org "cbvgas",
+# projeto "Arthemis" (https://cbvgas.visualstudio.com/Arthemis). Troque livremente.
+provider: azure-devops
+org_url: https://cbvgas.visualstudio.com   # ou https://dev.azure.com/<org>
+project: Arthemis
+repo: Arthemis                              # nome do repositório Azure Repos alvo das PRs
+process_template: agile                     # agile | scrum | basic | cmmi — confirme em Project Settings > Process
+
+# Tradução dos tipos internos do squad para os tipos de work item do processo escolhido.
+# Os nomes abaixo são os do template "Agile"; ajuste se o projeto usar Scrum/CMMI/Basic:
+#   Scrum: story -> "Product Backlog Item"
+#   CMMI:  story -> Requirement, epic -> Epic, task -> Task, bug -> Bug
+#   Basic: epic -> Epic, story -> Issue, task -> Task
+work_item_type_map:
+  epic: Epic
+  story: "User Story"
+  task: Task
+  bug: Bug
+  spike: Task
+  release: Task
+  evolution: Epic
+  study: Task
+
+# Tradução dos estados do ciclo do squad (config/workflow.yaml) para estados do Board.
+# US-10 (2026-09-02): removido `review-qa` — estado órfão, não usado em cycles.yaml.
+# Nota: o Azure Boards Agile process tem 4 estados nativos (New/Active/Resolved/Closed).
+# Para separar scaffolding/implementation/code-security-review em colunas distintas,
+# crie colunas customizadas no board (Board > Column options > Add column) ou use
+# um processo customizado. O state_map abaixo mapeia para os estados padrão;
+# as tags phase-* permitem filtrar por fase dentro de cada coluna.
+state_map:
+  blueprint: New
+  scaffolding: Active
+  implementation: Active
+  code-security-review: Active
+  quality-validation: Resolved
+  governance-release: Resolved
+  done: Closed
+
+  # Opcional: se o projeto tiver colunas customizadas, descomente e ajuste:
+  # scaffolding: "In Progress"
+  # implementation: "Implementation"
+  # code-security-review: "Review"
+
+# Phase tags (US-1, 2026-09-02): aplicadas pelo connector ao mover estado,
+# refletem a fase real do work item sem custom states herdados. Usadas em
+# swimlanes do board Stories e em queries OData do Analytics.
+phase_tags:
+  blueprint: phase-blueprint
+  scaffolding: phase-scaffolding
+  implementation: phase-implementation
+  code-security-review: phase-code-security-review
+  quality-validation: phase-quality-validation
+  governance-release: phase-governance-release
+  done: phase-done
+
+# Squad tags (US-1, 2026-09-02): discriminam squad temática nos swimlanes.
+# Aplicadas pelo squad-owner persona ao atribuir o work item.
+squad_tags:
+  core: squad-core
+  web: squad-web
+  mobile: squad-mobile
+  data: squad-data
+  ai: squad-ai
+  infra-cloud: squad-infra-cloud
+  quality: squad-quality
+
+area_path: Arthemis
+iteration_path: Arthemis
+
+# Contas Azure DevOps (não são personas). Os 41 agentes compartilham estas 3 contas.
+# Não criar e-mail por agente nem por squad temática (web/mobile/data/ai/…).
+# US-16 (2026-09-02): pr_and_card_approver expandido de 2 para 5 personas via
+# path filter. SoD mantida (squads@ != arthemis@ no nível AAD). Cada persona
+# vota apenas em paths do seu domínio, conforme US-15 (CODEOWNERS).
+identities:
+  human_master:
+    email: michel.laurindo@outlook.com
+    role: project-admin
+    notifications: false
+    used_by: []
+  development_team:
+    email: squads@michellaurindooutlook812.onmicrosoft.com
+    role: contributors
+    notifications: true
+    used_by:
+      - delivery-orchestrator
+      - requirements-analyst
+      - product-owner
+      - scrum-master
+      - solution-architect
+      - data-ai-architect
+      - software-engineer
+      - data-engineer
+      - mlops-llmops-engineer
+      - security-reviewer
+      - test-engineer
+      - qa-engineer
+      - devops-release-engineer
+      - ai-analyst
+      - dba-databricks-engineer
+      - ai-engineer
+      - skill-curator
+      - technical-writer
+      - ux-researcher
+      - frontend-engineer
+      - backend-engineer
+      - data-architect
+      - ml-engineer
+      - agent-rag-engineer
+      - sre-observability-engineer
+      - platform-engineer
+      - performance-engineer
+      - integration-engineer
+      - brand-strategist
+      - direct-response-copywriter
+      - growth-marketing-strategist
+      - storytelling-strategist
+      - swarm-consensus-coordinator
+      - fullstack-engineer
+      - mobile-engineer
+      - cloud-architect
+      - agile-coach
+      - ui-designer
+      # offensive-cyber-operator foi movido para service_accounts.cyber_red (US-ACCT-01)
+      # para garantir duplo sign-off com security-reviewer em paths sensíveis.
+  pr_and_card_approver:
+    email: arthemis@michellaurindooutlook812.onmicrosoft.com
+    role: required-reviewer
+    notifications: true
+    # Ordem reflete: default voter, security paths, qa paths, perf paths,
+    # cyber paths, governance (card close no G6). SoD preservada.
+    used_by:
+      - code-reviewer              # default em todos os PRs (G4 owner)
+      - security-reviewer          # obrigatório em paths sensíveis (G4 collab)
+      - qa-engineer                # obrigatório em paths de teste/aceitação (G5 owner)
+      - performance-engineer       # obrigatório em paths de perf/hotpath (G5 collab)
+      - governance-auditor         # fecha/move card no G6 (NÃO vota PR)
+
+# US-ACCT-01 (2026-09-02): contas de serviço especializadas. Não são personas,
+# nem aprovadores de PR. Permissões restritas e segregadas por projeto.
+# Mantêm a SoD de 3 contas principais (squads@ / arthemis@ / human_master).
+service_accounts:
+  cyber_red:
+    email: cyber-red@michellaurindooutlook812.onmicrosoft.com
+    purpose: "Operações de Red Team / Offensive Cyber. Conta dedicada para 34-offensive-cyber-operator (duplo sign-off com 10-security-reviewer em auth/crypto/iac)."
+    role: security-service
+    permissions: [Project Contributors, Security Service]
+    scope_paths: [auth/, crypto/, iac/*.tf, Dockerfile]
+    used_by: [offensive-cyber-operator]
+    double_signoff_with: [security-reviewer]
+    notifications: true
+  customer_data_pii:
+    email: customer_data_pii@michellaurindooutlook812.onmicrosoft.com
+    purpose: "Acesso a pipelines e dados PII/sensíveis. Segregação por projeto; sem voto em PR; somente leitura em datasets."
+    role: data-reader
+    permissions: [Data Reader, Build Service]
+    scope_paths: [datasets/pii/, pipelines/data-pii-*]
+    used_by: []
+    notifications: false
+    segregation: "Sem acesso a repositórios de produção; somente datasets e pipelines classificados como PII."
+
+# Quem aprova DENTRO do squad (personas) vs contas Azure DevOps.
+approvals:
+  pull_request_agent: code-reviewer
+  card_agent: governance-auditor
+  security_collaborator: security-reviewer
+  human_gates:
+    - G1-product
+    - G6-governance-release
+
+pr_policy:
+  minimum_reviewers: 1
+  require_linked_work_item: true
+  target_branch: main
+  creator_vote_counts: false
+  reset_on_source_push: true
+  block_last_pusher: true
+
+scoring:
+  story_points:
+    field: Microsoft.VSTS.Scheduling.StoryPoints
+    allowed: [1, 2, 3, 5, 8]
+    max: 8
+    split_rule: mandatory
+  epic_tshirt:
+    field: Microsoft.VSTS.Scheduling.Effort
+    map:
+      PP: 1
+      P: 2
+      M: 3
+      G: 5
+      GG: 8
+
+colors:
+  work_item_types:
+    Epic: "#E06C00"
+    Feature: "#773B93"
+    "User Story": "#0098C7"
+    Task: "#A4880A"
+    Bug: "#CC293D"
+  tags:
+    risk-low: "#107C10"
+    risk-medium: "#FFB900"
+    risk-high: "#D13438"
+    risk-critical: "#5C2D91"
+    gate-g4: "#5C2D91"
+    gate-g6: "#004B50"
+
+board:
+  enable_epic_backlog: true
+  bugs_behavior: asTasks
+  include_area_children: true
+  apply_custom_card_rules: false
+  # WIP por coluna do board Agile padrão. Se o projeto usar colunas customizadas,
+  # edite para bater com os nomes exatos do board (Stories > Column options).
+  # Internamente, o squad usa colunas separadas (scaffolding/implementation/code-security-review)
+  # compartilhando o estado Active do Azure Boards — para separação visual total,
+  # crie colunas customizadas no board ou use swimlanes por tag.
+  wip:
+    New: 2
+    Active: 6
+    Resolved: 2
+    Closed: 10
+  # Swimlanes por squad temática (aplicadas via query-based no board).
+  # Cada squad aparece como uma faixa separada no Stories board.
+  swimlanes:
+    - name: "Squad Core"
+      query: "System.Tags CONTAINS 'squad-core'"
+    - name: "Squad Web"
+      query: "System.Tags CONTAINS 'squad-web'"
+    - name: "Squad Mobile"
+      query: "System.Tags CONTAINS 'squad-mobile'"
+    - name: "Squad Data"
+      query: "System.Tags CONTAINS 'squad-data'"
+    - name: "Squad AI"
+      query: "System.Tags CONTAINS 'squad-ai'"
+    - name: "Squad Infra-Cloud"
+      query: "System.Tags CONTAINS 'squad-infra-cloud'"
+    - name: "Squad Quality"
+      query: "System.Tags CONTAINS 'squad-quality'"
+    - name: "Without Squad"
+      query: "NOT (System.Tags CONTAINS 'squad-')"
+
+# US-2 (2026-09-02): queries salvas em pasta Shared/Agents Squad/.
+# Idempotente — reaplicar não duplica. Setar enabled: false para desabilitar.
+queries:
+  enabled: true
+  folder: Shared/Agents Squad
+
+# US-4 (2026-09-02): URL base do Analytics OData para queries CFD/Cycle Time
+# por squad temática (filtro System.Tags CONTAINS 'squad-*'). Read-only.
+analytics:
+  base_url: https://analytics.dev.azure.com/{org}/{project}/_odata/v2.0/
+
+# US-3 (2026-09-02): Delivery Plans (cross-team) — opt-in. Default OFF porque
+# cada projeto tem cadência própria; ligar quando múltiplos times forem criados.
+delivery_plan:
+  enabled: false
+  name: "Agents Squad — Delivery Plan"
+
+# US-5 (2026-09-02): Dashboards (1 team + 1 project). Default OFF — contributionIds
+# mudam entre versões da Azure DevOps; ligar após validar com primeira execução.
+dashboards:
+  enabled: false
+  items:
+    - name: "Agents Squad — Team Overview"
+      scope: project_Team
+      widgets: []
+    - name: "Agents Squad — Project Overview"
+      scope: project
+      widgets: []
+
+# US-6 (2026-09-02): Project wiki + 5 pages (Home, Architecture, Onboarding,
+# Runbooks, Compliance). Default OFF — opt-in via flag quando projeto estiver
+# maduro o suficiente para ter docs estáveis.
+wiki:
+  enabled: false
+  pages:
+    - { title: "Home", slug: "home" }
+    - { title: "Architecture", slug: "architecture" }
+    - { title: "Onboarding", slug: "onboarding" }
+    - { title: "Runbooks", slug: "runbooks" }
+    - { title: "Compliance", slug: "compliance" }
+
+notifications:
+  route_to: development_team
+  opt_out_human_master: true
+  events:
+    - ms.vss-work.workitem-changed-event
+    - ms.vss-code.pull-request-updated-event
+    - ms.vss-build.build-completed-event
+
+areas:
+  - Delivery
+  - Platform
+
+iterations:
+  - name: Iteration 1
+    start: "2026-09-01"
+    finish: "2026-09-14"
+  - name: Iteration 2
+    start: "2026-09-15"
+    finish: "2026-09-28"
+  - name: Iteration 3
+    start: "2026-09-29"
+    finish: "2026-10-12"

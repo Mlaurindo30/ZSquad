@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "hashes": {
+    "AGENTS.md": "bce8b921feea0c73d83ddf33dd3f16f8536d8036c5ac263637f2ad9345bda99d",
+    "CLAUDE.md": "c256354a066cdd1195e18c66b3123f2c8850b1b9b72377fa7dd533ad1c2baf79",
+    "CODEX.md": "ce99dcb98ffbb06e15852d1f89ed26e193370ef7e5124f77c53a335875c71b33",
+    "GEMINI.md": "c3bdc44c7fb8843ac8f65ea0a5664d0a7df9ea51537d0684fa2c535977602c2a"
+  },
+  "sizes": {
+    "AGENTS.md": 11856,
+    "CLAUDE.md": 25346,
+    "CODEX.md": 2118,
+    "GEMINI.md": 11634
+  },
+  "claude_codex_overlap": 0.0173,
+  "thresholds": {
+    "max_claude_codex_overlap": 0.8,
+    "max_agents_other_overlap": 0.6
+  }
+}

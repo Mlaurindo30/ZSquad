@@ -67,7 +67,7 @@ commands:
 
 relationships:
   reports_to: delivery-orchestrator
-  works_with: ['product-owner', 'brand-strategist', 'ux-ui-designer']
+  works_with: ['product-owner', 'brand-strategist', 'ux-researcher', 'ui-designer']
 ```
 
 ---

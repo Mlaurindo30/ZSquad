@@ -13,14 +13,33 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import re
+import signal
 import subprocess
 import sys
+
+logger = logging.getLogger(__name__)
+
+
+def _signal_handler(sig, frame):
+    logger.info("Received SIGINT, cleaning up...")
+    sys.exit(0)
+
+
 from contextlib import contextmanager
 from functools import wraps
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
+
+# Garante que o pacote ``scripts`` (que abriga este módulo) esteja importável
+# independentemente do modo de invocação (script, ``python -m``, test runner).
+_THIS_DIR = Path(__file__).resolve().parent
+_ROOT_DIR = _THIS_DIR.parent
+for _candidate in (str(_THIS_DIR), str(_ROOT_DIR)):
+    if _candidate not in sys.path:
+        sys.path.insert(0, _candidate)
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -72,10 +91,26 @@ def write_yaml(path: Path, value: dict[str, Any]) -> None:
     )
 
 
+BINARY_EXTENSIONS = {
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf",
+    ".pyc", ".pyo", ".so", ".dll", ".exe", ".zip", ".gz", ".tar",
+    ".db", ".sqlite", ".sqlite3", ".coverage", ".bin", ".woff", ".woff2",
+}
+
+
 def contains_control(path: Path) -> bool:
-    """Verifica se um arquivo contém caracteres de controle inválidos."""
+    """Verifica se um arquivo de texto contém caracteres de controle inválidos.
+
+    Evidências binárias (imagens, .pyc, .coverage etc.) sempre têm bytes < 32
+    e não são varredura de conteúdo textual malicioso; são ignoradas aqui.
+    """
+    # pathlib não trata ".coverage" como uma extensão (é um dotfile sem stem);
+    # comparar pelo nome completo cobre esses casos além da extensão comum.
+    if path.name.lower() in {".coverage"} or path.suffix.lower() in BINARY_EXTENSIONS or "__pycache__" in path.parts:
+        return False
     data = path.read_bytes()
-    return any(byte < 32 and byte not in (9, 10, 13) for byte in data)
+    # 9=tab, 10=LF, 13=CR, 27=ESC (sequências ANSI benignas em logs de build/terminal)
+    return any(byte < 32 and byte not in (9, 10, 13, 27) for byte in data)
 
 
 def locked_artifact_mutation(method: Any) -> Any:
@@ -100,27 +135,101 @@ class AgentSquad:
       - ``banco`` sempre fica em ``<root>/banco/``, separado de work/.
     """
 
-    def __init__(self, root: Path, project_name: str | None = None):
+    def __init__(self, root: Path, project_name: str | None = None, allow_legacy: bool = False):
         """Inicializa o squad carregando contratos, workflow e registros.
 
         Args:
             root: raiz do runtime do squad (agentes, skills, configs globais).
             project_name: nome do projeto consumidor. Default: ``None`` (modo legado).
+            allow_legacy: permite criar work items soltos em ``work/`` sem projeto.
+                Use apenas em testes/utilitários; o fluxo governado exige projeto.
         """
         self.root = Path(root).resolve()
         self.project_name = project_name
+        self.allow_legacy = allow_legacy
         self.contracts = self.root / "contracts"
         self.templates = self.root / "templates"
         self.registry = read_yaml(self.root / "config/agent-registry.yaml")
         self.workflow = read_yaml(self.root / "config/workflow.yaml")
         self.skills_catalog = read_yaml(self.root / "config/skills-catalog.yaml")
-        self.agents = {entry["id"]: entry for entry in self.registry.get("agents", [])}
+        registry_agents = self.registry.get("agents", [])
+        ordered_agents = sorted(registry_agents, key=lambda entry: entry.get("dispatchable") is False)
+        self.agents = {entry["id"]: entry for entry in ordered_agents}
         self.agent_ids = {entry["id"] for entry in self.registry.get("agents", [])}
+        primary_hosts = [
+            entry for entry in self.registry.get("agents", [])
+            if entry.get("provider_primary") is True
+        ]
+        if len(primary_hosts) != 1 or primary_hosts[0].get("dispatchable") is not False:
+            raise SquadError("registry exige exatamente um provider_primary não despachável")
+        self.dispatchable_agent_ids = {
+            entry["id"] for entry in self.registry.get("agents", [])
+            if entry.get("dispatchable", True)
+        }
         self.catalog_entries = {
             entry["path"]: entry for entry in self.skills_catalog.get("catalog", [])
         }
         self.gate_ids = set(self.workflow.get("gates", {}))
+        self.gate_aliases = self.workflow.get("gate_aliases", {})
+        final_gates = {"G4-code-security", "G5-quality", "G6-governance-release"}
+        if not final_gates <= self.gate_ids or final_gates & set(self.gate_aliases):
+            raise SquadError("workflow exige gates finais nativos G4, G5 e G6")
         self.states = {entry["id"] for entry in self.workflow.get("states", [])}
+
+    def get_gate(self, gate_id: str) -> dict[str, Any]:
+        """Retorna as configurações do gate resolvendo aliases (ex: G1-product -> GT-entry)."""
+        key = self.gate_aliases.get(gate_id, gate_id)
+        if key not in self.gate_ids:
+            raise SquadError(f"gate desconhecido: {gate_id}")
+        return self.workflow["gates"][key]
+
+    def validate_sod_snapshot(self, snapshot: dict[str, Any]) -> None:
+        """Rejeita sobreposição de funções incompatíveis no risco governado."""
+        risk = snapshot.get("risk")
+        if risk not in {"medium", "high", "critical"}:
+            return
+        roles = {
+            role: snapshot.get(role)
+            for role in ("author", "reviewer", "approver", "executor")
+            if snapshot.get(role) is not None
+        }
+        conflicts = self.workflow.get("segregation_of_duties", {}).get("conflicts", [])
+        for first, second in conflicts:
+            if roles.get(first) is not None and roles.get(first) == roles.get(second):
+                raise SquadError(f"SoD conflict: {first} and {second}")
+        if risk in {"high", "critical"} and len(set(roles.values())) != len(roles):
+            raise SquadError("SoD conflict: high/critical roles must be pairwise distinct")
+
+    def migrate_handoffs(self, item: Path | str, *, dry_run: bool = False) -> dict[str, Any]:
+        """Migra handoffs v1 locais para v2 com backup e execução idempotente."""
+        item_path = self._item(item)
+        risk = read_yaml(item_path / "status.yaml")["risk"]
+        migrated: list[str] = []
+        skipped: list[str] = []
+        for path in sorted((item_path / "handoffs").glob("HANDOFF-*.yaml")):
+            value = read_yaml(path)
+            if value.get("schema_version") == 2:
+                skipped.append(path.name)
+                continue
+            reviewer = value.get("to") if value.get("to") != value.get("from") else None
+            upgraded = dict(value)
+            upgraded["schema_version"] = 2
+            upgraded["sod_snapshot"] = {
+                "risk": risk,
+                "author": value["from"],
+                "reviewer": reviewer,
+                "approver": None,
+                "executor": None,
+                "independence_checked": reviewer is not None,
+            }
+            self._validate(upgraded, "handoff.schema.json")
+            if not dry_run:
+                backup = path.with_suffix(path.suffix + ".v1.bak")
+                if not backup.exists():
+                    atomic_write_text(backup, path.read_text(encoding="utf-8"), encoding="utf-8")
+                write_yaml(path, upgraded)
+            migrated.append(path.name)
+        return {"dry_run": dry_run, "migrated": migrated, "skipped": skipped}
 
     def _schema(self, name: str) -> dict[str, Any]:
         return json.loads((self.contracts / name).read_text(encoding="utf-8"))
@@ -140,6 +249,7 @@ class AgentSquad:
             "route.schema.json": "route.yaml",
             "task-template.schema.json": "task-template.yaml",
             "workflow-template.schema.json": "workflow-template.yaml",
+            "devops-config.schema.json": "devops.yaml",
         }
         errors: list[str] = []
         for schema_name, template_name in pairs.items():
@@ -177,12 +287,88 @@ class AgentSquad:
         except LockTimeoutError as exc:
             raise SquadError(str(exc)) from exc
 
-    def init_work_item(self, work_id: str, risk: str, base: Path | None = None) -> Path:
-        """Inicializa um novo work item sob lock exclusivo entre processos."""
+    def init_work_item(
+        self,
+        work_id: str,
+        risk: str,
+        base: Path | None = None,
+        story_points: int | None = None,
+    ) -> Path:
+        """Inicializa um novo work item Full sob lock exclusivo entre processos."""
+        if story_points is not None and story_points not in {1, 2, 3, 5, 8}:
+            raise SquadError("story_points deve usar Fibonacci 1, 2, 3, 5 ou 8")
+        if base is None and not self.project_name and not self.allow_legacy:
+            raise SquadError(
+                "work item solto recusado: informe project_name (ou --project-name/--project-root) "
+                "para criar em work/<projeto>/<WORK-ID>"
+            )
         parent = Path(base) if base else self._work_base()
         item = (parent / work_id).resolve()
         with self._artifact_lock(item):
-            return self._init_work_item_unlocked(work_id, risk, parent)
+            item = self._init_work_item_unlocked(work_id, risk, parent)
+            if story_points is not None:
+                status_path = item / "status.yaml"
+                status = read_yaml(status_path)
+                status["story_points"] = story_points
+                atomic_write_yaml(status_path, status)
+            return item
+
+    def _ledger_path(self, item: Path | str) -> Path:
+        """Resolve o ledger exclusivamente dentro do work item governado."""
+        item_path = Path(item).resolve()
+        configured = self.workflow.get("work_item", {}).get("ledger")
+        if not isinstance(configured, str):
+            raise SquadError("ledger inválido no workflow")
+        return self._item_reference(item_path, configured, "ledger")
+
+    def init_light_item(self, work_id: str, risk: str, objective: str = "") -> Path:
+        """Cria um flat artifact para tarefa Light (zero pastas, zero handoff, zero gate)."""
+        if not self.project_name:
+            raise SquadError("light-start exige project_name (use --project-name)")
+        if not ID_RE.fullmatch(work_id):
+            raise SquadError(f"ID inválido: {work_id}")
+        if risk not in {"low", "medium"}:
+            raise SquadError("Light aceita apenas risco low ou medium")
+        light_dir = self._work_base() / "light"
+        light_dir.mkdir(parents=True, exist_ok=True)
+        artifact = light_dir / f"{work_id}.md"
+        if artifact.exists():
+            raise SquadError(f"light artifact já existe: {artifact}")
+        content = (
+            "---\n"
+            f"id: {work_id}\n"
+            "mode: light\n"
+            f"risk: {risk}\n"
+            f"created_at: {now()}\n"
+            "owner: delivery-orchestrator\n"
+            "touch: []\n"
+            "---\n\n"
+            "## Objetivo\n"
+            f"{objective or '(preencher)'}\n\n"
+            "## TDD\n"
+            "- RED: (pendente)\n"
+            "- GREEN: (pendente)\n\n"
+            "## Evidência\n"
+            "(pendente)\n"
+        )
+        artifact.write_text(content, encoding="utf-8")
+        return artifact
+
+    def check_timebox(self, item: Path | str) -> dict[str, Any]:
+        """Verifica se a fase atual excedeu o timebox definido no workflow."""
+        item_path = self._item(item)
+        status = read_yaml(item_path / "status.yaml")
+        phase = status.get("state", "")
+        timeboxes = self.workflow.get("flow", {}).get("phase_timeboxes", {})
+        limit = timeboxes.get(phase)
+        if not limit:
+            return {"phase": phase, "limit": None, "elapsed_minutes": None, "exceeded": False}
+        started = status.get("phase_started_at")
+        if not started:
+            return {"phase": phase, "limit": limit, "elapsed_minutes": None, "exceeded": False}
+        start = datetime.fromisoformat(started.replace("Z", "+00:00"))
+        elapsed = (datetime.now(timezone.utc) - start).total_seconds() / 60
+        return {"phase": phase, "limit": limit, "elapsed_minutes": round(elapsed, 1), "exceeded": elapsed > limit}
 
     def _init_work_item_unlocked(self, work_id: str, risk: str, parent: Path) -> Path:
         """Cria a árvore governada; deve ser chamado com o lock do item obtido."""
@@ -212,19 +398,22 @@ class AgentSquad:
         status = {
             "id": work_id,
             "type": kind,
-            "state": "intake",
+            "state": "blueprint",
             "risk": risk,
             "owner": "delivery-orchestrator",
             "active_agents": [],
             "current_gate": None,
-            "next_action": "Classificar e iniciar discovery.",
-            "artifacts": ["status.yaml", "epic.md", "documentation/delivery-ledger.md"],
+            "next_action": "Preencher blueprint.md e validar GT-entry.",
+            "artifacts": ["status.yaml", "blueprint.md", "epic.md", "documentation/delivery-ledger.md"],
             "updated_at": now(),
+            "phase_started_at": now(),
         }
         self._validate(status, "work-item.schema.json")
         write_yaml(item / "status.yaml", status)
         ledger = (self.templates / "delivery-ledger.md").read_text(encoding="utf-8")
+        blueprint = (self.templates / "blueprint.md").read_text(encoding="utf-8")
         initial_files = {
+            "blueprint.md": blueprint.replace("<WORK-ID>", work_id),
             "epic.md": f"# {work_id}\n\n## Objetivo\n\nA preencher durante discovery.\n",
             "product-goal.md": "# Product Goal\n\nA preencher após a validação do problema.\n",
             "backlog.md": "# Backlog\n\nA preencher pelo Product Owner.\n",
@@ -284,8 +473,10 @@ class AgentSquad:
             raise SquadError("from/to precisam existir no agent-registry")
         if not artifacts or not evidence:
             raise SquadError("handoff exige artefato e evidência")
-        if next_gate is not None and next_gate not in self.gate_ids:
-            raise SquadError(f"gate desconhecido: {next_gate}")
+        if next_gate is not None:
+            next_gate = self.gate_aliases.get(next_gate, next_gate)
+            if next_gate not in self.gate_ids:
+                raise SquadError(f"gate desconhecido: {next_gate}")
         for reference in artifacts:
             self._item_reference(item_path, reference, "artefato")
         for reference in evidence:
@@ -295,6 +486,7 @@ class AgentSquad:
         status = read_yaml(item_path / "status.yaml")
         seq = len(list((item_path / "handoffs").glob("HANDOFF-*.yaml"))) + 1
         value = {
+            "schema_version": 2,
             "id": f"HANDOFF-{status['id']}-{seq:03d}",
             "work_item_id": status["id"],
             "from": sender,
@@ -309,6 +501,14 @@ class AgentSquad:
             "evidence": evidence,
             "memory_delta": memory_delta,
             "next_gate": next_gate,
+            "sod_snapshot": {
+                "risk": status["risk"],
+                "author": sender,
+                "reviewer": recipient if recipient != sender else None,
+                "approver": None,
+                "executor": None,
+                "independence_checked": recipient != sender,
+            },
             "acceptance": {
                 "criteria_checked": ["handoff-schema-valid"],
                 "recipient_ack_required": True,
@@ -319,6 +519,7 @@ class AgentSquad:
                 "acknowledged_at": None,
             },
         }
+        self.validate_sod_snapshot(value["sod_snapshot"])
         self._validate(value, "handoff.schema.json")
         write_yaml(item_path / "handoffs" / f"{value['id']}.yaml", value)
         return value
@@ -353,10 +554,19 @@ class AgentSquad:
     ) -> dict[str, Any]:
         """Avalia e emite formalmente uma decisão de gate (G1 a G6)."""
         item_path = self._item(item)
+        gate_id = self.gate_aliases.get(gate_id, gate_id)
         if gate_id not in self.gate_ids:
             raise SquadError(f"gate desconhecido: {gate_id}")
-        if decider not in self.agent_ids or not criteria or not evidence:
-            raise SquadError("decisor, critérios e evidências são obrigatórios")
+        if not decider:
+            raise SquadError("decisor é obrigatório")
+        if decider not in self.agent_ids:
+            raise SquadError(
+                f"decisor desconhecido: {decider}; use um id do registry sem prefixo numérico (ex: delivery-orchestrator)"
+            )
+        if not criteria:
+            raise SquadError("critérios são obrigatórios")
+        if not evidence:
+            raise SquadError("evidências são obrigatórias")
         gate = self.workflow["gates"][gate_id]
         authorized = set(gate.get("owners", [gate.get("owner")])) - {None}
         if decider not in authorized:
@@ -479,7 +689,11 @@ class AgentSquad:
 
     def discover(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Pesquisa somente o catálogo aprovado; intake e quarentena nunca entram."""
-        from scripts.skill_selector import DiscoveredSkill, select_skills_for_task
+        import importlib
+
+        _skill_selector = importlib.import_module("scripts.skill_selector")
+        DiscoveredSkill = _skill_selector.DiscoveredSkill
+        select_skills_for_task = _skill_selector.select_skills_for_task
 
         candidates: list[DiscoveredSkill] = []
         for relative, entry in sorted(self.catalog_entries.items()):
@@ -601,6 +815,46 @@ class AgentSquad:
         for path in (item_path / "gate-decisions").glob("*.yaml"):
             self._validate(read_yaml(path), "gate-decision.schema.json")
         return errors
+
+    def deep_audit(self) -> dict[str, Any]:
+        """Varre work/**/status.yaml e valida cada work item real contra os contratos.
+
+        Complementa ``audit()`` (que só cobre catálogo de skills e manifestos):
+        aqui é medida a conformidade real de status.yaml/handoffs/gate-decisions
+        em todo o portfólio de projetos, e são sinalizadas pastas órfãs sob
+        ``work/`` sem nenhum work item governado dentro.
+        """
+        work_root = self.root / "work"
+        conformant: list[str] = []
+        non_conformant: dict[str, str] = {}
+        if work_root.is_dir():
+            for status_path in sorted(work_root.rglob("status.yaml")):
+                item_dir = status_path.parent
+                rel = item_dir.relative_to(work_root).as_posix()
+                try:
+                    item_errors = self.validate_work_item(item_dir)
+                except SquadError as exc:
+                    non_conformant[rel] = str(exc)
+                    continue
+                if item_errors:
+                    non_conformant[rel] = "; ".join(item_errors)
+                else:
+                    conformant.append(rel)
+
+        orphans: list[str] = []
+        if work_root.is_dir():
+            for entry in work_root.iterdir():
+                if not entry.is_dir() or entry.name == "light":
+                    continue
+                if not any(True for _ in entry.rglob("status.yaml")):
+                    orphans.append(entry.relative_to(work_root).as_posix())
+
+        return {
+            "conformant_count": len(conformant),
+            "non_conformant_count": len(non_conformant),
+            "non_conformant": non_conformant,
+            "orphans": orphans,
+        }
 
     def audit(self) -> list[str]:
         """Audita a integridade do catálogo de skills, manifestos e mapeamentos de agentes."""
@@ -738,7 +992,28 @@ class AgentSquad:
             )
             db.record_token_metrics(status["id"], agent, step, prompt_tokens, completion_tokens, cost_usd)
             summary = db.get_token_summary(status["id"])
-        except (OSError, ValueError):
+        except (OSError, ValueError, RuntimeError) as exc:
+            # Banco indisponível: alerta explícito em vez de mascarar.
+            print(f"WARN track_tokens_db_unavailable: {type(exc).__name__}: {exc}")
+            try:
+                db_fallback = LocalAgentDB(
+                    db_path=self._db_path(),
+                    project_id=self.project_name or "legacy",
+                    allow_legacy=True,
+                )
+                db_fallback.record_recovery_event(
+                    target_key=f"track_tokens:{status.get('id', 'unknown')}",
+                    phase="track-tokens",
+                    reason="db_unavailable",
+                    action="escalate",
+                    attempt=1,
+                    backoff_seconds=0.0,
+                    error_message=f"{type(exc).__name__}: {exc}",
+                    rationale="track_tokens falhou ao gravar no banco",
+                )
+            except Exception as e:
+                logger.debug("track_tokens fallback failed: %s", e)
+                raise
             summary = {
                 "total_prompt_tokens": prompt_tokens,
                 "total_completion_tokens": completion_tokens,
@@ -834,9 +1109,18 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
+    migrate = sub.add_parser("migrate-handoffs")
+    migrate.add_argument("--work-item", required=True)
+    migrate.add_argument("--dry-run", action="store_true")
+
     init = sub.add_parser("init-work-item")
     init.add_argument("--id", required=True)
     init.add_argument("--risk", default="medium", choices=["low", "medium", "high", "critical"])
+
+    light = sub.add_parser("light-start")
+    light.add_argument("--id", required=True)
+    light.add_argument("--risk", default="low", choices=["low", "medium"])
+    light.add_argument("--objective", default="")
 
     disc = sub.add_parser("discover")
     disc.add_argument("--query", required=True)
@@ -882,7 +1166,9 @@ def _build_parser() -> argparse.ArgumentParser:
     activate.add_argument("--assigned", nargs="*", default=[])
     activate.add_argument("--discovered", nargs="*", default=[])
 
-    sub.add_parser("audit")
+    audit = sub.add_parser("audit")
+    audit.add_argument("--deep", action="store_true",
+                        help="Também valida status.yaml/handoffs/gate-decisions de todo work/ (não só o catálogo de skills)")
     sub.add_parser("validate-foundation")
 
     compact = sub.add_parser("compact-memory")
@@ -927,8 +1213,12 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
     """Executa o comando já validado pelo parser e retorna seu código de saída."""
-    if args.command == "init-work-item":
+    if args.command == "migrate-handoffs":
+        print(json.dumps(squad.migrate_handoffs(args.work_item, dry_run=args.dry_run), ensure_ascii=False, indent=2))
+    elif args.command == "init-work-item":
         print(squad.init_work_item(args.id, args.risk))
+    elif args.command == "light-start":
+        print(squad.init_light_item(args.id, args.risk, args.objective))
     elif args.command == "discover":
         print(json.dumps(squad.discover(args.query, args.limit), ensure_ascii=False, indent=2))
     elif args.command == "create-handoff":
@@ -981,6 +1271,15 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
         print(json.dumps(packet, ensure_ascii=False, indent=2))
     elif args.command == "audit":
         errors = squad.audit()
+        if getattr(args, "deep", False):
+            report = squad.deep_audit()
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            if not errors and not report["non_conformant_count"] and not report["orphans"]:
+                print("AUDIT_OK")
+                return 0
+            if errors:
+                print("\n".join(errors))
+            return 1
         if not errors:
             print("AUDIT_OK")
             return 0
@@ -1045,6 +1344,7 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Ponto de entrada CLI para comandos de controle e governança do squad."""
+    signal.signal(signal.SIGINT, _signal_handler)
     args = _build_parser().parse_args(argv)
     root = args.root.resolve()
     project_name = args.project_name

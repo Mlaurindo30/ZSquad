@@ -48,8 +48,8 @@ def _validate_agents(root: Path, errors: list[str]) -> list[dict]:
     registry = _load_yaml(root / "config/agent-registry.yaml", errors) or {}
     agents = registry.get("agents", [])
     ids = [entry.get("id") for entry in agents]
-    if len(agents) != 36:
-        errors.append(f"expected 36 agents, found {len(agents)}")
+    if len(agents) != 41:
+        errors.append(f"expected 41 agents, found {len(agents)}")
     if len(ids) != len(set(ids)):
         errors.append("duplicate agent ids")
     for agent in agents:
@@ -94,9 +94,15 @@ def _active_skill_paths(root: Path) -> set[str]:
         and "/discovery/quarantine/" not in path.as_posix()
         and "/vendor/" not in path.as_posix()
     }
+    integrations_root = root / "integrations"
     paths.update(
         path.relative_to(root).as_posix()
-        for path in (root / "integrations").glob("*.py")
+        for path in integrations_root.glob("*.py")
+        if path.name != "__init__.py"
+    )
+    paths.update(
+        path.relative_to(root).as_posix()
+        for path in integrations_root.glob("experimental/*.py")
         if path.name != "__init__.py"
     )
     return paths

@@ -160,10 +160,10 @@ class ErrorClassifier:
         if status in (401, 403) or self._matches(self._AUTH_PATTERNS, text):
             return ClassifiedError(
                 reason=FailoverReason.auth,
-                retryable=True,
+                retryable=False,
                 should_backoff=False,
                 should_compress=False,
-                should_fallback=False,
+                should_fallback=True,
                 bound_error=text,
                 provider_hint=provider,
             )
@@ -260,7 +260,10 @@ class ErrorClassifier:
 
         return ClassifiedError(
             reason=FailoverReason.unknown,
-            retryable=False,
+            # Falhas de rede (ex.: ConnectionError) devem ser retentadas;
+            # classificar como retriável por padrão para preservar o
+            # comportamento histórico do LLMRouter (retry + fallback).
+            retryable=True,
             should_backoff=False,
             should_compress=False,
             should_fallback=False,

@@ -148,3 +148,11 @@ OWASP Top 10, ASVS 4.0, STRIDE threat modeling, dependency CVE auditing, CSAF 2.
 - **Primary Artifacts**: `reviews/security-review.md`, `gate-decisions/G4-security.yaml`, `findings/SEC-*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G4-code-security`
+
+## Azure DevOps Review Model (US-16/US-17)
+
+- **Azure AD account**: `arthemis@` (Required reviewer — security-reviewer)
+- **Voting scope**: Voto em PRs quando path ∈ {`auth/`, `secrets/`, `crypto/`, `iac/*.tf`, `Dockerfile`}; duplo sign-off com `34-offensive-cyber-operator` em `auth/ + crypto/` via cross-account (`arthemis@` + `cyber_red@`)
+- **Thread tag**: `[10-security-reviewer] approve|reject`
+- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
+- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

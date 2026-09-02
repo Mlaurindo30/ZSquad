@@ -210,13 +210,29 @@ def test_setup_environment_all_paths(tmp_path, monkeypatch, capsys):
 def test_sre_creation_cli_and_main_guard(tmp_path, monkeypatch, capsys):
     values = {"%Y%m%d-%H%M%S":"20240101-010203", "%Y-%m-%dT%H:%M:%SZ":"iso", "%Y-%m-%d %H:%M:%S UTC":"human", "%Y-%m-%d":"date"}
     monkeypatch.setattr(sre.time, "strftime", lambda fmt: values[fmt])
+    # create_incident_bug agora delega a AgentSquad.init_work_item (schema-validado),
+    # que exige a raiz real do squad (config/contracts/templates); isolar via cópia
+    # em tmp_path evita poluir work/ do repositório real a cada execução do teste.
+    import shutil
+    for folder in ("config", "contracts", "templates"):
+        shutil.copytree(sre.ROOT / folder, tmp_path / folder)
+    monkeypatch.setattr(sre, "ROOT", tmp_path)
     loop=sre.SREIncidentLoop(tmp_path); bug=loop.create_incident_bug("alert","svc","trace","critical")
     assert bug == "BUG-INCIDENT-SVC-20240101-010203" and (tmp_path/"work"/bug/"documentation"/"delivery-ledger.md").exists()
-    monkeypatch.setattr(sre,"SREIncidentLoop",lambda:loop)
+    monkeypatch.setattr(sre,"SREIncidentLoop",lambda *a, **k: loop)
     assert sre.main(["--alert","a","--service","s"]) == 0
-    monkeypatch.setattr(sys,"argv",["sre_incident_loop.py","--alert","a","--service","s"])
-    with pytest.raises(SystemExit) as exc: runpy.run_path(str(Path(sre.__file__)), run_name="__main__")
-    assert exc.value.code == 0 and "INCIDENT_WORK_ITEM_CREATED" in capsys.readouterr().out
+
+    # runpy reexecuta o módulo como um __main__ novo (ROOT recalculado a partir do
+    # arquivo real): usa --project-name para isolar em work/<projeto>/, com limpeza.
+    real_root = Path(sre.__file__).resolve().parents[1]
+    test_project = "test-sre-incident-runpy"
+    shutil.rmtree(real_root / "work" / test_project, ignore_errors=True)
+    monkeypatch.setattr(sys,"argv",["sre_incident_loop.py","--alert","a","--service","s","--project-name",test_project])
+    try:
+        with pytest.raises(SystemExit) as exc: runpy.run_path(str(Path(sre.__file__)), run_name="__main__")
+        assert exc.value.code == 0 and "INCIDENT_WORK_ITEM_CREATED" in capsys.readouterr().out
+    finally:
+        shutil.rmtree(real_root / "work" / test_project, ignore_errors=True)
 
 
 def test_module_main_guards(monkeypatch, tmp_path):

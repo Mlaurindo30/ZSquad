@@ -791,6 +791,7 @@ AGENTS_SPEC = {
             "Package release artifacts and verify SHA-256 digests across all deliverables.",
             "Configure safe deployment pipelines with automated healthchecks and rollback triggers.",
             "Verify Infrastructure-as-Code scripts and environment variable configurations.",
+            "Own the DevOps board integration (Azure DevOps today): configure `.agents_squad/config/devops.yaml`, keep integrations/devops_platform_connector.py and scripts/azure_devops_bootstrap.py working, and ensure status.yaml.devops_id stays linked.",
             "Author release/release-record.md documenting version, changelog, and rollback steps.",
             "Collaborate with Governance Auditor to evaluate G6-governance-release gate."
         ],

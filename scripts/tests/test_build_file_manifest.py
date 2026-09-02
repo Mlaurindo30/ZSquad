@@ -30,8 +30,8 @@ def test_build_is_deterministic_and_reconciles_every_file(tmp_path: Path):
     write(root, "THIRD_PARTY_NOTICES.md", "notices")
     write(root, "agents/00/PROMPT.md", "persona")
     write(root, "work/OLD/status.yaml", "state: done")
-    write(root, "work/EPIC-SQUAD-EVOLUTION-20260818/evidence.md", "evidence")
-    write(root, "work/EPIC-SQUAD-EVOLUTION-20260818/traceability/verification-log.md", "live")
+    write(root, "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/evidence.md", "evidence")
+    write(root, "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/traceability/verification-log.md", "live")
     write(root, ".coverage", "coverage data")
     write(root, ".pytest_cache/nodeids", "[]")
     write(root, "scripts/__pycache__/x.pyc", "bytecode")
@@ -47,8 +47,8 @@ def test_build_is_deterministic_and_reconciles_every_file(tmp_path: Path):
     assert by_path["AGENTS.md"]["destination"] == "distribution"
     assert by_path["THIRD_PARTY_NOTICES.md"]["destination"] == "distribution"
     assert by_path["work/OLD/status.yaml"]["destination"] == "archive"
-    assert by_path["work/EPIC-SQUAD-EVOLUTION-20260818/evidence.md"]["lifecycle"] == "release-evidence"
-    assert by_path["work/EPIC-SQUAD-EVOLUTION-20260818/traceability/verification-log.md"]["destination"] == "excluded"
+    assert by_path["work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/evidence.md"]["lifecycle"] == "release-evidence"
+    assert by_path["work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/traceability/verification-log.md"]["destination"] == "excluded"
     assert by_path[".coverage"]["destination"] == "excluded"
     assert by_path[".pytest_cache/nodeids"]["destination"] == "excluded"
     assert by_path["scripts/__pycache__/x.pyc"]["destination"] == "excluded"

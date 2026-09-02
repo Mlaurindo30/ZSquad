@@ -261,7 +261,7 @@ def test_gate_helpers_and_all_gate_dispatch(tmp_path: Path, monkeypatch):
     for gate_id in list(gates._GATE_VALIDATORS):
         monkeypatch.setitem(gates._GATE_VALIDATORS, gate_id, lambda p, g=gate_id: {"approved": True, "gate": g})
     assert gates.validate_gate("G1-product", work)["approved"]
-    assert len(gates.validate_all_gates(work)["gates"]) == 6
+    assert len(gates.validate_all_gates(work)["gates"]) == 3
     assert not gates.validate_gate("G0", work)["approved"]
 
 
@@ -443,7 +443,7 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     item = squad.init_work_item("TASK-REMAINING", "medium", base=tmp_path)
     assert squad._item(item) == item
 
-    legacy = agent.AgentSquad(ROOT)
+    legacy = agent.AgentSquad(ROOT, allow_legacy=True)
     legacy.root = tmp_path / "legacy-runtime"
     legacy_item = legacy.init_work_item("TASK-RELATIVE", "low")
     assert legacy._item("TASK-RELATIVE") == legacy_item

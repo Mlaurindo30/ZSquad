@@ -54,7 +54,7 @@ class RealOrchestrationTests(unittest.TestCase):
         with self.assertRaisesRegex(SquadError, "verificação executável"):
             self.squad.decide_gate(
                 item, "G4-code-security", "code-reviewer",
-                [(c, "pass") for c in self.squad.workflow["gates"]["G4-code-security"]["criteria"]],
+                [(c, "pass") for c in self.squad.get_gate("G4-code-security")["criteria"]],
                 ["implementation/demo.py"]
             )
         errors = self.squad.validate_work_item(item)
@@ -80,7 +80,7 @@ class RealOrchestrationTests(unittest.TestCase):
             with self.assertRaisesRegex(SquadError, "verificação executável"):
                 self.squad.decide_gate(
                     item, "G5-quality", "qa-engineer",
-                    [(c, "pass") for c in self.squad.workflow["gates"]["G5-quality"]["criteria"]],
+                    [(c, "pass") for c in self.squad.get_gate("G5-quality")["criteria"]],
                     ["status.yaml"],
                     human_approved_by="business-stakeholder",
                     human_evidence="status.yaml"

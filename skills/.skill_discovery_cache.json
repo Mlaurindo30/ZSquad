@@ -1,0 +1,2073 @@
+{
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agent-development\\SKILL.md": {
+    "name": "ai-agent-development",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agent-development\\SKILL.md",
+    "source": "local",
+    "description": "AI agent development workflow for building autonomous agents, multi-agent systems, and agent orchestration with CrewAI, LangGraph, and custom agents.",
+    "metadata": {
+      "metadata": {
+        "category": "granular-workflow-bundle",
+        "risk": "safe",
+        "source": "personal",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488977008100:4261"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agents-architect\\SKILL.md": {
+    "name": "ai-agents-architect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agents-architect\\SKILL.md",
+    "source": "local",
+    "description": "Expert in designing and building autonomous AI agents. Masters tool use, memory systems, planning strategies, and multi-agent orchestration.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488978941600:9469"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\langgraph\\SKILL.md": {
+    "name": "langgraph",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\langgraph\\SKILL.md",
+    "source": "local",
+    "description": "Expert in LangGraph - the production-grade framework for building stateful, multi-actor AI applications. Covers graph construction, state management, cycles and branches, persistence with checkpointers, human-in-the-loop patterns, and the ReAct agent pattern.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488981315600:13880"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\prompt-engineering\\SKILL.md": {
+    "name": "prompt-engineering",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\prompt-engineering\\SKILL.md",
+    "source": "local",
+    "description": "Expert guide on prompt engineering patterns, best practices, and optimization techniques. Use when user wants to improve prompts, learn prompting strategies, or debug agent behavior.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488983353600:6337"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-analysis\\ai-analysis\\SKILL.md": {
+    "name": "ai-analysis",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-analysis\\ai-analysis\\SKILL.md",
+    "source": "local",
+    "description": "Analisa requisitos, dados, métricas e comportamento de IA para converter evidência em decisão de produto e engenharia.",
+    "metadata": {},
+    "key": "1785632500686571500:722"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineer\\SKILL.md": {
+    "name": "ai-engineer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineer\\SKILL.md",
+    "source": "local",
+    "description": "Build production-ready LLM applications, advanced RAG systems, and intelligent agents. Implements vector search, multimodal AI, agent orchestration, and enterprise AI integrations.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488988887400:9408"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineering\\SKILL.md": {
+    "name": "ai-engineering",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineering\\SKILL.md",
+    "source": "local",
+    "description": "Constrói aplicações de IA e agentes com contratos de ferramentas, RAG, avaliação, observabilidade, segurança e custo controlado.",
+    "metadata": {},
+    "key": "1785632500684566300:716"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineering-toolkit\\SKILL.md": {
+    "name": "ai-engineering-toolkit",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\ai-engineering\\ai-engineering-toolkit\\SKILL.md",
+    "source": "local",
+    "description": "6 production-ready AI engineering workflows: prompt evaluation (8-dimension scoring), context budget planning, RAG pipeline design, agent security audit (65-point checklist), eval harness building, and product sense coaching.",
+    "metadata": {
+      "metadata": {
+        "category": "data-ai",
+        "risk": "offensive",
+        "source": "community",
+        "date_added": "2026-03-15",
+        "author": "viliawang-pm",
+        "tags": [
+          "prompt-engineering",
+          "rag",
+          "security",
+          "evaluation",
+          "ai-engineering",
+          "llm"
+        ],
+        "tools": [
+          "claude",
+          "cursor",
+          "gemini",
+          "copilot"
+        ]
+      }
+    },
+    "key": "1785642488993412600:7053"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\advanced-evaluation\\SKILL.md": {
+    "name": "advanced-evaluation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\advanced-evaluation\\SKILL.md",
+    "source": "local",
+    "description": "This skill should be used when the user asks to \"implement LLM-as-judge\", \"compare model outputs\", \"create evaluation rubrics\", \"mitigate evaluation bias\", or mentions direct scoring, pairwise comparison, position bias, evaluation pipelines, or automated quality assessment.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-03-18"
+      }
+    },
+    "key": "1785642488995928400:18316"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\agent-evaluation\\SKILL.md": {
+    "name": "agent-evaluation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\agent-evaluation\\SKILL.md",
+    "source": "local",
+    "description": "Testing and benchmarking LLM agents including behavioral testing, capability assessment, reliability metrics, and production monitoring—where even top agents achieve less than 50% on real-world benchmarks",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642488998927500:38103"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\llm-evaluation\\SKILL.md": {
+    "name": "llm-evaluation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\model-evaluation\\llm-evaluation\\SKILL.md",
+    "source": "local",
+    "description": "Master comprehensive evaluation strategies for LLM applications, from automated metrics to human evaluation and A/B testing.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489001433000:14907"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\rag\\rag-engineer\\SKILL.md": {
+    "name": "rag-engineer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\rag\\rag-engineer\\SKILL.md",
+    "source": "local",
+    "description": "Expert in building Retrieval-Augmented Generation systems. Masters embedding models, vector databases, chunking strategies, and retrieval optimization for LLM applications.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489003056000:10307"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\rag\\rag-implementation\\SKILL.md": {
+    "name": "rag-implementation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\rag\\rag-implementation\\SKILL.md",
+    "source": "local",
+    "description": "RAG (Retrieval-Augmented Generation) implementation workflow covering embedding selection, vector database setup, chunking strategies, and retrieval optimization.",
+    "metadata": {
+      "metadata": {
+        "category": "granular-workflow-bundle",
+        "risk": "safe",
+        "source": "personal",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489006055300:4821"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\api-and-interface-design\\SKILL.md": {
+    "name": "api-and-interface-design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\api-and-interface-design\\SKILL.md",
+    "source": "local",
+    "description": "Guides stable API and interface design. Use when designing APIs, module boundaries, or any public interface. Use when creating REST or GraphQL endpoints, defining type contracts between modules, or establishing boundaries between frontend and backend.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "risk": "unknown",
+        "source": "https://github.com/addyosmani/agent-skills/tree/main/skills/api-and-interface-design",
+        "source_repo": "addyosmani/agent-skills",
+        "source_type": "community",
+        "date_added": "2026-07-01",
+        "license_source": "https://github.com/addyosmani/agent-skills/blob/main/LICENSE"
+      }
+    },
+    "key": "1785642489008056800:11291"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\architecture-decision-records\\SKILL.md": {
+    "name": "architecture-decision-records",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\architecture-decision-records\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive patterns for creating, maintaining, and managing Architecture Decision Records (ADRs) that capture the context and rationale behind significant technical decisions.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489010055000:13775"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\design-evidence-architecture\\SKILL.md": {
+    "name": "design-evidence-architecture",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\design-evidence-architecture\\SKILL.md",
+    "source": "local",
+    "description": "Create solution designs that compare options, record ADRs, model data and failure paths, define security threats, test strategy, observability, rollback and operational evidence. Use for architecture/design gates, Databricks or MLflow workloads, high-risk changes, or when review feedback challenges feasibility.",
+    "metadata": {},
+    "key": "1785631327824377900:1956"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\senior-architect\\SKILL.md": {
+    "name": "senior-architect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\senior-architect\\SKILL.md",
+    "source": "local",
+    "description": "Complete toolkit for senior architect with modern tools and best practices.",
+    "metadata": {
+      "metadata": {
+        "risk": "critical",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489014202400:4971"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\software-architecture\\SKILL.md": {
+    "name": "software-architecture",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\architecture\\software-architecture\\SKILL.md",
+    "source": "local",
+    "description": "Guide for quality focused software architecture. This skill should be used when users want to write code, design architecture, analyze code, in any case that relates to software development.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489017200200:4117"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-architecture\\database-architect\\SKILL.md": {
+    "name": "database-architect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-architecture\\database-architect\\SKILL.md",
+    "source": "local",
+    "description": "Expert database architect specializing in data layer design from scratch, technology selection, schema modeling, and scalable database architectures.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489019200200:17617"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-architecture\\database-design\\SKILL.md": {
+    "name": "database-design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-architecture\\database-design\\SKILL.md",
+    "source": "local",
+    "description": "Database design principles and decision-making. Schema design, indexing strategy, ORM selection, serverless databases.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489020201900:2037"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\airflow-dag-patterns\\SKILL.md": {
+    "name": "airflow-dag-patterns",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\airflow-dag-patterns\\SKILL.md",
+    "source": "local",
+    "description": "Build production Apache Airflow DAGs with best practices for operators, sensors, testing, and deployment. Use when creating data pipelines, orchestrating workflows, or scheduling batch jobs.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489023227100:1861"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-engineer\\SKILL.md": {
+    "name": "data-engineer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-engineer\\SKILL.md",
+    "source": "local",
+    "description": "Build scalable data pipelines, modern data warehouses, and real-time streaming architectures. Implements Apache Spark, dbt, Airflow, and cloud-native data platforms.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489026876100:11919"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-engineering-data-pipeline\\SKILL.md": {
+    "name": "data-engineering-data-pipeline",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-engineering-data-pipeline\\SKILL.md",
+    "source": "local",
+    "description": "You are a data pipeline architecture expert specializing in scalable, reliable, and cost-effective data pipelines for batch and streaming data processing.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489028382100:7522"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-quality-frameworks\\SKILL.md": {
+    "name": "data-quality-frameworks",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\data-quality-frameworks\\SKILL.md",
+    "source": "local",
+    "description": "Implement data quality validation with Great Expectations, dbt tests, and data contracts. Use when building data quality pipelines, implementing validation rules, or establishing data contracts.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489030905500:1847"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\dbt-transformation-patterns\\SKILL.md": {
+    "name": "dbt-transformation-patterns",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-engineering\\dbt-transformation-patterns\\SKILL.md",
+    "source": "local",
+    "description": "Production-ready patterns for dbt (data build tool) including model organization, testing strategies, documentation, and incremental processing.",
+    "metadata": {
+      "metadata": {
+        "risk": "none",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489033414000:1678"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\database-administration\\postgres-best-practices\\SKILL.md": {
+    "name": "postgres-best-practices",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\database-administration\\postgres-best-practices\\SKILL.md",
+    "source": "local",
+    "description": "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489035426700:2371"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\database-administration\\sql-pro\\SKILL.md": {
+    "name": "sql-pro",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\database-administration\\sql-pro\\SKILL.md",
+    "source": "local",
+    "description": "Master modern SQL with cloud-native databases, OLTP/OLAP optimization, and advanced query techniques. Expert in performance tuning, data modeling, and hybrid analytical systems.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489037423500:8276"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\azure-databricks\\SKILL.md": {
+    "name": "azure-databricks",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\azure-databricks\\SKILL.md",
+    "source": "local",
+    "description": "Expert knowledge for Azure Databricks development including troubleshooting, best practices, decision making, architecture & design patterns, limits & quotas, security, configuration, integrations & coding patterns, and deployment. Use when working with Unity Catalog, Delta Lake/Lakehouse, Lakeflow, Lakebase, OpenSharing, or GenAI/agent workloads, and other Azure Databricks related development tasks. Not for Azure Synapse Analytics (use azure-synapse-analytics), Azure HDInsight (use azure-hdinsight), Azure Machine Learning (use azure-machine-learning), Azure Data Factory (use azure-data-factory).",
+    "metadata": {
+      "metadata": {
+        "generated_at": "2026-07-26",
+        "generator": "docs2skills/1.0.0",
+        "compatibility": "Requires network access. Uses mcp_microsoftdocs:microsoft_docs_fetch or fetch_webpage to retrieve documentation."
+      }
+    },
+    "key": "1785642489041422700:68541"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-agent-bricks\\SKILL.md": {
+    "name": "databricks-agent-bricks",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-agent-bricks\\SKILL.md",
+    "source": "local",
+    "description": "Create Agent Bricks: Knowledge Assistants (KA) for document Q&A and Supervisor Agents for multi-agent orchestration (MAS).",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489043929400:7096"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-ai-functions\\SKILL.md": {
+    "name": "databricks-ai-functions",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-ai-functions\\SKILL.md",
+    "source": "local",
+    "description": "Use Databricks built-in AI Functions (ai_classify, ai_extract, ai_summarize, ai_mask, ai_translate, ai_fix_grammar, ai_gen, ai_analyze_sentiment, ai_similarity, ai_parse_document, ai_prep_search, ai_query, ai_forecast) to add AI capabilities directly to SQL and PySpark pipelines without managing model endpoints. Also covers document parsing and building custom RAG pipelines (parse → prep_search → index → query).",
+    "metadata": {
+      "metadata": {
+        "version": "0.2.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489046451200:15607"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-aibi-dashboards\\SKILL.md": {
+    "name": "databricks-aibi-dashboards",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-aibi-dashboards\\SKILL.md",
+    "source": "local",
+    "description": "Create Databricks AI/BI dashboards. Must use when creating, updating, or deploying Lakeview dashboards as Databricks Dashboard have a unique json structure. CRITICAL: You MUST test ALL SQL queries via CLI BEFORE deploying. Follow guidelines strictly.",
+    "metadata": {
+      "metadata": {
+        "version": "0.2.1",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642690167244700:33668"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-app-design\\SKILL.md": {
+    "name": "databricks-app-design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-app-design\\SKILL.md",
+    "source": "local",
+    "description": "Design the UX of custom-code Databricks Apps (AppKit/React) data screens — KPI/overview pages, reports, charts, tables, and Genie/chat data assistants — mapped to concrete AppKit components. Use when BUILDING or reviewing the UI of an AppKit/React app that displays data or answers data questions: choosing genre, layout, charts, KPIs, semantic color, required states (loading/empty/error), IBCS notation, and AI-result trust (showing generated SQL/sources for Genie/chat). A plain \"create a dashboard\" request means a managed AI/BI (Lakeview) dashboard → use databricks-aibi-dashboards, NOT this skill. Also NOT for non-data frontend (forms, settings, auth, marketing) or scaffolding/build/deploy (→ databricks-apps). Complements databricks-apps; use it alongside whenever a custom app has a chart, table, KPI, report, or Genie/chat/AI surface.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "parent": "databricks-apps"
+      }
+    },
+    "key": "1785642489053853400:7150"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-apps\\SKILL.md": {
+    "name": "databricks-apps",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-apps\\SKILL.md",
+    "source": "local",
+    "description": "Build apps on Databricks Apps platform. Use when asked to create data apps, analytics tools, or custom interactive visualizations. A plain \"create a dashboard\" request means a managed AI/BI (Lakeview) dashboard → use databricks-aibi-dashboards, not this skill. Evaluates data access patterns (analytics vs Lakebase synced tables) before scaffolding. Invoke BEFORE starting implementation.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.2",
+        "compatibility": "Requires databricks CLI (>= v0.294.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489057107600:20711"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-apps-python\\SKILL.md": {
+    "name": "databricks-apps-python",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-apps-python\\SKILL.md",
+    "source": "local",
+    "description": "Python backend for Databricks Apps — FastAPI (default), Flask, Dash, Streamlit, Gradio, Reflex. **Default for a new Databricks App is `databricks-apps` (AppKit — Node/TypeScript/React) — reach for it first.** Use this skill only when the user asks for a Python backend, extends an existing Python app, or the team is Python-only. Covers OAuth auth, app resources, SQL warehouse and Lakebase connectivity, foundation-model / Vector Search / model-serving APIs (via `databricks-python-sdk`), and deployment via CLI or DABs.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489060014800:12385"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-core\\SKILL.md": {
+    "name": "databricks-core",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-core\\SKILL.md",
+    "source": "local",
+    "description": "Databricks CLI operations and the parent/entry-point skill for Databricks CLI use: authentication, profile selection, and bundles. Load this first for CLI, auth, profile, and bundle tasks, then load the matching product skill. For finding or exploring data, answering questions about the data, or generating SQL, load the databricks-data-discovery skill (it routes to Genie One). Contains up-to-date guidelines for Databricks-related CLI tasks.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v0.292.0)"
+      }
+    },
+    "key": "1785642489064030900:7366"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-dabs\\SKILL.md": {
+    "name": "databricks-dabs",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-dabs\\SKILL.md",
+    "source": "local",
+    "description": "Create, configure, validate, deploy, run, and manage Declarative Automation Bundles (DABs, formerly Databricks Asset Bundles). Use when working with Databricks resources via DABs including dashboards, jobs, pipelines, alerts, volumes, and apps.",
+    "metadata": {},
+    "key": "1785642489066443300:2841"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-data-discovery\\SKILL.md": {
+    "name": "databricks-data-discovery",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-data-discovery\\SKILL.md",
+    "source": "local",
+    "description": "Discover, explore, and query Databricks data via Genie — the CLI equivalent of the Genie One MCP. MUST be invoked whenever the user asks to find or locate data ('what tables are in X', 'where does X live', 'which catalog/schema has Y'), answer a natural-language question about the data, or write a SQL query.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI >= v1.9.0 for `databricks genie ask` (older CLIs fall back to the deprecated `databricks experimental genie ask` alias)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489069238600:8615"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-dbsql\\SKILL.md": {
+    "name": "databricks-dbsql",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-dbsql\\SKILL.md",
+    "source": "local",
+    "description": "Databricks SQL (DBSQL) advanced features and SQL warehouse capabilities. This skill MUST be invoked when the user mentions: \"DBSQL\", \"Databricks SQL\", \"SQL warehouse\", \"SQL scripting\", \"stored procedure\", \"CALL procedure\", \"materialized view\", \"CREATE MATERIALIZED VIEW\", \"pipe syntax\", \"pipe-forward operator\", \"geospatial\", \"H3\", \"ST_\", \"spatial SQL\", \"collation\", \"COLLATE\", \"ai_query\", \"ai_classify\", \"ai_extract\", \"ai_gen\", \"AI function\", \"http_request\", \"remote_query\", \"read_files\", \"Lakehouse Federation\", \"recursive CTE\", \"WITH RECURSIVE\", \"multi-statement transaction\", \"temp table\", \"temporary view\", \"pipe operator\". SHOULD also invoke when the user asks about SQL best practices, data modeling patterns, or advanced SQL features on Databricks.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642844354862600:11292"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-docs\\SKILL.md": {
+    "name": "databricks-docs",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-docs\\SKILL.md",
+    "source": "local",
+    "description": "Databricks documentation reference via llms.txt index. Use when other skills do not cover a topic, looking up unfamiliar Databricks features, or needing authoritative docs on APIs, configurations, or platform capabilities.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489074598900:2952"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-execution-compute\\SKILL.md": {
+    "name": "databricks-execution-compute",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-execution-compute\\SKILL.md",
+    "source": "local",
+    "description": "Execute code and manage compute on Databricks: run Python/Scala/SQL/R via serverless, classic, or interactive clusters, and create/resize/delete clusters and SQL warehouses.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642690168290600:9258"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-genie-agents\\SKILL.md": {
+    "name": "databricks-genie-agents",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-genie-agents\\SKILL.md",
+    "source": "local",
+    "description": "Create, manage, and query Databricks Genie Agents — curated, per-data natural-language agents (formerly Genie Spaces): build, export/import, migrate across workspaces, and ask questions of a *specific* Agent via the Conversation API. For general data questions or finding data across your workspace, use databricks-data-discovery (Genie One) instead.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)"
+      }
+    },
+    "key": "1785642489079622600:14493"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-iceberg\\SKILL.md": {
+    "name": "databricks-iceberg",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-iceberg\\SKILL.md",
+    "source": "local",
+    "description": "Apache Iceberg tables on Databricks — Managed Iceberg tables, External Iceberg Reads (fka Uniform), Compatibility Mode, Iceberg REST Catalog (IRC), Iceberg v3, Snowflake interop, PyIceberg, OSS Spark, external engine access and credential vending. Use when creating Iceberg tables, enabling External Iceberg Reads (uniform) on Delta tables (including Streaming Tables and Materialized Views via compatibility mode), configuring external engines to read Databricks tables via Unity Catalog IRC, integrating with Snowflake catalog to read Foreign Iceberg tables",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489083891800:10508"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-jobs\\SKILL.md": {
+    "name": "databricks-jobs",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-jobs\\SKILL.md",
+    "source": "local",
+    "description": "Develop and deploy Lakeflow Jobs on Databricks via DABs, Python SDK, or the CLI. Use when creating data engineering jobs with notebooks, Python wheels, SQL, dbt, or pipelines. Invoke BEFORE starting implementation.",
+    "metadata": {
+      "metadata": {
+        "version": "0.2.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489085890800:12783"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-lakebase\\SKILL.md": {
+    "name": "databricks-lakebase",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-lakebase\\SKILL.md",
+    "source": "local",
+    "description": "Databricks Lakebase Postgres: projects, scaling, connectivity, Lakebase synced tables, and Data API. Use when asked about Lakebase databases, OLTP storage, or connecting apps to Postgres on Databricks.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v0.294.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489087890300:19565"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-lakeflow-connect\\SKILL.md": {
+    "name": "databricks-lakeflow-connect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-lakeflow-connect\\SKILL.md",
+    "source": "local",
+    "description": "Build managed ingestion pipelines into Databricks using Lakeflow Connect. Use when ingesting from SaaS apps (Salesforce, Workday Reports, ServiceNow, Google Analytics 4, HubSpot, Confluence) or databases (SQL Server cloud and on-prem; PostgreSQL/MySQL CDC in PuPr) into Unity Catalog with serverless pipelines.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v0.294.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489091276400:15528"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-metric-views\\SKILL.md": {
+    "name": "databricks-metric-views",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-metric-views\\SKILL.md",
+    "source": "local",
+    "description": "Unity Catalog metric views: define, create, query, and manage governed business metrics in YAML. Use when building standardized KPIs, revenue metrics, order analytics, or any reusable business metrics that need consistent definitions across teams and tools.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489093275900:13363"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-ml-training\\SKILL.md": {
+    "name": "databricks-ml-training",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-ml-training\\SKILL.md",
+    "source": "local",
+    "description": "Train ML models on Databricks. Use for: classification/regression/deep-learning (XGBoost, scikit-learn, LightGBM, PyTorch) with Optuna, @prod/@challenger aliases, batch scoring (spark_udf for plain models, fe.score_batch for feature-store-backed), custom PyFunc, custom ResponsesAgent (LangGraph + UC Function/Vector Search); UC feature tables + FeatureLookup + point-in-time joins + Lakebase online store; declarative Feature Views (create_feature, DeltaTableSource, RollingWindow/SlidingWindow/TumblingWindow, materialize_features, streaming Kafka features). NOT for: endpoint ops (databricks-model-serving), MLflow evaluation (databricks-mlflow-evaluation).",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v0.294.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489096791900:18716"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-mlflow-evaluation\\SKILL.md": {
+    "name": "databricks-mlflow-evaluation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-mlflow-evaluation\\SKILL.md",
+    "source": "local",
+    "description": "MLflow 3 GenAI agent evaluation. Use when writing mlflow.genai.evaluate() code, creating @scorer functions, using built-in scorers (Guidelines, Correctness, Safety, RetrievalGroundedness), building eval datasets from traces, setting up trace ingestion and production monitoring, aligning judges with MemAlign from domain expert feedback, or running optimize_prompts() with GEPA for automated prompt improvement.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489100697800:10653"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-model-serving\\SKILL.md": {
+    "name": "databricks-model-serving",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-model-serving\\SKILL.md",
+    "source": "local",
+    "description": "Databricks Model Serving endpoint lifecycle and ops. Use when asked to: CRUD serving endpoints (CLI or MLflow Deployments client); configure traffic routing for A/B / canary deploys and zero-downtime version swaps; retrieve OpenAPI schemas; inspect logs, metrics, or permissions; manage AI Gateway rate limits; discover Foundation Model API endpoints at runtime; integrate endpoints into Databricks Apps; or stream from off-platform clients (Vercel AI SDK v6, standalone Node.js). NOT for: training, MLflow autologging, UC registration, custom PyFunc/ResponsesAgent authoring (databricks-ml-training); Knowledge Assistants/Supervisor Agents (databricks-agent-bricks); MLflow evaluation (databricks-mlflow-evaluation).",
+    "metadata": {
+      "metadata": {
+        "version": "0.4.0",
+        "compatibility": "Requires databricks CLI (>= v0.294.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489103707300:13330"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-pipelines\\SKILL.md": {
+    "name": "databricks-pipelines",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-pipelines\\SKILL.md",
+    "source": "local",
+    "description": "Develop Lakeflow Spark Declarative Pipelines (formerly Delta Live Tables) on Databricks. Use when building batch or streaming data pipelines with Python or SQL. Invoke BEFORE starting implementation.",
+    "metadata": {
+      "metadata": {
+        "version": "0.3.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489105705200:34689"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-python-sdk\\SKILL.md": {
+    "name": "databricks-python-sdk",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-python-sdk\\SKILL.md",
+    "source": "local",
+    "description": "Databricks development guidance including Python SDK, Databricks Connect, CLI, and REST API. Use when working with databricks-sdk, databricks-connect, or Databricks APIs.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489108222900:18837"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-serverless-migration\\SKILL.md": {
+    "name": "databricks-serverless-migration",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-serverless-migration\\SKILL.md",
+    "source": "local",
+    "description": "Migrate Databricks workloads from classic compute to serverless compute. Use when migrating notebooks, jobs, pipelines, or Scala JARs (`spark_jar_task`) from classic clusters to serverless, checking if existing code is serverless-compatible, or writing new serverless-compatible code. Provides concrete fixes for the serverless Spark Connect architecture and guides the full migration. Not for classic DBR version upgrades or cluster configuration changes within classic compute.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v0.292.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489111738900:64631"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-spark-structured-streaming\\SKILL.md": {
+    "name": "databricks-spark-structured-streaming",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-spark-structured-streaming\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive guide to Spark Structured Streaming for production workloads. Use when building streaming pipelines, working with Kafka ingestion, implementing Real-Time Mode (RTM), configuring triggers (processingTime, availableNow), handling stateful operations with watermarks, optimizing checkpoints, performing stream-stream or stream-static joins, writing to multiple sinks, or tuning streaming cost and performance.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489114256600:3897"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-synthetic-data-gen\\SKILL.md": {
+    "name": "databricks-synthetic-data-gen",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-synthetic-data-gen\\SKILL.md",
+    "source": "local",
+    "description": "Generate realistic synthetic data using Spark + Faker (strongly recommended). Supports serverless execution, multiple output formats (Parquet/JSON/CSV/Delta), and scales from thousands to millions of rows. For small datasets below 10K rows, can optionally generate locally and upload to volumes. Use when user mentions 'synthetic data', 'test data', 'generate data', 'demo dataset', 'Faker', or 'sample data'.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642844354862600:13187"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-unity-catalog\\SKILL.md": {
+    "name": "databricks-unity-catalog",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-unity-catalog\\SKILL.md",
+    "source": "local",
+    "description": "Unity Catalog governance, access control, and observability. Use to grant or revoke access (GRANT/REVOKE), reason about the privilege model and ownership, set up row-level security and column masks, create external locations and storage credentials, define catalogs/schemas/tables/volumes, answer \"who can read this table\", and query system tables (audit, lineage, billing) or work with volume files in /Volumes/.",
+    "metadata": {
+      "metadata": {
+        "version": "0.3.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489120339100:12449"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-unstructured-pdf-generation\\SKILL.md": {
+    "name": "databricks-unstructured-pdf-generation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-unstructured-pdf-generation\\SKILL.md",
+    "source": "local",
+    "description": "Build RAG / unstructured-document evaluation datasets and demo documents (e.g. for Knowledge Assistant) on Databricks: generate synthetic PDFs locally, upload to Unity Catalog volumes, and pair each document with test questions for retrieval evaluation.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489122856000:6854"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-vector-search\\SKILL.md": {
+    "name": "databricks-vector-search",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-vector-search\\SKILL.md",
+    "source": "local",
+    "description": "Databricks Vector Search endpoints and indexes for RAG and semantic search; covers index types, search modes, end-to-end RAG patterns",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "parent": "databricks-core"
+      }
+    },
+    "key": "1785642489125853500:12056"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-zerobus-ingest\\SKILL.md": {
+    "name": "databricks-zerobus-ingest",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\databricks\\databricks-zerobus-ingest\\SKILL.md",
+    "source": "local",
+    "description": "Build Zerobus Ingest clients for near real-time data ingestion into Databricks Delta tables via gRPC. Use when creating producers that write directly to Unity Catalog tables without a message bus, working with the Zerobus Ingest SDK in Python/Java/Go/TypeScript/Rust, generating Protobuf schemas from UC tables, or implementing stream-based ingestion with ACK handling and retry logic.",
+    "metadata": {
+      "metadata": {
+        "version": "0.1.0",
+        "compatibility": "Requires databricks CLI (>= v1.0.0)"
+      }
+    },
+    "key": "1785642489126853500:12444"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\analyzing-mlflow-trace\\SKILL.md": {
+    "name": "analyzing-mlflow-trace",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\analyzing-mlflow-trace\\SKILL.md",
+    "source": "local",
+    "description": "Analyzes a single MLflow trace to answer a user query about it. Use when the user provides a trace ID and asks to debug, investigate, find issues, root-cause errors, understand behavior, or analyze quality. Triggers on \"analyze this trace\", \"what went wrong with this trace\", \"debug trace\", \"investigate trace\", \"why did this trace fail\", \"root cause this trace\".",
+    "metadata": {},
+    "key": "1785609860905756100:9214"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\instrumenting-with-mlflow-tracing\\SKILL.md": {
+    "name": "instrumenting-with-mlflow-tracing",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\instrumenting-with-mlflow-tracing\\SKILL.md",
+    "source": "local",
+    "description": "Instruments Python and TypeScript code with MLflow Tracing for observability. Must be loaded when setting up tracing as part of any workflow including agent evaluation. Triggers on adding tracing, instrumenting agents/LLM apps, getting started with MLflow tracing, tracing specific frameworks (LangGraph, LangChain, OpenAI, Gemini, DSPy, CrewAI, AutoGen), or when another skill references tracing setup. Examples - \"How do I add tracing?\", \"Instrument my agent\", \"Trace my LangChain app\", \"Set up tracing for evaluation\"",
+    "metadata": {},
+    "key": "1785609860913262800:5861"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\mlflow-agent\\SKILL.md": {
+    "name": "mlflow-agent",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\mlflow-agent\\SKILL.md",
+    "source": "local",
+    "description": "Master dispatcher for all MLflow workflows. Use this skill when the user wants to do anything with MLflow — tracing, evaluating, debugging, or improving an agent. Routes to the right MLflow sub-skill automatically. Triggers on: \"use mlflow\", \"help with mlflow\", \"mlflow agent\", \"add mlflow to my project\", \"trace my agent\", \"evaluate my agent\", or any MLflow task without a specific skill in mind.\n",
+    "metadata": {
+      "metadata": {
+        "disable-model-invocation": true
+      }
+    },
+    "key": "1785642489132514900:1715"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\querying-mlflow-metrics\\SKILL.md": {
+    "name": "querying-mlflow-metrics",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\querying-mlflow-metrics\\SKILL.md",
+    "source": "local",
+    "description": "Fetches aggregated trace metrics (token usage, latency, trace counts, quality evaluations) from MLflow tracking servers. Use when asked to show metrics, analyze token usage, view LLM costs, check usage trends, or query trace statistics.",
+    "metadata": {
+      "license": "Apache-2.0"
+    },
+    "key": "1787865472531651200:2062"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\retrieving-mlflow-traces\\SKILL.md": {
+    "name": "retrieving-mlflow-traces",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\mlflow\\retrieving-mlflow-traces\\SKILL.md",
+    "source": "local",
+    "description": "Retrieves MLflow traces using CLI or Python API. Use when the user asks to get a trace by ID, find traces, filter traces by status/tags/metadata/execution time, query traces, or debug failed traces. Triggers on \"get trace\", \"search traces\", \"find failed traces\", \"filter traces by\", \"traces slower than\", \"query MLflow traces\".",
+    "metadata": {},
+    "key": "1785609860923303900:6308"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\closed-loop-delivery\\SKILL.md": {
+    "name": "closed-loop-delivery",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\closed-loop-delivery\\SKILL.md",
+    "source": "local",
+    "description": "Use when a coding task must be completed against explicit acceptance criteria with minimal user re-intervention across implementation, review feedback, deployment, and runtime verification.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-03-12"
+      }
+    },
+    "key": "1785642489137036300:4417"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\govern-agent-handoffs\\SKILL.md": {
+    "name": "govern-agent-handoffs",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\govern-agent-handoffs\\SKILL.md",
+    "source": "local",
+    "description": "Validate agent registry entries, handoff contracts, approvals, evidence lineage, role separation, risk escalation and release readiness across a multi-agent SDLC. Use when onboarding an agent, auditing a work item, reviewing a gate, or resolving traceability gaps.",
+    "metadata": {},
+    "key": "1785631327828471400:1868"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\orchestrate-sdlc-gates\\SKILL.md": {
+    "name": "orchestrate-sdlc-gates",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\orchestration\\orchestrate-sdlc-gates\\SKILL.md",
+    "source": "local",
+    "description": "Coordinate an agentic software delivery item through the Scrum-Kanban SDLC states, dispatch only the necessary specialists, enforce typed handoffs and gate evidence, and route feedback to the root-cause owner. Use for starting, resuming, reviewing, blocking, or releasing any work item in this repository.",
+    "metadata": {},
+    "key": "1785631327818859200:2571"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\planning\\concise-planning\\SKILL.md": {
+    "name": "concise-planning",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\planning\\concise-planning\\SKILL.md",
+    "source": "local",
+    "description": "Use when a user asks for a plan for a coding task, to generate a clear, actionable, and atomic checklist.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489141044900:1881"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\planning\\planning-with-files\\SKILL.md": {
+    "name": "planning-with-files",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\planning\\planning-with-files\\SKILL.md",
+    "source": "local",
+    "description": "Work like Manus: Use persistent markdown files as your \"working memory on disk.\"",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489142551200:6283"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\scrum-kanban\\operate-scrum-kanban\\SKILL.md": {
+    "name": "operate-scrum-kanban",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\scrum-kanban\\operate-scrum-kanban\\SKILL.md",
+    "source": "local",
+    "description": "Run a hybrid Scrum-Kanban delivery system with sprint goals, refinement, Definition of Ready/Done, WIP limits, classes of service, flow metrics, blocker escalation and evidence-based retrospectives. Use for planning, daily flow, reviews, retrospectives or process health.",
+    "metadata": {},
+    "key": "1785631327826883800:1931"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\brainstorming\\SKILL.md": {
+    "name": "brainstorming",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\brainstorming\\SKILL.md",
+    "source": "local",
+    "description": "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation.",
+    "metadata": {},
+    "key": "1785642489144646900:10196"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\executing-plans\\SKILL.md": {
+    "name": "executing-plans",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\executing-plans\\SKILL.md",
+    "source": "local",
+    "description": "Use when you have a written implementation plan to execute in a separate session with review checkpoints",
+    "metadata": {},
+    "key": "1785637676217748200:2305"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\using-superpowers\\SKILL.md": {
+    "name": "using-superpowers",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\using-superpowers\\SKILL.md",
+    "source": "local",
+    "description": "Use when starting any conversation - establishes how to find and use skills, requiring skill invocation before ANY response including clarifying questions",
+    "metadata": {},
+    "key": "1785637676236519200:3063"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\writing-plans\\SKILL.md": {
+    "name": "writing-plans",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\superpowers\\writing-plans\\SKILL.md",
+    "source": "local",
+    "description": "Use when you have a spec or requirements for a multi-step task, before touching code",
+    "metadata": {},
+    "key": "1785637676242096600:6907"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\token-efficiency\\caveman\\SKILL.md": {
+    "name": "caveman",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\delivery\\token-efficiency\\caveman\\SKILL.md",
+    "source": "local",
+    "description": "Ultra-compressed communication mode. Cuts output tokens 65% (measured) by speaking like caveman while keeping full technical accuracy. Supports intensity levels: lite, full (default), ultra, wenyan-lite, wenyan-full, wenyan-ultra. Use when user says \"caveman mode\", \"talk like caveman\", \"use caveman\", \"less tokens\", \"be brief\", or invokes /caveman. Also auto-triggers when token efficiency is requested.",
+    "metadata": {},
+    "key": "1785642489149833200:5289"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\catalog\\skill-router\\SKILL.md": {
+    "name": "skill-router",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\catalog\\skill-router\\SKILL.md",
+    "source": "local",
+    "description": "Use when the user is unsure which skill to use or where to start. Interviews the user with targeted questions and recommends the best skill(s) from the installed library for their goal.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "self"
+      }
+    },
+    "key": "1785642489152289000:8862"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\catalog\\skill-suggester\\SKILL.md": {
+    "name": "skill-suggester",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\catalog\\skill-suggester\\SKILL.md",
+    "source": "local",
+    "description": "Scan prompt history for recurring patterns and unmet needs, then propose new skills or command templates",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "version": "1.0.0",
+        "risk": "safe",
+        "source": "community",
+        "source_type": "community",
+        "source_repo": "mskadu/opencode-agent-skills",
+        "license_source": "https://github.com/mskadu/opencode-agent-skills/blob/main/LICENSE",
+        "date_added": "2026-06-05"
+      }
+    },
+    "key": "1785642489154346000:2746"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\antigravity-awesome-skills\\SKILL.md": {
+    "name": "antigravity-awesome-skills",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\antigravity-awesome-skills\\SKILL.md",
+    "source": "local",
+    "description": "Coleção de skills para perfis de infraestrutura, banco de dados e performance.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "sickn33/antigravity-awesome-skills",
+        "url": "https://github.com/sickn33/antigravity-awesome-skills",
+        "notes": "Catálogo extenso - requer importação seletiva item a item"
+      }
+    },
+    "key": "1785682023137167600:623"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\cavemem\\SKILL.md": {
+    "name": "cavemem",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\cavemem\\SKILL.md",
+    "source": "local",
+    "description": "Cross-agent persistent memory for coding assistants via SQLite + vector index.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "JuliusBrussee/cavemem",
+        "url": "https://github.com/JuliusBrussee/cavemem",
+        "notes": "Servidor MCP / Skill de memória persistente entre agentes"
+      }
+    },
+    "key": "1785682023121045000:540"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\code-review-security\\SKILL.md": {
+    "name": "code-review-security",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\code-review-security\\SKILL.md",
+    "source": "local",
+    "description": "Checklist de revisão de código baseado no OWASP Top 10.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "hieutrtr/ai1-skills",
+        "url": "https://github.com/hieutrtr/ai1-skills",
+        "notes": "Reforço de segurança para Code Reviewer e Security Reviewer"
+      }
+    },
+    "key": "1785682023126591400:545"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\code-reviewer-gemini\\SKILL.md": {
+    "name": "code-reviewer-gemini",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\code-reviewer-gemini\\SKILL.md",
+    "source": "local",
+    "description": "Skill oficial de revisão de código do ecossistema Gemini CLI.",
+    "metadata": {
+      "license": "Apache-2.0",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "google-gemini/gemini-cli",
+        "url": "https://github.com/google-gemini/gemini-cli",
+        "notes": "Revisão de código com foco em clareza e padrões"
+      }
+    },
+    "key": "1785682023125076800:558"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\documentation-writer\\SKILL.md": {
+    "name": "documentation-writer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\documentation-writer\\SKILL.md",
+    "source": "local",
+    "description": "Skill oficial do GitHub para escrita de documentação.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "github/awesome-copilot",
+        "url": "https://github.com/github/awesome-copilot",
+        "notes": "Apoio ao Technical Writer e padronização de docs"
+      }
+    },
+    "key": "1785682023128982800:530"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\find-skills\\SKILL.md": {
+    "name": "find-skills",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\find-skills\\SKILL.md",
+    "source": "local",
+    "description": "Ferramenta para busca e localização de skills por domínio.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "vercel-labs/skills",
+        "url": "https://github.com/vercel-labs/skills",
+        "notes": "Ferramental para apoio ao Skill Curator"
+      }
+    },
+    "key": "1785682023131623700:484"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\grill-me\\SKILL.md": {
+    "name": "grill-me",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\grill-me\\SKILL.md",
+    "source": "local",
+    "description": "Entrevista adversarial para questionar planos antes da construção.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "JuliusBrussee/skills",
+        "url": "https://github.com/JuliusBrussee/skills",
+        "notes": "Reforço de alinhamento e mitigação de risco nos gates G2/G3"
+      }
+    },
+    "key": "1785682023133644700:537"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\hermes-skills\\SKILL.md": {
+    "name": "hermes-skills",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\hermes-skills\\SKILL.md",
+    "source": "local",
+    "description": "Skills auto-geradas a partir de repositórios em alta.",
+    "metadata": {
+      "license": "Unknown",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "aradotso/hermes-skills",
+        "url": "https://github.com/aradotso/hermes-skills",
+        "notes": "REQUER REVISÃO DE PROMPT-INJECTION ANTES DE QUALQUER INTAKE (skills auto-geradas a partir de repositórios em alta)"
+      }
+    },
+    "key": "1785682023146949100:655"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\junior-to-senior\\SKILL.md": {
+    "name": "junior-to-senior",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\junior-to-senior\\SKILL.md",
+    "source": "local",
+    "description": "Revisão crítica e elevação de padrão de código.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "JuliusBrussee/skills",
+        "url": "https://github.com/JuliusBrussee/skills",
+        "notes": "Reforço de qualidade e revisão em G4"
+      }
+    },
+    "key": "1785682023135151200:490"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\nodejs-backend-patterns\\SKILL.md": {
+    "name": "nodejs-backend-patterns",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\nodejs-backend-patterns\\SKILL.md",
+    "source": "local",
+    "description": "Padrões de backend e serviços Node.js.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "wshobson/agents",
+        "url": "https://github.com/wshobson/agents",
+        "notes": "Especialização para Backend Engineer"
+      }
+    },
+    "key": "1785682023142279100:476"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\python-type-safety\\SKILL.md": {
+    "name": "python-type-safety",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\python-type-safety\\SKILL.md",
+    "source": "local",
+    "description": "Padrões de segurança de tipos e type hinting em Python.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "wshobson/agents",
+        "url": "https://github.com/wshobson/agents",
+        "notes": "Especialização para Backend, Software e Data Engineers"
+      }
+    },
+    "key": "1785682023144351500:519"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\quality-assurance-with-bdd-and-tdd\\SKILL.md": {
+    "name": "quality-assurance-with-bdd-and-tdd",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\quality-assurance-with-bdd-and-tdd\\SKILL.md",
+    "source": "local",
+    "description": "Aplicar práticas de BDD (Behaviour-Driven Development) e TDD (Test-Driven Development) para garantir cobertura de requisitos e casos de falha, além de manter padrões de qualidade de código.",
+    "metadata": {},
+    "key": "1787414325994549200:497"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\requesting-code-review\\SKILL.md": {
+    "name": "requesting-code-review",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\requesting-code-review\\SKILL.md",
+    "source": "local",
+    "description": "Superpowers skill para solicitação estruturada de revisão de código.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "obra/superpowers",
+        "url": "https://github.com/obra/superpowers",
+        "notes": "Mesma família de superpowers já ativas no squad"
+      }
+    },
+    "key": "1785682023123064100:531"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\scope-creep-detector\\SKILL.md": {
+    "name": "scope-creep-detector",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\scope-creep-detector\\SKILL.md",
+    "source": "local",
+    "description": "Detector de crescimento não planejado de escopo em diffs.",
+    "metadata": {
+      "license": "Apache-2.0",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "Shubhamsaboo/awesome-llm-apps",
+        "url": "https://github.com/Shubhamsaboo/awesome-llm-apps",
+        "notes": "Reforço para Code Reviewer e Delivery Orchestrator"
+      }
+    },
+    "key": "1785682023144933100:570"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\skill-creator\\SKILL.md": {
+    "name": "skill-creator",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\skill-creator\\SKILL.md",
+    "source": "local",
+    "description": "Skill para criação e estruturação de novas skills no padrão SKILL.md.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "anthropics/skills",
+        "url": "https://github.com/anthropics/skills",
+        "notes": "Apoio ao Skill Curator no design de novas habilidades"
+      }
+    },
+    "key": "1785682023131623700:526"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\vercel-react-best-practices\\SKILL.md": {
+    "name": "vercel-react-best-practices",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\vercel-react-best-practices\\SKILL.md",
+    "source": "local",
+    "description": "Diretrizes de performance e arquitetura React da Vercel.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "vercel-labs/agent-skills",
+        "url": "https://github.com/vercel-labs/agent-skills",
+        "notes": "Especialização para Frontend Engineer"
+      }
+    },
+    "key": "1785682023139185800:529"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\web-design-guidelines\\SKILL.md": {
+    "name": "web-design-guidelines",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\web-design-guidelines\\SKILL.md",
+    "source": "local",
+    "description": "Diretrizes de acessibilidade e web design moderno.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "vercel-labs/agent-skills",
+        "url": "https://github.com/vercel-labs/agent-skills",
+        "notes": "Especialização para UX/UI Designer e Frontend Engineer"
+      }
+    },
+    "key": "1785682023141191400:545"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\writing-skills\\SKILL.md": {
+    "name": "writing-skills",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\intake\\writing-skills\\SKILL.md",
+    "source": "local",
+    "description": "Superpowers skill para redação e estruturação de documentos técnicos.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "status": "draft_intake",
+        "source_repo": "obra/superpowers",
+        "url": "https://github.com/obra/superpowers",
+        "notes": "Apoio ao Technical Writer"
+      }
+    },
+    "key": "1785682023128339000:469"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\quarantine\\ai-analyzer\\SKILL.md": {
+    "name": "ai-analyzer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\discovery\\quarantine\\ai-analyzer\\SKILL.md",
+    "source": "local",
+    "description": "AI驱动的综合健康分析系统，整合多维度健康数据、识别异常模式、预测健康风险、提供个性化建议。支持智能问答和AI健康报告生成。",
+    "metadata": {
+      "allowed-tools": "Read, Grep, Glob, Write",
+      "metadata": {
+        "risk": "unknown",
+        "source": "community"
+      }
+    },
+    "key": "1785642716723866900:8324"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\api-documentation\\SKILL.md": {
+    "name": "api-documentation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\api-documentation\\SKILL.md",
+    "source": "local",
+    "description": "API documentation workflow for generating OpenAPI specs, creating developer guides, and maintaining comprehensive API documentation.",
+    "metadata": {
+      "metadata": {
+        "category": "granular-workflow-bundle",
+        "risk": "safe",
+        "source": "personal",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489156348300:3790"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation\\SKILL.md": {
+    "name": "documentation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation\\SKILL.md",
+    "source": "local",
+    "description": "Documentation generation workflow covering API docs, architecture docs, README files, code comments, and technical writing.",
+    "metadata": {
+      "metadata": {
+        "category": "workflow-bundle",
+        "risk": "safe",
+        "source": "personal",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489158344300:5947"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation-and-adrs\\SKILL.md": {
+    "name": "documentation-and-adrs",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation-and-adrs\\SKILL.md",
+    "source": "local",
+    "description": "Records decisions and documentation. Use when making architectural decisions, changing public APIs, shipping features, or when you need to record context that future engineers and agents will need to understand the codebase.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "risk": "unknown",
+        "source": "https://github.com/addyosmani/agent-skills/tree/main/skills/documentation-and-adrs",
+        "source_repo": "addyosmani/agent-skills",
+        "source_type": "community",
+        "date_added": "2026-07-01",
+        "license_source": "https://github.com/addyosmani/agent-skills/blob/main/LICENSE"
+      }
+    },
+    "key": "1785642489160344500:9700"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation-templates\\SKILL.md": {
+    "name": "documentation-templates",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\documentation\\documentation-templates\\SKILL.md",
+    "source": "local",
+    "description": "Documentation templates and structure guidelines. README, API docs, code comments, and AI-friendly documentation.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489161849300:3934"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\api-patterns\\SKILL.md": {
+    "name": "api-patterns",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\api-patterns\\SKILL.md",
+    "source": "local",
+    "description": "API design principles and decision-making. REST vs GraphQL vs tRPC selection, response formats, versioning, pagination.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489163991800:2975"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\backend-architect\\SKILL.md": {
+    "name": "backend-architect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\backend-architect\\SKILL.md",
+    "source": "local",
+    "description": "Expert backend architect specializing in scalable API design, microservices architecture, and distributed systems.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489166328000:19253"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\backend-dev-guidelines\\SKILL.md": {
+    "name": "backend-dev-guidelines",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\backend\\backend-dev-guidelines\\SKILL.md",
+    "source": "local",
+    "description": "You are a senior backend engineer operating production-grade services under strict architectural and reliability constraints. Use when routes, controllers, services, repositories, express middleware, or prisma database access.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489168327500:8374"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\clean-code\\SKILL.md": {
+    "name": "clean-code",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\clean-code\\SKILL.md",
+    "source": "local",
+    "description": "This skill embodies the principles of \"Clean Code\" by Robert C. Martin (Uncle Bob). Use it to transform \"code that works\" into \"code that is clean.\"",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "ClawForge (https://github.com/jackjin1997/ClawForge)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489170329100:4775"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\clean-code-guard\\SKILL.md": {
+    "name": "clean-code-guard",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\clean-code-guard\\SKILL.md",
+    "source": "local",
+    "description": "Review generated or changed production code with Clean Code, SOLID, DRY, KISS, YAGNI, and LLM-specific failure-mode checks.",
+    "metadata": {
+      "metadata": {
+        "risk": "critical",
+        "source": "community",
+        "source_repo": "amElnagdy/guard-skills",
+        "source_type": "community",
+        "date_added": "2026-07-13",
+        "author": "community",
+        "tags": [],
+        "tools": []
+      }
+    },
+    "key": "1785642489172330200:17262"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\lint-and-validate\\SKILL.md": {
+    "name": "lint-and-validate",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\lint-and-validate\\SKILL.md",
+    "source": "local",
+    "description": "MANDATORY: Run appropriate validation tools after EVERY code change. Do not finish a task until the code is error-free.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489175425800:2258"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\systematic-debugging\\SKILL.md": {
+    "name": "systematic-debugging",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\systematic-debugging\\SKILL.md",
+    "source": "local",
+    "description": "Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489176426400:10579"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\test-driven-development\\SKILL.md": {
+    "name": "test-driven-development",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\test-driven-development\\SKILL.md",
+    "source": "local",
+    "description": "Use when implementing any feature or bugfix, before writing implementation code",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489178942200:10637"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\verification-before-completion\\SKILL.md": {
+    "name": "verification-before-completion",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\clean-code\\verification-before-completion\\SKILL.md",
+    "source": "local",
+    "description": "Claiming work is complete without verification is dishonesty, not efficiency. Use when ANY variation of success/completion claims, ANY expression of satisfaction, or ANY positive statement about work state.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489180457500:4825"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\clean-code-contract\\SKILL.md": {
+    "name": "clean-code-contract",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\clean-code-contract\\SKILL.md",
+    "source": "local",
+    "description": "Aplica código limpo, padrões consistentes e comentários de contrato com responsabilidade, falhas e conexões antes da revisão.",
+    "metadata": {},
+    "key": "1785632500678375000:1617"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\code-documentation-code-explain\\SKILL.md": {
+    "name": "code-documentation-code-explain",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\code-documentation-code-explain\\SKILL.md",
+    "source": "local",
+    "description": "You are a code education expert specializing in explaining complex code through clear narratives, visual diagrams, and step-by-step breakdowns. Transform difficult concepts into understandable explanations for developers at all levels.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489181755300:2294"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\code-documentation-doc-generate\\SKILL.md": {
+    "name": "code-documentation-doc-generate",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\code-documentation\\code-documentation-doc-generate\\SKILL.md",
+    "source": "local",
+    "description": "You are a documentation expert specializing in creating comprehensive, maintainable documentation from code. Generate API docs, architecture diagrams, user guides, and technical references using AI-powered analysis and industry best practices.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489184867600:2292"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\frontend-design\\SKILL.md": {
+    "name": "frontend-design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\frontend-design\\SKILL.md",
+    "source": "local",
+    "description": "You are a frontend designer-engineer, not a layout generator.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489186392000:7208"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\frontend-developer\\SKILL.md": {
+    "name": "frontend-developer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\frontend-developer\\SKILL.md",
+    "source": "local",
+    "description": "Build React components, implement responsive layouts, and handle client-side state management. Masters React 19, Next.js 15, and modern frontend architecture.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489187902100:7821"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\nextjs-best-practices\\SKILL.md": {
+    "name": "nextjs-best-practices",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\nextjs-best-practices\\SKILL.md",
+    "source": "local",
+    "description": "Next.js App Router principles. Server Components, data fetching, routing patterns.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489190424900:4404"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\react-best-practices\\SKILL.md": {
+    "name": "react-best-practices",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\frontend\\react-best-practices\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Use when writing new React components or Next.js pages, implementing data fetching (client or server-side), or reviewing code for performance issues.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489191939300:5795"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\mobile\\mobile-design\\SKILL.md": {
+    "name": "mobile-design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\mobile\\mobile-design\\SKILL.md",
+    "source": "local",
+    "description": "(Mobile-First · Touch-First · Platform-Respectful)",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489192939200:9856"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\mobile\\mobile-developer\\SKILL.md": {
+    "name": "mobile-developer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\mobile\\mobile-developer\\SKILL.md",
+    "source": "local",
+    "description": "Develop React Native, Flutter, or native mobile apps with modern architecture patterns. Masters cross-platform development, native integrations, offline sync, and app store optimization.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489195118800:9221"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\review\\code-review-checklist\\SKILL.md": {
+    "name": "code-review-checklist",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\review\\code-review-checklist\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive checklist for conducting thorough code reviews covering functionality, security, performance, and maintainability",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489197126300:12471"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\review\\code-review-excellence\\SKILL.md": {
+    "name": "code-review-excellence",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\review\\code-review-excellence\\SKILL.md",
+    "source": "local",
+    "description": "Transform code reviews from gatekeeping to knowledge sharing through constructive feedback, systematic analysis, and collaborative improvement.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489199699900:1781"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\accessibility-compliance-accessibility-audit\\SKILL.md": {
+    "name": "accessibility-compliance-accessibility-audit",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\accessibility-compliance-accessibility-audit\\SKILL.md",
+    "source": "local",
+    "description": "You are an accessibility expert specializing in WCAG compliance, inclusive design, and assistive technology compatibility. Conduct audits, identify barriers, and provide remediation guidance.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489200698700:2342"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\design\\SKILL.md": {
+    "name": "design",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\design\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive design skill: brand identity, design tokens, UI styling, logo generation (55 styles, Gemini AI), corporate identity program (50 deliverables, CIP mockups), HTML presentations (Chart.js), banner design (22 styles, social/ads/web/print), icon design (15 styles, SVG, Gemini 3.1 Pro), social photos (HTML→screenshot, multi-platform). Actions: design logo, create CIP, generate mockups, build slides, design banner, generate icon, create social photos, social media images, brand identity, design system. Platforms: Facebook, Twitter, LinkedIn, YouTube, Instagram, Pinterest, TikTok, Threads, Google Ads.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "author": "claudekit",
+        "version": "2.1.0",
+        "argument-hint": "[design-type] [context]"
+      }
+    },
+    "key": "1785642489203697800:12635"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\design-system\\SKILL.md": {
+    "name": "design-system",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\design-system\\SKILL.md",
+    "source": "local",
+    "description": "Token architecture, component specifications, and slide generation. Three-layer tokens (primitive→semantic→component), CSS variables, spacing/typography scales, component specs, strategic slide creation. Use for design tokens, systematic design, brand-compliant presentations.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "author": "claudekit",
+        "version": "1.0.0",
+        "argument-hint": "[component or token]"
+      }
+    },
+    "key": "1785642710757373400:3815"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\ui-styling\\SKILL.md": {
+    "name": "ui-styling",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\ui-styling\\SKILL.md",
+    "source": "local",
+    "description": "Create beautiful, accessible user interfaces with shadcn/ui components (built on Radix UI + Tailwind), Tailwind CSS utility-first styling, and canvas-based visual designs. Use when building user interfaces, implementing design systems, creating responsive layouts, adding accessible components (dialogs, dropdowns, forms, tables), customizing themes and colors, implementing dark mode, generating visual designs and posters, or establishing consistent styling patterns across applications.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "author": "claudekit",
+        "version": "1.0.0",
+        "argument-hint": "[component or layout]"
+      }
+    },
+    "key": "1785642489209804700:10369"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\ui-ux-pro-max\\SKILL.md": {
+    "name": "ui-ux-pro-max",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\engineering\\ui-ux\\ui-ux-pro-max\\SKILL.md",
+    "source": "local",
+    "description": "Comprehensive design guide for web and mobile applications. Use when designing new UI components or pages, choosing color palettes and typography, or reviewing code for UX issues.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489211309100:13368"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\agent-memory\\SKILL.md": {
+    "name": "agent-memory",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\agent-memory\\SKILL.md",
+    "source": "local",
+    "description": "A hybrid memory system that provides persistent, searchable knowledge management for AI agents.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "risk": "unknown",
+        "source": "https://github.com/webzler/agentMemory/tree/main/",
+        "source_repo": "webzler/agentMemory",
+        "source_type": "community",
+        "date_added": "2026-07-01",
+        "license_source": "https://github.com/webzler/agentMemory/blob/main/LICENSE"
+      }
+    },
+    "key": "1785642489213318900:3073"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\agent-memory-systems\\SKILL.md": {
+    "name": "agent-memory-systems",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\agent-memory-systems\\SKILL.md",
+    "source": "local",
+    "description": "Memory is the cornerstone of intelligent agents. Without it, every interaction starts from zero. This skill covers the architecture of agent memory: short-term (context window), long-term (vector stores), and the cognitive architectures that organize them.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489215822200:32283"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\conversation-memory\\SKILL.md": {
+    "name": "conversation-memory",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\memory\\conversation-memory\\SKILL.md",
+    "source": "local",
+    "description": "Persistent memory systems for LLM conversations including short-term, long-term, and entity-based memory",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489217804900:14872"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\containers\\docker-expert\\SKILL.md": {
+    "name": "docker-expert",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\containers\\docker-expert\\SKILL.md",
+    "source": "local",
+    "description": "You are an advanced Docker containerization expert with comprehensive, practical knowledge of container optimization, security hardening, multi-stage builds, orchestration patterns, and production deployment strategies based on current industry best practices.",
+    "metadata": {
+      "metadata": {
+        "category": "devops",
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489219796600:14876"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\containers\\kubernetes-architect\\SKILL.md": {
+    "name": "kubernetes-architect",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\containers\\kubernetes-architect\\SKILL.md",
+    "source": "local",
+    "description": "Expert Kubernetes architect specializing in cloud-native infrastructure, advanced GitOps workflows (ArgoCD/Flux), and enterprise container orchestration.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489220794400:10408"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\ci-cd-and-automation\\SKILL.md": {
+    "name": "ci-cd-and-automation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\ci-cd-and-automation\\SKILL.md",
+    "source": "local",
+    "description": "Automates CI/CD pipeline setup. Use when setting up or modifying build and deployment pipelines. Use when you need to automate quality gates, configure test runners in CI, or establish deployment strategies.",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "risk": "unknown",
+        "source": "https://github.com/addyosmani/agent-skills/tree/main/skills/ci-cd-and-automation",
+        "source_repo": "addyosmani/agent-skills",
+        "source_type": "community",
+        "date_added": "2026-07-01",
+        "license_source": "https://github.com/addyosmani/agent-skills/blob/main/LICENSE"
+      }
+    },
+    "key": "1785642489224309100:12408"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\iac\\terraform-specialist\\SKILL.md": {
+    "name": "terraform-specialist",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\iac\\terraform-specialist\\SKILL.md",
+    "source": "local",
+    "description": "Expert Terraform/OpenTofu specialist mastering advanced IaC automation, state management, and enterprise infrastructure patterns.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489225816000:9565"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\integration\\api-integration\\SKILL.md": {
+    "name": "api-integration",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\integration\\api-integration\\SKILL.md",
+    "source": "local",
+    "description": "Designs event-driven architectures, webhook systems, API chaining flows, ETL pipelines, and integration patterns between services. Use whenever the user asks about webhooks, event streaming, API composition, connecting two or more APIs, building pipelines, Pub/Sub, Kafka topics, ETL...",
+    "metadata": {
+      "license": "MIT",
+      "metadata": {
+        "risk": "unknown",
+        "source": "https://github.com/LambdaTest/agent-skills/tree/main/api-skill/api-integration-helper",
+        "source_repo": "LambdaTest/agent-skills",
+        "source_type": "community",
+        "date_added": "2026-07-01",
+        "license_source": "https://github.com/LambdaTest/agent-skills/blob/main/LICENSE"
+      }
+    },
+    "key": "1785642489228929300:5746"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\observability\\observability-engineer\\SKILL.md": {
+    "name": "observability-engineer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\observability\\observability-engineer\\SKILL.md",
+    "source": "local",
+    "description": "Build production-ready monitoring, logging, and tracing systems. Implements comprehensive observability strategies, SLI/SLO management, and incident response workflows.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489229929300:13558"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\performance\\performance-engineer\\SKILL.md": {
+    "name": "performance-engineer",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\performance\\performance-engineer\\SKILL.md",
+    "source": "local",
+    "description": "Expert performance engineer specializing in modern observability,",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489232628000:11349"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\sre\\incident-responder\\SKILL.md": {
+    "name": "incident-responder",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\sre\\incident-responder\\SKILL.md",
+    "source": "local",
+    "description": "Expert SRE incident responder specializing in rapid problem resolution, modern observability, and comprehensive incident management.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489234638300:10785"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\sre\\slo-implementation\\SKILL.md": {
+    "name": "slo-implementation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\sre\\slo-implementation\\SKILL.md",
+    "source": "local",
+    "description": "Framework for defining and implementing Service Level Indicators (SLIs), Service Level Objectives (SLOs), and error budgets.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642690173759000:9325"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\product\\business-analyst\\SKILL.md": {
+    "name": "business-analyst",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\product\\business-analyst\\SKILL.md",
+    "source": "local",
+    "description": "Master modern business analysis with AI-powered analytics, real-time dashboards, and data-driven insights. Build comprehensive KPI frameworks, predictive models, and strategic recommendations.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489237242500:8304"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\product\\product-manager-toolkit\\SKILL.md": {
+    "name": "product-manager-toolkit",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\product\\product-manager-toolkit\\SKILL.md",
+    "source": "local",
+    "description": "Essential tools and frameworks for modern product management, from discovery to delivery.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489239763800:9585"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\requirements\\refine-requirements-stories\\SKILL.md": {
+    "name": "refine-requirements-stories",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\requirements\\refine-requirements-stories\\SKILL.md",
+    "source": "local",
+    "description": "Convert user needs, discovery notes, incidents, or business rules into traceable epics and INVEST user stories with testable acceptance criteria, non-functional requirements, risks, dependencies and Databricks/MLflow evaluation expectations. Use before product approval or when feedback invalidates a story.",
+    "metadata": {},
+    "key": "1785631327821377000:2004"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\requirements\\security-requirement-extraction\\SKILL.md": {
+    "name": "security-requirement-extraction",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\requirements\\security-requirement-extraction\\SKILL.md",
+    "source": "local",
+    "description": "Derive security requirements from threat models and business context. Use when translating threats into actionable requirements, creating security user stories, or building security test cases.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489242274900:1518"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\api-security-best-practices\\SKILL.md": {
+    "name": "api-security-best-practices",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\api-security-best-practices\\SKILL.md",
+    "source": "local",
+    "description": "Implement secure API design patterns including authentication, authorization, input validation, rate limiting, and protection against common API vulnerabilities",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489243283900:24720"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\dependency-management-deps-audit\\SKILL.md": {
+    "name": "dependency-management-deps-audit",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\dependency-management-deps-audit\\SKILL.md",
+    "source": "local",
+    "description": "You are a dependency security expert specializing in vulnerability scanning, license compliance, and supply chain security. Analyze project dependencies for known vulnerabilities, licensing issues, outdated packages, and provide actionable remediation strategies.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489245803600:2237"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\gha-security-review\\SKILL.md": {
+    "name": "gha-security-review",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\gha-security-review\\SKILL.md",
+    "source": "local",
+    "description": "GitHub Actions security review for workflow exploitation vulnerabilities. Use when asked to \"review GitHub Actions\", \"audit workflows\", \"check CI security\", \"GHA security\", \"workflow security review\", or review .github/workflows/ for pwn requests, expression injection, credential theft, and supply chain attacks. Exploitation-focused with concrete PoC scenarios.",
+    "metadata": {
+      "allowed-tools": "Read, Grep, Glob, Bash, Task"
+    },
+    "key": "1785642489247948000:8531"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\owasp-security\\SKILL.md": {
+    "name": "owasp-security",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\owasp-security\\SKILL.md",
+    "source": "local",
+    "description": "Use when reviewing code for security vulnerabilities, implementing authentication/authorization, handling user input, or discussing web application security. Covers OWASP Top 10:2025, ASVS 5.0, LLM Top 10 (2025), and Agentic AI security (2026).",
+    "metadata": {},
+    "key": "1785634447278321100:14957"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-auditor\\SKILL.md": {
+    "name": "security-auditor",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-auditor\\SKILL.md",
+    "source": "local",
+    "description": "Expert security auditor specializing in DevSecOps, comprehensive cybersecurity, and compliance frameworks.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489252363700:11683"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-review\\SKILL.md": {
+    "name": "security-review",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-review\\SKILL.md",
+    "source": "local",
+    "description": "Security code review for vulnerabilities. Use when asked to \"security review\", \"find vulnerabilities\", \"check for security issues\", \"audit security\", \"OWASP review\", or review code for injection, XSS, authentication, authorization, cryptography issues. Provides systematic review with confidence-based reporting.",
+    "metadata": {
+      "license": "LICENSE",
+      "allowed-tools": "Read, Grep, Glob, Bash, Task"
+    },
+    "key": "1785642489254330300:12087"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-review-gates\\SKILL.md": {
+    "name": "security-review-gates",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\security-review-gates\\SKILL.md",
+    "source": "local",
+    "description": "Executa revisão de segurança Sentry, GHA, OWASP e supply chain com threat model, evidência e decisão de gate.",
+    "metadata": {},
+    "key": "1785632500678375000:1378"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\threat-modeling-expert\\SKILL.md": {
+    "name": "threat-modeling-expert",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\security\\threat-modeling-expert\\SKILL.md",
+    "source": "local",
+    "description": "Expert in threat modeling methodologies, security architecture review, and risk assessment. Masters STRIDE, PASTA, attack trees, and security requirement extraction. Use PROACTIVELY for security architecture reviews, threat identification, or building secure-by-design systems.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489256845900:2515"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\bdd\\behavior-driven-development\\SKILL.md": {
+    "name": "behavior-driven-development",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\bdd\\behavior-driven-development\\SKILL.md",
+    "source": "local",
+    "description": "Behavior-Driven Development (BDD) com Gherkin. Use when the user asks for BDD, Given/When/Then, acceptance criteria, Gherkin scenarios, feature files, behavior specifications, or wants to bridge business requirements and executable tests.",
+    "metadata": {},
+    "key": "1787249756848654800:3126"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\browser-automation\\SKILL.md": {
+    "name": "browser-automation",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\browser-automation\\SKILL.md",
+    "source": "local",
+    "description": "Browser automation powers web testing, scraping, and AI agent interactions. The difference between a flaky script and a reliable system comes down to understanding selectors, waiting strategies, and anti-detection patterns.",
+    "metadata": {
+      "metadata": {
+        "risk": "unknown",
+        "source": "vibeship-spawner-skills (Apache 2.0)",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489258437300:30614"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\e2e-testing-patterns\\SKILL.md": {
+    "name": "e2e-testing-patterns",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\e2e-testing-patterns\\SKILL.md",
+    "source": "local",
+    "description": "Build reliable, fast, and maintainable end-to-end test suites that provide confidence to ship code quickly and catch regressions before users do.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489259438900:1753"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\test-fixing\\SKILL.md": {
+    "name": "test-fixing",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\testing\\test-fixing\\SKILL.md",
+    "source": "local",
+    "description": "Systematically identify and fix all failing tests using smart grouping strategies. Use when explicitly asks to fix tests (\"fix these tests\", \"make tests pass\"), reports test failures (\"tests are failing\", \"test suite is broken\"), or completes implementation and wants tests passing.",
+    "metadata": {
+      "metadata": {
+        "risk": "safe",
+        "source": "community",
+        "date_added": "2026-02-27"
+      }
+    },
+    "key": "1785642489261943900:3560"
+  }
+}

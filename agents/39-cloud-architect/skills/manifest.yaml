@@ -1,0 +1,18 @@
+agent: cloud-architect
+native:
+- path: agents/39-cloud-architect/skills/native/cloud-architect-native
+assigned:
+- path: skills/delivery/superpowers/executing-plans
+- path: skills/platform/iac/terraform-specialist
+- path: skills/platform/containers/kubernetes-architect
+- path: skills/security/threat-modeling-expert
+- path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/cloud-architect.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

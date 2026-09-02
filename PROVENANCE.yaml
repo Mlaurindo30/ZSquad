@@ -1,6 +1,7 @@
-version: 1
+version: 2
 kind: project-squad-provenance
 created_at: '2026-08-19T15:00:00-03:00'
+updated_at: '2026-09-02T01:47:00-03:00'
 source:
   path: C:/Users/miche/OneDrive/Documentos/.agents_squad
   git_history_copied: false
@@ -9,8 +10,124 @@ governance:
   registry: config/agent-registry.yaml
   operating_contract: agents/_shared/OPERATING_CONTRACT.md
   memory_contract: agents/_shared/MEMORY_CONTRACT.md
+  review_model: agents/_shared/OPERATING_CONTRACT.md#quem-aprova-o-que
+applied_changes:
+  - id: US-10
+    date: 2026-09-02
+    description: Removido `review-qa` órfão de state_map (templates/devops.yaml),
+      config/workflow.yaml (columns, timeboxes, next, gate_state_mapping),
+      config/cycles.yaml (bugfix.cycle), banco/schema.sql (comentário).
+    affected_files:
+      - templates/devops.yaml
+      - config/workflow.yaml
+      - config/cycles.yaml
+      - banco/schema.sql
+      - contracts/devops-config.schema.json
+      - integrations/devops_platform_connector.py
+  - id: US-16
+    date: 2026-09-02
+    description: pr_and_card_approver.used_by expandido de 2 para 5 personas
+      (code-reviewer, security-reviewer, qa-engineer, performance-engineer,
+      governance-auditor). offensive-cyber-operator movido para
+      service_accounts.cyber_red. SoD preservada por separação AAD entre squads@ e arthemis@.
+    affected_files:
+      - templates/devops.yaml
+      - scripts/tests/test_azure_devops_project_setup.py
+  - id: US-17
+    date: 2026-09-02
+    description: OPERATING_CONTRACT.md reescrito com §"Quem aprova o quê" e §SoD
+      expandidos. Norma citada: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32;
+      SOC 2 TSC CC8.1, CC6.1; NIST SP 800-53 CM-5. Auditoria amostral semanal
+      adicionada (10% sample, retroativo).
+    affected_files:
+      - agents/_shared/OPERATING_CONTRACT.md
+      - AGENTS.md
+      - CLAUDE.md
+      - CODEX.md
+      - GEMINI.md
+      - HERMES.md
+  - id: US-1
+    date: 2026-09-02
+    description: phase_tags e squad_tags adicionados ao state_map; connector
+      aplica phase tag ao mover estado; team iterations vinculadas.
+      schemasync/apply_team_iterations.
+    affected_files:
+      - templates/devops.yaml
+      - contracts/devops-config.schema.json
+      - integrations/devops_platform_connector.py
+      - scripts/azure_devops_project_setup.py
+  - id: US-2
+    date: 2026-09-02
+    description: 5 queries salvas em pasta Shared/Agents Squad/ (Active, WIP
+      by State, Missing Iteration, Critical Bugs, G6 Governance). Idempotente.
+    affected_files:
+      - templates/devops.yaml
+      - scripts/azure_devops_project_setup.py
+      - contracts/devops-config.schema.json
+  - id: US-3
+    date: 2026-09-02
+    description: Delivery Plan opt-in (default OFF). Função apply_delivery_plans
+      idempotente.
+    affected_files:
+      - templates/devops.yaml
+      - scripts/azure_devops_project_setup.py
+      - contracts/devops-config.schema.json
+  - id: US-4
+    date: 2026-09-02
+    description: Analytics OData URL documentada em devops.yaml.analytics.base_url.
+    affected_files:
+      - templates/devops.yaml
+      - contracts/devops-config.schema.json
+  - id: US-5
+    date: 2026-09-02
+    description: Dashboards opt-in (1 team + 1 project, default OFF). Função
+      apply_dashboards idempotente.
+    affected_files:
+      - templates/devops.yaml
+      - scripts/azure_devops_project_setup.py
+      - contracts/devops-config.schema.json
+  - id: US-6
+    date: 2026-09-02
+    description: Project wiki opt-in (5 pages: Home, Architecture, Onboarding,
+      Runbooks, Compliance). Função apply_wiki idempotente.
+    affected_files:
+      - templates/devops.yaml
+      - scripts/azure_devops_project_setup.py
+      - contracts/devops-config.schema.json
+  - id: US-3-2026-09-02
+    date: 2026-09-02
+    description: Testes atualizados (test_identities_map_squad_accounts_to_personas,
+      test_phase_tags_and_squad_tags_present, test_review_qa_state_removed,
+      test_queries_block_present_and_opt_in, test_analytics_and_delivery_plan_opt_in,
+      test_wiki_and_dashboards_opt_in). 19/19 verde.
+    affected_files:
+      - scripts/tests/test_azure_devops_project_setup.py
 constraints:
   - Keep work-item state, evidence, handoffs, memory and gates authoritative.
   - Require executed evidence before claiming completion.
   - Segregation of duties enforced at risk >= medium.
   - Never request, store or expose chain-of-thought.
+  - Defaults are OFF for wiki, dashboards, delivery_plan — opt-in per project.
+known_gaps:
+  - id: agent-registry-id-36-missing
+    description: >-
+      config/agent-registry.yaml and agents/ jump from id 35
+      (swarm-consensus-coordinator) directly to 37 (fullstack-engineer);
+      id 36 was never assigned in this squad and no prior agent occupied it.
+      Recorded 2026-09-01 during a full technical audit so the gap is not
+      mistaken for accidental deletion in future reviews.
+    resolution: none-required
+  - id: us-blocked-push-required
+    date: 2026-09-02
+    description: >-
+      Stories US-7, US-8, US-11, US-12, US-15, US-20, US-22 (push, CODEOWNERS,
+      CI template, environments, path-filter policies, conventional commits,
+      pipeline folder convention) estão BLOQUEADAS até que o repositório
+      tenha defaultBranch. Requer primeiro push no repo + 1 humano autorizando.
+    resolution: push manual em <project>/Arthemis, depois --apply com novas flags
+  - id: us-blocked-real-prs-required
+    date: 2026-09-02
+    description: >-
+      Stories US-18 (audit_weekly_sample.py) e US-19 (evidence/ por work item)
+      requerem PRs reais para amostrar. Aguardar primeiro ciclo de PRs mergeados.
+    resolution: rodar após ~10 PRs mergeados com o novo modelo de revisão

@@ -42,7 +42,7 @@ def validate_feature(path: Path) -> dict[str, object]:
 
 def validate_features(directory: Path) -> dict[str, object]:
     """Valida todos os arquivos .feature de um diretório de especificação."""
-    files = sorted(directory.glob("*.feature"))
+    files = sorted(directory.rglob("*.feature")) if directory.is_dir() else ([directory] if directory.is_file() else [])
     if not files:
         return {"approved": False, "errors": ["nenhum arquivo .feature"], "features": {}}
     results = {path.name: validate_feature(path) for path in files}

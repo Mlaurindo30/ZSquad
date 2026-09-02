@@ -21,7 +21,7 @@ class AgentE2EWorkflowTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_all_36_agents_activation_and_skills_resolution(self):
-        self.assertEqual(len(self.squad.agents), 36)
+        self.assertEqual(len(self.squad.agents), 41)
         for aid, entry in self.squad.agents.items():
             manifest_path = self.squad.root / entry["manifest"]
             self.assertTrue(manifest_path.exists(), f"Missing manifest for {aid}")
@@ -88,12 +88,12 @@ class AgentE2EWorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(SquadError, "verificação executável"):
             self.squad.decide_gate(
                 item, "G1-product", "product-owner",
-                [(c, "pass") for c in self.squad.workflow["gates"]["G1-product"]["criteria"]],
+                [(c, "pass") for c in self.squad.get_gate("G1-product")["criteria"]],
                 ["epic.md"], human_approved_by="product-stakeholder", human_evidence="epic.md"
             )
         g1 = self.squad.decide_gate(
             item, "G1-product", "product-owner",
-            [(c, "fail" if c == "bdd-specification-valid" else "pass") for c in self.squad.workflow["gates"]["G1-product"]["criteria"]],
+            [(c, "fail" if c == "bdd-specification-valid" else "pass") for c in self.squad.get_gate("G1-product")["criteria"]],
             ["epic.md"], human_approved_by="product-stakeholder", human_evidence="epic.md"
         )
         self.assertEqual(g1["decision"], "changes_requested")
@@ -150,7 +150,7 @@ class AgentE2EWorkflowTests(unittest.TestCase):
         with self.assertRaisesRegex(SquadError, "verificação executável"):
             self.squad.decide_gate(
                 item, "G4-code-security", "code-reviewer",
-                [(c, "pass") for c in self.squad.workflow["gates"]["G4-code-security"]["criteria"]],
+                [(c, "pass") for c in self.squad.get_gate("G4-code-security")["criteria"]],
                 ["implementation/payment_service.py", "tests/test_payment.py"]
             )
 
@@ -213,7 +213,7 @@ class AgentE2EWorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(SquadError, "verificação executável"):
                 self.squad.decide_gate(
                     item, "G4-code-security", "code-reviewer",
-                    [(c, "pass") for c in self.squad.workflow["gates"]["G4-code-security"]["criteria"]],
+                    [(c, "pass") for c in self.squad.get_gate("G4-code-security")["criteria"]],
                     ["status.yaml"]
                 )
             errors = self.squad.validate_work_item(item)

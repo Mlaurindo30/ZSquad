@@ -76,6 +76,20 @@ def bootstrap(
         ),
         encoding="utf-8",
     )
+    agents_md = target_root / "AGENTS.md"
+    if not agents_md.exists() or not agents_md.read_text(encoding="utf-8").strip():
+        agents_md.write_text(
+            "<!-- managed-by: agents-squad-bootstrap -->\n"
+            "# Agents Squad\n\n"
+            f"This project is linked to the shared Agents Squad runtime: {runtime_root.as_posix()}\n\n"
+            f"Load and follow {runtime_root.as_posix()}/AGENTS.md before any work. "
+            "You are the `delivery-orchestrator` (`00`); assume this role at session start. "
+            "Classify type/risk/domains, pick Consult/Light/Full, and never hand-scaffold a work item — "
+            "use `python <SQUAD_RUNTIME>/scripts/agent_squad.py`. "
+            "Identify the request's function and follow its work cycle from "
+            f"{runtime_root.as_posix()}/config/cycles.yaml.\n",
+            encoding="utf-8",
+        )
     return destination
 
 

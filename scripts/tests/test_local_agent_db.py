@@ -113,6 +113,15 @@ def login_user(username: str) -> bool:
         self.assertEqual([symbol["name"] for symbol in symbols_a], ["only_in_a"])
         self.assertEqual([symbol["name"] for symbol in symbols_b], ["only_in_b"])
 
+    def test_migration_rejects_unknown_table_identifiers(self):
+        with self.db._connection() as conn:
+            with self.assertRaises(ValueError):
+                self.db._migrate_legacy_table(
+                    conn,
+                    "symbols; DROP TABLE symbols;--",
+                    {"name"},
+                )
+
     def test_legacy_schema_migrates_idempotently(self):
         legacy_path = Path(self.temp_dir.name) / "legacy.db"
         with closing(sqlite3.connect(legacy_path)) as conn:

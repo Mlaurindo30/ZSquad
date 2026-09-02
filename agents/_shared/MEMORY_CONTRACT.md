@@ -12,9 +12,9 @@ A cognição e retenção de conhecimento do Agents Squad estruturam-se em quatr
    - `shared/summary.md`: Somente fatos confirmados, decisões técnicas, dependências, riscos e pendências validadas.
    - `agents/<persona>.md`: Checkpoints privados, hipóteses e próximos passos de cada papel.
    - `deltas/MEM-*.yaml`: Deltas tipados com `kind: fact | decision | dependency | risk | pending` vinculados aos handoffs.
-4. **Memória Procedural & Auto-Skills (`integrations/procedural_skill_engine.py`)**:
+4. **Memória Procedural & Auto-Skills (`integrations/experimental/procedural_skill_engine.py`)**:
    - Padrão `agentskills.io` com linter de convenções e auditoria AST para transformar soluções consolidadas em skills ativas via `/learn`.
-5. **Memória de Trajetória & Autorreparo (`integrations/trajectory_refinement_engine.py`)**:
+5. **Memória de Trajetória & Autorreparo (`integrations/experimental/trajectory_refinement_engine.py`)**:
    - Traces de passos em JSONL e classificação de erros para destilação automática de regras corretivas de briefing via `/refine`.
 6. **Memória Durável Global L3 (`D:/Hive-Mind`)**:
    - Sinapse Vault durável para padrões arquiteturais, decisões e aprendizados reutilizáveis entre múltiplos projetos.
@@ -34,3 +34,4 @@ A cognição e retenção de conhecimento do Agents Squad estruturam-se em quatr
 - **Proibição de Dados Sensíveis**: Nunca gravar credenciais, tokens, segredos ou dados pessoais em arquivos de memória.
 - **Metadados Obrigatórios**: Toda entrada de memória deve possuir `source`, `recorded_at`, `confidence`, `sensitivity` e `invalidates_when`.
 - **Memória é Pista, Não Prova**: A memória serve como guia heurístico; fatos mutáveis sobre código, testes e ambiente devem ser confirmados diretamente no artefato e na execução real.
+

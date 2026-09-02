@@ -45,17 +45,17 @@ def test_agents_all_validation_branches(tmp_path, monkeypatch):
     write(tmp_path / "manifests/two.yaml")
     agents = subject._validate_agents(tmp_path, errors)
     assert agents[0]["id"] == "same"
-    assert "expected 36 agents, found 2" in errors
+    assert "expected 41 agents, found 2" in errors
     assert "duplicate agent ids" in errors
     assert "missing manifest for same" in errors
     assert "missing prompt for same" in errors
 
     monkeypatch.setattr(subject, "_load_yaml", lambda *_: {"agents": [
-        {"id": str(i), "path": "ok", "manifest": "ok/PROMPT.md"} for i in range(36)
+        {"id": str(i), "path": "ok", "manifest": "ok/PROMPT.md"} for i in range(41)
     ]})
     write(tmp_path / "ok/PROMPT.md")
     errors = []
-    assert len(subject._validate_agents(tmp_path, errors)) == 36
+    assert len(subject._validate_agents(tmp_path, errors)) == 41
     assert errors == []
 
 

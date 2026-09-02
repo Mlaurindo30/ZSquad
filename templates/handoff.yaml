@@ -1,3 +1,4 @@
+schema_version: 2
 id: HANDOFF-EPIC-000-001
 work_item_id: EPIC-000
 from: source-agent
@@ -16,6 +17,13 @@ risks:
 evidence: [specs/solution-design.md]
 memory_delta: memory/deltas/MEM-EPIC-000-001.yaml
 next_gate: G2-design
+sod_snapshot:
+  risk: low
+  author: source-agent
+  reviewer: target-agent
+  approver: null
+  executor: null
+  independence_checked: true
 acceptance:
   criteria_checked: [solution-design-present]
   recipient_ack_required: true

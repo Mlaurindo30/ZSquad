@@ -81,3 +81,88 @@ G4 exige evidências independentes de Clean Code, testes, segurança e um ciclo 
    docker compose up -d
    ```
 
+## Project Onboarding
+
+Use this runbook to onboard a fresh project to the Agents Squad runtime and Azure DevOps governance. All commands assume the repository root unless stated otherwise.
+
+### 1. Link a new project to the shared runtime
+
+Bootstrap a target project so it consumes the shared `SQUAD_RUNTIME` instead of copying the runtime into the product repo:
+
+```powershell
+python scripts/bootstrap_project_squad.py --runtime <SQUAD_RUNTIME> --target <project_root>
+python scripts/bootstrap_project_squad.py --check
+```
+
+`--check` validates the link is healthy. The script writes only `config/project.yaml` and `PROVENANCE.yaml` under `<project_root>/.agents_squad/`.
+
+### 2. Configure Azure DevOps identities
+
+Copy the template and adjust organisation, project, repository, and email accounts:
+
+```powershell
+Copy-Item templates/devops.yaml .agents_squad/config/devops.yaml
+# then edit .agents_squad/config/devops.yaml:
+#   devops.organization, devops.project, devops.repository
+#   identities.human_master, development_team, pr_and_card_approver
+#   service_accounts.cyber_red, customer_data_pii
+```
+
+The three principal Azure DevOps accounts (`squads@`, `arthemis@`, plus `human_master`) and the two service accounts are defined in `templates/devops.yaml.identities` / `templates/devops.yaml.service_accounts`. The SoD-compliant approval model is documented in `agents/_shared/OPERATING_CONTRACT.md` §"Quem aprova o quê (US-17, 2026-09-02)".
+
+### 3. Run the project setup
+
+Provision the project structure and work directory on the target machine:
+
+```powershell
+python scripts/azure_devops_project_setup.py --apply
+```
+
+Use `--dry-run` first to preview the changes. The setup creates the initial iterations, area paths, and the work-item skeleton.
+
+### 4. Create the first work item
+
+Initialize a governed work item with explicit risk and story-point sizing:
+
+```powershell
+python scripts/agent_squad.py init-work-item --id US-001 --risk low
+```
+
+The command writes `work/US-001/status.yaml` and the linked scaffolding. Stories above 8 Fibonacci points are blocked by the orchestrator and must be split first.
+
+### 5. Validate the structure
+
+Confirm the project layout and contracts are intact:
+
+```powershell
+python scripts/validate_structure.py
+```
+
+A non-zero exit or a `INVALID` verdict blocks the next gate (G1).
+
+### 6. Run the test suite
+
+Execute the full test suite and coverage report:
+
+```powershell
+python -m pytest scripts/tests/
+```
+
+Coverage threshold is governed by `pyproject.toml` (`fail_under = 85` until the suite is fully stabilized; long-term target is 100%).
+
+### 7. Delivery history
+
+Every work item produces an immutable ledger entry. Inspect the chronological delivery record at:
+
+- `documentation/delivery-ledger.md`
+
+The ledger records work-item IDs, gate decisions (G1–G6), handoffs, and verification evidence.
+
+### 8. Audit history
+
+Periodic and ad-hoc audits land under:
+
+- `documentation/audit-reports/`
+
+Each report is stamped with its date and scope (e.g. `2026-09-02-exhaustive-audit.md`). Use these as the canonical record of which findings were open, fixed, or accepted as risk.
+

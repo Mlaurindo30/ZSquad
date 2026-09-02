@@ -10,6 +10,7 @@ Conexões: Utiliza agent_squad.py e alimenta runtimes de execução.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,54 @@ from typing import Any
 import yaml
 
 from agent_squad import AgentSquad, SquadError, read_yaml
+
+
+_render_cache: dict[tuple[Any, ...], str] = {}
+
+
+def _get_mtime(path: Path) -> float:
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return 0.0
+
+
+def _build_cache_key(
+    agent: str,
+    work_item: str | None,
+    assigned: tuple[str, ...],
+    discovered: tuple[str, ...],
+    auto_select_skills: bool,
+    max_discovered: int,
+    project_name: str | None,
+    root_dir: Path,
+    squad: AgentSquad,
+) -> tuple:
+    key: list[Any] = [
+        agent,
+        work_item,
+        assigned,
+        discovered,
+        auto_select_skills,
+        max_discovered,
+        project_name,
+    ]
+    try:
+        prompt_file = root_dir / squad.agents[agent]["prompt"]
+        key.append(_get_mtime(prompt_file))
+    except (KeyError, OSError):
+        key.append(0.0)
+    for skill_path in assigned + discovered:
+        key.append(_get_mtime(root_dir / skill_path))
+    if work_item:
+        item_path = Path(work_item)
+        if not item_path.is_absolute():
+            item_path = root_dir / work_item
+        key.append(_get_mtime(item_path / "status.yaml"))
+        key.append(_get_mtime(item_path / "epic.md"))
+    else:
+        key.extend([0.0, 0.0])
+    return tuple(key)
 
 
 def _extract_work_item_text(work_item_path: Path) -> str:
@@ -203,9 +252,31 @@ def render_agent_prompt(
 
     effective_project_name = _resolve_project_name(work_item, project_name)
     squad = AgentSquad(root=root_dir, project_name=effective_project_name)
+    if agent not in squad.dispatchable_agent_ids and output_path is not None:
+        raise SquadError(f"provider-primary host não pode ser despachado: {agent}")
 
     if discovered is None:
         discovered = []
+
+    cache_key = _build_cache_key(
+        agent=agent,
+        work_item=work_item,
+        assigned=tuple(assigned or []),
+        discovered=tuple(discovered or []),
+        auto_select_skills=auto_select_skills,
+        max_discovered=max_discovered,
+        project_name=project_name,
+        root_dir=root_dir,
+        squad=squad,
+    )
+
+    cached = _render_cache.get(cache_key)
+    if cached is not None:
+        if output_path:
+            out_file = Path(output_path).resolve()
+            out_file.parent.mkdir(parents=True, exist_ok=True)
+            out_file.write_text(cached, encoding="utf-8")
+        return cached
 
     if auto_select_skills and work_item and not discovered:
         try:
@@ -265,6 +336,7 @@ def render_agent_prompt(
         sections.append(engines_section)
 
     rendered = "\n".join(sections)
+    _render_cache[cache_key] = rendered
 
     if output_path:
         out_file = Path(output_path).resolve()

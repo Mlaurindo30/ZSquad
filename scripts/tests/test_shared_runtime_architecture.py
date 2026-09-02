@@ -65,3 +65,23 @@ def test_bootstrap_refuses_legacy_local_state(tmp_path):
 
     with pytest.raises(SystemExit, match="dados locais legados"):
         bootstrap(project, ROOT, project_name="consumer", force=True)
+
+
+def test_bootstrap_writes_minimal_agents_md_and_never_overwrites_personal(tmp_path):
+    from bootstrap_project_squad import bootstrap
+
+    project = tmp_path / "consumer"
+    project.mkdir()
+    bootstrap(project, ROOT, project_name="consumer")
+
+    agents_md = project / "AGENTS.md"
+    text = agents_md.read_text(encoding="utf-8")
+    assert "Agents Squad" in text
+    assert ROOT.as_posix() in text
+    assert "delivery-orchestrator" in text
+
+    personal = tmp_path / "personal"
+    personal.mkdir()
+    (personal / "AGENTS.md").write_text("# my own rules\n", encoding="utf-8")
+    bootstrap(personal, ROOT, project_name="personal")
+    assert (personal / "AGENTS.md").read_text(encoding="utf-8") == "# my own rules\n"

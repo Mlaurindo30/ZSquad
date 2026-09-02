@@ -69,7 +69,7 @@ commands:
 
 relationships:
   reports_to: delivery-orchestrator
-  works_with: ['ux-ui-designer', 'backend-engineer', 'code-reviewer']
+  works_with: ['ui-designer', 'ux-researcher', 'fullstack-engineer', 'backend-engineer', 'code-reviewer']
 ```
 
 ---

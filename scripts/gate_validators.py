@@ -197,10 +197,27 @@ def validate_G2_design(work_item: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
-    """Valida os artefatos e critérios obrigatórios do gate G3 de prontidão."""
+    """Valida os artefatos e critérios obrigatórios do gate G3 de prontidão, incluindo Story Points e Sizing."""
     status = _read_yaml(work_item / "status.yaml")
     plan = _read_md(work_item / "plans" / "delivery-plan.md")
     combined = f"{status}\n{plan}"
+    item_type = status.get("type", "story")
+    story_points = status.get("story_points")
+    t_shirt_size = status.get("t_shirt_size")
+
+    # Sizing criteria validation
+    sizing_valid = True
+    cognitive_load_safe = True
+    if item_type == "epic":
+        sizing_valid = bool(t_shirt_size and t_shirt_size in ["PP", "P", "M", "G", "GG"])
+    else:
+        if story_points is not None:
+            sizing_valid = story_points in [1, 2, 3, 5, 8, 13]
+            cognitive_load_safe = story_points <= 8
+        else:
+            # Fallback check in plan text if not in yaml
+            sizing_valid = _find(plan, "story point") or _find(plan, "fibonacci") or _find(plan, "estimate")
+            cognitive_load_safe = True
 
     criteria = [
         ("definition-of-ready", _find(plan, "definition of ready") or _find(plan, "definição de pronto")),
@@ -209,14 +226,22 @@ def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
         ("dependencies-resolved", _find(plan, "depend") and (_find(plan, "resolvida") or _find(plan, "sem bloqueio"))),
         ("environments-known", _find(combined, "environment") or _find(combined, "ambiente")),
         ("estimates-bounded", _find(plan, "estimate") or _find(plan, "estimativa")),
+        ("sizing-assigned", sizing_valid),
+        ("cognitive-load-protected", cognitive_load_safe),
     ]
 
     findings = []
     for name, passed in criteria:
+        if name == "cognitive-load-protected" and not cognitive_load_safe:
+            evidence = f"Story points ({story_points}) exceeds limit 8. Split required."
+        elif name == "sizing-assigned" and not sizing_valid:
+            evidence = "Missing or invalid story_points/t_shirt_size"
+        else:
+            evidence = "found" if passed else "missing"
         findings.append({
             "criterion": name,
             "status": "PASS" if passed else "FAIL",
-            "evidence": "found" if passed else "missing",
+            "evidence": evidence,
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
@@ -339,7 +364,19 @@ _GATE_VALIDATORS = {
     "G4-code-security": validate_G4_code_security,
     "G5-quality": validate_G5_quality,
     "G6-governance-release": validate_G6_governance_release,
+    "GT-entry": lambda wi: _merge_validations([validate_G1_product(wi), validate_G2_design(wi)]),
+    "GT-design-review": validate_G3_readiness,
+    "GT-done": lambda wi: _merge_validations([validate_G4_code_security(wi), validate_G5_quality(wi), validate_G6_governance_release(wi)]),
 }
+
+
+def _merge_validations(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """Funde resultados de múltiplos validadores legados em uma decisão de gate comprimido."""
+    all_findings: list[dict[str, Any]] = []
+    for result in results:
+        all_findings.extend(result.get("findings", []))
+    approved = all(r.get("approved", False) for r in results)
+    return {"approved": approved, "findings": all_findings, "next_state": None}
 
 
 def validate_gate(gate_id: str, work_item: Path) -> dict[str, Any]:
@@ -350,13 +387,18 @@ def validate_gate(gate_id: str, work_item: Path) -> dict[str, Any]:
     return validator(work_item)
 
 
+_LEGACY_GATE_NAMES = {"G1-product", "G2-design", "G3-readiness", "G4-code-security", "G5-quality", "G6-governance-release"}
+
+
 def validate_all_gates(work_item: Path) -> dict[str, Any]:
-    """Executa todos os validadores de gate para um work item."""
+    """Executa os validadores de gate canônicos (v3) para um work item."""
     results = {}
     all_approved = True
     for gate_id, validator in _GATE_VALIDATORS.items():
+        if gate_id in _LEGACY_GATE_NAMES:
+            continue
         result = validator(work_item)
         results[gate_id] = result
-        if not result["approved"]:
+        if not result.get("approved", False):
             all_approved = False
     return {"work_item": str(work_item), "all_approved": all_approved, "gates": results}

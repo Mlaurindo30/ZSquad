@@ -1,10 +1,13 @@
 version: 1
 model: private-shared-episodic-semantic
+# <project> é opcional apenas no modo legado (work item solto sem projeto);
+# o fluxo governado sempre resolve para work/<project>/<WORK-ID>/... (ver
+# AgentSquad._work_base() em scripts/agent_squad.py).
 locations:
-  private: work/<WORK-ID>/memory/agents/<AGENT-ID>.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-  deltas: work/<WORK-ID>/memory/deltas/MEM-<SEQ>.yaml
-  episodic: work/<WORK-ID>/handoffs
+  private: work/<project>/<WORK-ID>/memory/agents/<AGENT-ID>.md
+  shared: work/<project>/<WORK-ID>/memory/shared/summary.md
+  deltas: work/<project>/<WORK-ID>/memory/deltas/MEM-<SEQ>.yaml
+  episodic: work/<project>/<WORK-ID>/handoffs
   durable: docs/knowledge
 promotion:
   proposer: any-active-agent

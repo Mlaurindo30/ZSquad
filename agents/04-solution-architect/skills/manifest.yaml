@@ -7,7 +7,7 @@ assigned:
 - path: skills/architecture/design-evidence-architecture
 - path: skills/architecture/senior-architect
 - path: skills/architecture/software-architecture
-- path: integrations/sdlc_role_mapper.py
+- path: integrations/experimental/sdlc_role_mapper.py
 - path: skills/memory/agent-memory
 - path: skills/security/threat-modeling-expert
 discovery:
@@ -18,3 +18,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/solution-architect.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

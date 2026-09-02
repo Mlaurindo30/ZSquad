@@ -1,7 +1,10 @@
 import multiprocessing
 import tempfile
 import unittest
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +35,40 @@ class AgentSquadTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_loose_work_item_creation_is_fail_closed_without_project(self):
+        with self.assertRaisesRegex(SquadError, "project_name|--project-name"):
+            self.squad.init_work_item("EPIC-LOOSE", "low")
+
+    def test_light_start_creates_flat_artifact_only(self):
+        import shutil
+        squad = AgentSquad(ROOT, project_name="test-light", allow_legacy=True)
+        shutil.rmtree(ROOT / "work" / "test-light", ignore_errors=True)
+        item = squad.init_light_item("TASK-LIGHT-DEMO", "low")
+        self.assertTrue(item.is_file())
+        self.assertEqual(item.suffix, ".md")
+        parent = item.parent
+        self.assertEqual(parent.name, "light")
+        self.assertFalse((parent / "TASK-LIGHT-DEMO").exists())
+        self.assertFalse((parent / "status.yaml").exists())
+        content = item.read_text(encoding="utf-8")
+        self.assertIn("mode: light", content)
+        self.assertIn("TASK-LIGHT-DEMO", content)
+        self.assertIn("## Objetivo", content)
+        self.assertIn("## TDD", content)
+        shutil.rmtree(ROOT / "work" / "test-light", ignore_errors=True)
+
+    def test_check_timebox_detects_exceeded_phase(self):
+        from datetime import datetime, timezone, timedelta
+        item = self.squad.init_work_item("EPIC-TB", "low", base=self.work_root)
+        status_path = item / "status.yaml"
+        status = yaml.safe_load(status_path.read_text(encoding="utf-8"))
+        status["phase_started_at"] = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat().replace("+00:00", "Z")
+        status_path.write_text(yaml.safe_dump(status, allow_unicode=True), encoding="utf-8")
+        result = self.squad.check_timebox(item)
+        self.assertTrue(result["exceeded"])
+        self.assertEqual(result["phase"], "blueprint")
+        self.assertEqual(result["limit"], 45)
 
     def test_init_work_item_creates_contract_tree(self):
         item = self.squad.init_work_item("EPIC-TEST", "low", base=self.work_root)
@@ -103,20 +140,21 @@ class AgentSquadTests(unittest.TestCase):
         item = self.squad.init_work_item("EPIC-TEST", "low", base=self.work_root)
         with self.assertRaises(SquadError):
             self.squad.decide_gate(item, "G6-release", "governance-auditor", [("ok", "pass")], ["status.yaml"])
+        gate = "GT-entry"
         criteria = [
             (name, "pass")
-            for name in self.squad.workflow["gates"]["G1-product"]["criteria"]
+            for name in self.squad.workflow["gates"][gate]["criteria"]
         ]
         with self.assertRaises(SquadError):
-            self.squad.decide_gate(item, "G1-product", "qa-engineer", criteria, ["epic.md"])
+            self.squad.decide_gate(item, gate, "qa-engineer", criteria, ["epic.md"])
         with self.assertRaises(SquadError):
-            self.squad.decide_gate(item, "G1-product", "product-owner", [("problem-clear", "pass")], ["epic.md"])
+            self.squad.decide_gate(item, gate, "product-owner", [("blueprint-complete", "pass")], ["epic.md"])
         with self.assertRaises(SquadError):
-            self.squad.decide_gate(item, "G1-product", "product-owner", criteria, ["epic.md"])
+            self.squad.decide_gate(item, gate, "product-owner", criteria, ["epic.md"])
         with self.assertRaisesRegex(SquadError, "verificação executável"):
             self.squad.decide_gate(
                 item,
-                "G1-product",
+                gate,
                 "product-owner",
                 criteria,
                 ["epic.md"],
@@ -125,7 +163,7 @@ class AgentSquadTests(unittest.TestCase):
             )
         decision = self.squad.decide_gate(
             item,
-            "G1-product",
+            gate,
             "product-owner",
             [(name, "fail" if name == "bdd-specification-valid" else result) for name, result in criteria],
             ["epic.md"],
@@ -164,6 +202,22 @@ class AgentSquadTests(unittest.TestCase):
 
     def test_audit_requires_every_active_skill_to_have_a_loader(self):
         self.assertEqual(self.squad.audit(), [])
+
+    def test_decide_gate_reports_precise_input_errors(self):
+        item = self.squad.init_work_item("EPIC-GATECLI", "low", base=self.work_root)
+        owner = next(iter(self.squad.agent_ids))
+
+        with self.assertRaisesRegex(SquadError, r"decisor desconhecido: 00-delivery-orchestrator"):
+            self.squad.decide_gate(
+                item, "G1-product", "00-delivery-orchestrator",
+                [("problem-clear", "pass")], ["evidence.txt"],
+            )
+        with self.assertRaisesRegex(SquadError, "decisor é obrigatório"):
+            self.squad.decide_gate(item, "G1-product", "", [("problem-clear", "pass")], ["evidence.txt"])
+        with self.assertRaisesRegex(SquadError, "critérios são obrigatórios"):
+            self.squad.decide_gate(item, "G1-product", owner, [], ["evidence.txt"])
+        with self.assertRaisesRegex(SquadError, "evidências são obrigatórias"):
+            self.squad.decide_gate(item, "G1-product", owner, [("problem-clear", "pass")], [])
 
     def test_foundation_contracts_and_templates_validate(self):
         self.assertEqual(self.squad.validate_foundation(), [])

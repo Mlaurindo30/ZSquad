@@ -37,7 +37,22 @@ jobs:
         run: python scripts/verify_clean_code.py scripts/*.py integrations/*.py
 
       - name: Run tests with full first-party branch coverage
-        run: python -m pytest scripts/tests/ --cov --cov-report=term-missing
+        run: python -m pytest scripts/tests/ --ignore=scripts/tests/test_quality_gates_bdd.py --cov --cov-report=term-missing
+
+      - name: Run P0 contract integrity acceptance
+        run: python -m pytest scripts/tests/test_contract_integrity_p0.py scripts/tests/test_work_cycles.py -q
+
+      - name: Run pip-audit
+        run: pip install pip-audit && pip-audit
+
+      - name: Run bandit
+        run: pip install bandit && bandit -r scripts/ integrations/
+
+      - name: Run semgrep
+        run: pip install semgrep && semgrep --config=auto scripts/ integrations/
+
+      - name: Verify provider prompts drift and limits
+        run: python scripts/build_provider_prompts.py
 
       - name: Verify security guardrails
         run: python scripts/audit_security_guardrails.py --target scripts

@@ -1,0 +1,83 @@
+version: 1
+managed_by: agents-squad
+description: Catalogo formal de Squads Tematicas para ativacao proporcional por tipo de projeto.
+
+squads:
+  core:
+    name: "Core Discovery & Flow Squad"
+    description: "Squad de descoberta, refinamento de negocio, arquitetura e fluxo agil."
+    members:
+      - 00-delivery-orchestrator
+      - 01-requirements-analyst
+      - 02-product-owner
+      - 04-solution-architect
+      - 40-agile-coach
+      - 20-ux-researcher
+    gate_responsibilities: [GT-entry, G1-product, G2-design, G3-readiness]
+
+  web:
+    name: "Web Application Squad"
+    description: "Squad focada no desenvolvimento de aplicacoes Web SPA/SSR e Fullstack."
+    members:
+      - 37-fullstack-engineer
+      - 21-frontend-engineer
+      - 22-backend-engineer
+      - 41-ui-designer
+      - 11-test-engineer
+    tech_stack: [React, Next.js, TypeScript, Node.js, Tailwind, Fastify, NestJS]
+    golden_path: user-story
+
+  mobile:
+    name: "Mobile Squad"
+    description: "Squad de desenvolvimento mobile iOS, Android, Flutter e React Native."
+    members:
+      - 38-mobile-engineer
+      - 41-ui-designer
+      - 29-integration-engineer
+      - 11-test-engineer
+    tech_stack: [Flutter, React Native, Swift, Kotlin, GraphQL]
+    golden_path: user-story
+
+  data:
+    name: "Data Engineering & Analytics Squad"
+    description: "Squad especializada em pipelines ETL/ELT, Lakehouse e bancos de dados."
+    members:
+      - 07-data-engineer
+      - 16-dba-databricks-engineer
+      - 23-data-architect
+      - 05-data-ai-architect
+    tech_stack: [Databricks, Spark, dbt, PostgreSQL, Delta Lake, Kafka]
+    golden_path: user-story
+
+  ai:
+    name: "AI & Machine Learning Squad"
+    description: "Squad para treinamento, fine-tuning, RAG e MLOps."
+    members:
+      - 17-ai-engineer
+      - 24-ml-engineer
+      - 25-agent-rag-engineer
+      - 08-mlops-llmops-engineer
+    tech_stack: [LangChain, LlamaIndex, PyTorch, MLflow, Vector Databases, vLLM]
+    golden_path: user-story
+
+  infra-cloud:
+    name: "Cloud, Platform & SRE Squad"
+    description: "Squad de infraestrutura como codigo, observabilidade e esteiras CI/CD."
+    members:
+      - 39-cloud-architect
+      - 27-platform-engineer
+      - 13-devops-release-engineer
+      - 26-sre-observability-engineer
+    tech_stack: [Terraform, Kubernetes, AWS, Azure, GCP, Prometheus, OpenTelemetry, GitHub Actions]
+    golden_path: new-project
+
+  quality:
+    name: "Quality Assurance & Cyber Security Squad"
+    description: "Squad independente de revisao de codigo, seguranca ofensiva e testes de carga."
+    members:
+      - 09-code-reviewer
+      - 10-security-reviewer
+      - 12-qa-engineer
+      - 28-performance-engineer
+      - 34-offensive-cyber-operator
+    gate_responsibilities: [G4-code-security, G5-quality, G6-governance-release]

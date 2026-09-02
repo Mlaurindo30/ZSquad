@@ -2,8 +2,8 @@ agent: platform-engineer
 native:
 - path: agents/27-platform-engineer/skills/native/platform-engineer-native
 assigned:
-- path: integrations/procedural_skill_engine.py
-- path: integrations/zcode_subagents.py
+- path: integrations/experimental/procedural_skill_engine.py
+- path: integrations/experimental/zcode_subagents.py
 - path: skills/memory/agent-memory
 - path: skills/platform/containers/docker-expert
 - path: skills/platform/containers/kubernetes-architect
@@ -17,3 +17,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/platform-engineer.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

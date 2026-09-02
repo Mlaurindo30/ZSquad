@@ -1,0 +1,66 @@
+name: Squad Quality & Sizing Gate (Pipeline-Driven Governance)
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  squad-governance:
+    name: "Pipeline Gate: Sizing, Structure & Quality"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Core Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install jsonschema pyyaml pytest
+
+      - name: 1. Validate Structure & Agent Registry
+        run: |
+          python scripts/validate_structure.py
+
+      - name: 2. Enforce Cognitive Protection & Story Points Sizing
+        run: |
+          python -c "
+          import sys, glob, yaml, json
+          from pathlib import Path
+          
+          work_items = list(Path('work').rglob('status.yaml'))
+          for wi_path in work_items:
+              with open(wi_path, 'r', encoding='utf-8') as f:
+                  data = yaml.safe_load(f) or {}
+              item_type = data.get('type', 'story')
+              sp = data.get('story_points')
+              ts = data.get('t_shirt_size')
+              
+              if item_type == 'epic' and ts and ts not in ['PP', 'P', 'M', 'G', 'GG']:
+                  print(f'❌ [FAIL] Epic {data.get(\"id\")} com t_shirt_size inválido: {ts}', file=sys.stderr)
+                  sys.exit(1)
+              
+              if item_type in ['story', 'task', 'bug'] and sp is not None:
+                  if sp > 8:
+                      print(f'❌ [FAIL] Cognitive Overload: Story {data.get(\"id\")} tem {sp} Story Points (> 8). É obrigatório realizar o Split da história antes do merge.', file=sys.stderr)
+                      sys.exit(1)
+          print('✅ [PASS] Sizing e limites cognitivos validados em todos os work items.')
+          "
+
+      - name: 3. Run Test Suite & TDD Verification
+        run: |
+          if [ -d scripts/tests ]; then
+            python -m pytest scripts/tests/ -v
+          fi
+
+      - name: 4. Static Code Quality & Security Check
+        run: |
+          python scripts/audit_security_guardrails.py --target scripts integrations

@@ -1,0 +1,8 @@
+version: 2
+runtime: C:/Users/miche/OneDrive/Documentos/agent_squad
+project_id: agent_squad
+project_name: agent_squad
+project_root: C:/Users/miche/OneDrive/Documentos/agent_squad
+work_dir: C:/Users/miche/OneDrive/Documentos/agent_squad/work/agent_squad
+db_path: C:/Users/miche/OneDrive/Documentos/agent_squad/banco/squad.db
+overrides: {}

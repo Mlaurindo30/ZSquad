@@ -143,3 +143,11 @@ Spec conformance, clean code standards, component contract verification, cogniti
 - **Primary Artifacts**: `reviews/code-review.md`, `gate-decisions/G4-code.yaml`, `findings/BUG-*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G4-code-security`
+
+## Azure DevOps Review Model (US-16/US-17)
+
+- **Azure AD account**: `arthemis@` (Required reviewer — code-reviewer)
+- **Voting scope**: Voto em TODOS os PRs; path-filter não se aplica (reviewer universal); G4 owner
+- **Thread tag**: `[09-code-reviewer] approve|reject`
+- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
+- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

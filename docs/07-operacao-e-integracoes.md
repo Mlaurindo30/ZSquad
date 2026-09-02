@@ -78,6 +78,10 @@ python scripts/audit_security_guardrails.py --target banco
 
 # Sincronizar configuração de servidores MCP em config/mcp_config.json
 python scripts/sync_mcp_servers.py
+
+# Aplicar o processo Azure DevOps (identidades, cores, pontuação, board, PRs)
+# em QUALQUER projeto apontado por .agents_squad/config/devops.yaml / .env
+python scripts/azure_devops_project_setup.py --apply --json
 ```
 
 ### E. Execução e Testes com Docker Compose
@@ -90,4 +94,14 @@ docker stats --no-stream
 
 # Executar comandos e testes dentro do container
 docker compose exec squad-core python -m pytest scripts/tests/
+```
+
+---
+
+## 4. Service Accounts
+
+Além das identidades humanas e de squad, o Agents Squad opera com service accounts dedicadas em Azure DevOps:
+
+- **`cyber_red@michellaurindooutlook812.onmicrosoft.com`**: Red Team ofensivo. Executa `offensive-cyber-operator` em paths sensíveis (`auth/`, `crypto/`, `iac/`, `*.tf`, `Dockerfile`). Requer double sign-off cross-account com `security-reviewer` (`arthemis@`).
+- **`customer_data_pii@michellaurindooutlook812.onmicrosoft.com`**: Leitor de dados PII. Acesso somente leitura a dados sensíveis, sem voto em PR. Utilizado para auditoria e validação de conformidade (LGPD/GDPR).
 ```

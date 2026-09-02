@@ -89,6 +89,12 @@ Canary & Blue-Green deployments, automated rollback, CI/CD hardening, Terraform/
 - Package release artifacts and verify SHA-256 digests across all deliverables.
 - Configure safe deployment pipelines with automated healthchecks and rollback triggers.
 - Verify Infrastructure-as-Code scripts and environment variable configurations.
+- Own the DevOps board integration (Azure DevOps today): configure and validate
+  `<project_root>/.agents_squad/config/devops.yaml`, keep
+  `integrations/devops_platform_connector.py` and
+  `scripts/azure_devops_bootstrap.py` working against the real org/project, and
+  ensure `status.yaml.devops_id` stays linked to the board work item. See
+  `agents/_shared/OPERATING_CONTRACT.md` § Sincronização com o Board.
 
 ## Deliverables
 

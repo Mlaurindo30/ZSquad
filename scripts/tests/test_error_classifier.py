@@ -27,14 +27,14 @@ class TestErrorClassifier:
     def test_auth_401(self):
         result = classify_error(status_code=401, response_text="unauthorized")
         assert result.reason == FailoverReason.auth
-        assert result.retryable is True
+        assert result.retryable is False
         assert result.should_backoff is False
-        assert result.should_fallback is False
+        assert result.should_fallback is True
 
     def test_auth_403(self):
         result = classify_error(status_code=403, response_text="forbidden")
         assert result.reason == FailoverReason.auth
-        assert result.retryable is True
+        assert result.retryable is False
 
     def test_auth_text(self):
         result = classify_error(response_text="Authentication failed")
@@ -115,7 +115,9 @@ class TestErrorClassifier:
     def test_unknown_fallback(self):
         result = classify_error(response_text="something weird happened")
         assert result.reason == FailoverReason.unknown
-        assert result.retryable is False
+        # Por padrão, erros de rede/causa desconhecida são retentáveis para
+        # preservar o comportamento histórico do LLMRouter.
+        assert result.retryable is True
 
     def test_exception_preferred_over_text(self):
         result = classify_error(exc=make_exc("authentication failed"), status_code=500, response_text="ignore this")

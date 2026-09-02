@@ -10,12 +10,13 @@ assigned:
 - path: skills/delivery/superpowers/using-superpowers
 - path: skills/delivery/superpowers/writing-plans
 - path: skills/delivery/token-efficiency/caveman
-- path: integrations/clone_or_update_repos.py
-- path: integrations/sdlc_role_mapper.py
-- path: integrations/trajectory_refinement_engine.py
-- path: integrations/gitingest.py
-- path: integrations/toon.py
-- path: integrations/zcode_subagents.py
+- path: integrations/experimental/clone_or_update_repos.py
+- path: integrations/experimental/sdlc_role_mapper.py
+- path: integrations/experimental/trajectory_refinement_engine.py
+- path: integrations/experimental/gitingest.py
+- path: integrations/experimental/toon.py
+- path: integrations/experimental/zcode_subagents.py
+- path: integrations/devops_platform_connector.py
 - path: skills/memory/agent-memory
 - path: skills/memory/conversation-memory
 discovery:
@@ -26,3 +27,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/delivery-orchestrator.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

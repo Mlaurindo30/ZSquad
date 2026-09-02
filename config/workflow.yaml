@@ -1,110 +1,127 @@
-version: 2
-method: scrum-with-kanban-and-evidence-gates
+version: 3
+method: spec-driven-with-proportional-evidence-gates
 cadence:
   sprint_length_days: 14
   ceremonies: [refinement, planning, daily-flow-review, review, retrospective]
 flow:
   pull_system: true
-  columns: [discovery, ready, design, ready-for-build, implementation, review, validation, documentation, ready-for-release, done]
+  # US-10 (2026-09-02): removido `review-qa` — estado órfão, não usado em cycles.yaml.
+  columns: [blueprint, scaffolding, implementation, code-security-review, quality-validation, governance-release, done]
   wip_limits:
-    design: 2
+    blueprint: 2
+    scaffolding: 2
     implementation: 3
-    review: 2
-    validation: 2
+    code-security-review: 2
+    quality-validation: 2
+    governance-release: 1
     high_or_critical_risk_total: 1
   required_metrics: [wip, throughput, work-item-age, cycle-time, blocked-time]
+  phase_timeboxes:
+    blueprint: 45
+    scaffolding: 30
+    implementation: 90
+    code-security-review: 45
+    quality-validation: 60
+    governance-release: 30
+  halt_condition:
+    # cycle = 1 passagem completa do estado `blueprint` ate `done` para o mesmo work item
+    # retry = 1 re-execucao do mesmo criterio de gate apos `fail` (gate-decidido rejected/changes_requested)
+    max_cycles_per_target: 3
+    max_retries_per_check: 2
 work_item:
-  root: work/<WORK-ID>
+  root: work/<project>/<WORK-ID>
   status_schema: contracts/work-item.schema.json
   handoff_schema: contracts/handoff.schema.json
   memory_delta_schema: contracts/memory-delta.schema.json
   ledger: documentation/delivery-ledger.md
+  light_artifact: work/<project>/light/<WORK-ID>.md
 states:
-  - id: intake
-    owner: delivery-orchestrator
-    action: create-work-item-and-classify
-    next: discovery
-  - id: discovery
-    owner: requirements-analyst
-    collaborators: [product-owner, ux-ui-designer, skill-curator, brand-strategist, storytelling-strategist, growth-marketing-strategist]
-    outputs: [discovery/brief.md, epic.md, stories]
-    next: product-ready
-  - id: product-ready
-    owner: product-owner
-    gate: G1-product
-    approved_next: design
-    feedback_next: discovery
-  - id: design
+  - id: blueprint
     owner: solution-architect
-    collaborators: [ux-ui-designer, data-architect, data-ai-architect, security-reviewer, test-engineer, integration-engineer, swarm-consensus-coordinator]
-    outputs: [specs, adr, threat-model, test-plan]
-    next: design-ready
-  - id: design-ready
+    collaborators: [requirements-analyst, product-owner, ux-researcher, ui-designer, agile-coach, security-reviewer, test-engineer]
+    outputs: [blueprint.md, specs, adr, threat-model, test-plan, bdd-spec]
+    next: scaffolding
+  - id: scaffolding
     owner: delivery-orchestrator
-    gate: G2-design
-    approved_next: ready-for-build
-    feedback_route: artifact-owner
-  - id: ready-for-build
-    owner: delivery-orchestrator
-    gate: G3-readiness
-    approved_next: implementation
-    feedback_route: artifact-owner
+    outputs: [stubs, red-tests, interface-contracts]
+    next: implementation
   - id: implementation
     owner: delivery-orchestrator
-    selectable_agents: [software-engineer, frontend-engineer, backend-engineer, integration-engineer, data-engineer, dba-databricks-engineer, ai-engineer, ml-engineer, agent-rag-engineer, mlops-llmops-engineer, platform-engineer, direct-response-copywriter, offensive-cyber-operator]
+    selectable_agents: [software-engineer, fullstack-engineer, mobile-engineer, cloud-architect, frontend-engineer, backend-engineer, integration-engineer, data-engineer, dba-databricks-engineer, ai-engineer, ml-engineer, agent-rag-engineer, mlops-llmops-engineer, platform-engineer, direct-response-copywriter, offensive-cyber-operator]
     outputs: [code, tests, implementation-logs, evidence]
-    next: review
-  - id: review
+    next: code-security-review
+  - id: code-security-review
     owner: code-reviewer
-    collaborators: [security-reviewer, offensive-cyber-operator]
-    gate: G4-code-security
-    approved_next: validation
-    feedback_route: root-cause-owner
-  - id: validation
+    collaborators: [security-reviewer]
+    outputs: [reviews, security-evidence]
+    next: quality-validation
+  - id: quality-validation
     owner: qa-engineer
-    collaborators: [test-engineer, performance-engineer, sre-observability-engineer, mlops-llmops-engineer, ai-analyst]
-    gate: G5-quality
-    approved_next: documentation
-    feedback_route: root-cause-owner
-  - id: documentation
-    owner: technical-writer
-    collaborators: [governance-auditor, storytelling-strategist, brand-strategist]
-    outputs: [updated-docs, delivery-ledger, traceability]
-    next: ready-for-release
-  - id: ready-for-release
-    owner: devops-release-engineer
-    collaborators: [sre-observability-engineer, governance-auditor]
-    gate: G6-governance-release
-    approved_next: done
-    feedback_route: root-cause-owner
+    collaborators: [test-engineer, performance-engineer, sre-observability-engineer]
+    outputs: [validation-evidence, acceptance-results, regression-results]
+    next: governance-release
+  - id: governance-release
+    owner: governance-auditor
+    collaborators: [technical-writer]
+    outputs: [updated-docs, delivery-ledger, traceability, rollout-rollback-plan]
+    next: done
   - id: done
     owner: governance-auditor
     terminal: true
 gates:
+  GT-entry:
+    owners: [product-owner, solution-architect]
+    criteria: [blueprint-complete, bdd-specification-valid, adr-recorded, interfaces-defined, data-contracts-defined-when-applicable, threat-model-done, test-strategy-defined]
+    human_required_when: risk-medium-high-critical
+    deprecated: true
+    superseded_by: [G1-product, G2-design]
   G1-product:
     owner: product-owner
-    criteria: [problem-clear, product-goal-defined, stories-invest, acceptance-testable, value-prioritized, dependencies-known, bdd-specification-valid]
-    human_required: true
+    criteria: [blueprint-complete, bdd-specification-valid, data-contracts-defined-when-applicable, timebox-defined, question-stated, finding-documented]
+    human_required_when: risk-medium-high-critical
   G2-design:
     owner: solution-architect
-    independent_reviewers: [security-reviewer, test-engineer]
-    criteria: [options-compared, adr-recorded, interfaces-defined, data-contracts-defined-when-applicable, threat-model-done, test-strategy-defined, observability-and-rollback-designed]
+    criteria: [adr-recorded, interfaces-defined, threat-model-done, test-strategy-defined, blast-radius-defined, deprecation-strategy-defined, migration-plan-defined]
     human_required_when: risk-medium-high-critical
-  G3-readiness:
+  GT-design-review:
     owner: delivery-orchestrator
-    criteria: [definition-of-ready, owners-assigned, skills-local-and-resolvable, dependencies-resolved, environments-known, estimates-bounded]
+    criteria: [definition-of-ready, tests-red-exist-and-fail, owners-assigned, dependencies-resolved]
+    human_required_when: risk-high-critical
+  GT-done:
+    owners: [code-reviewer, security-reviewer, qa-engineer, governance-auditor]
+    criteria: [spec-conformance, tests-green, tdd-cycle-valid, security-executed, acceptance-bdd-executed, regression-executed, coverage-executed, traceability-complete, ledger-current, rollout-rollback-ready]
+    human_required_when: risk-medium-high-critical
+    deprecated: true
   G4-code-security:
-    owners: [code-reviewer, security-reviewer]
-    criteria: [spec-conformance, clean-code, component-contract-comments, tests-green, sentry-security-review, gha-review-when-workflows-change, dependencies-and-secrets-checked, tdd-cycle-valid, clean-code-executed, tests-executed, security-executed]
-    independent_reviewer_when: risk-medium-high-critical
+    owner: code-reviewer
+    criteria: [spec-conformance, tests-green, tdd-cycle-valid, security-executed]
   G5-quality:
     owner: qa-engineer
-    criteria: [acceptance-passed, regression-passed, failure-paths-passed, nonfunctional-passed, tdd-cycle, bdd-scenarios, ai-ml-evaluation-passed-when-applicable, evidence-complete, acceptance-bdd-executed, regression-executed, coverage-executed]
-    human_required_when: business-acceptance
+    criteria: [acceptance-bdd-executed, regression-executed, coverage-executed]
   G6-governance-release:
-    owners: [governance-auditor, devops-release-engineer]
-    criteria: [traceability-complete, documentation-current, delivery-ledger-current, observability-ready, rollout-and-rollback-ready, approvals-current]
-    human_required: true
+    owner: governance-auditor
+    criteria: [traceability-complete, ledger-current, rollout-rollback-ready, rollout-plan-defined, rollback-plan-defined, runbook-updated, change-record-created]
+    human_required_when: risk-medium-high-critical
+# Espelho opcional no board: <project_root>/.agents_squad/config/devops.yaml
+# traduz cada estado abaixo (chave) para o estado real do provider (state_map).
+gate_state_mapping:
+  G1-product: blueprint
+  G2-design: blueprint
+  GT-design-review: scaffolding
+  G4-code-security: quality-validation
+  G5-quality: governance-release
+  G6-governance-release: done
+gate_aliases:
+  G3-readiness: GT-design-review
+segregation_of_duties:
+  enforced_from_risk: medium
+  conflicts:
+    - [author, reviewer]
+    - [author, approver]
+    - [reviewer, approver]
+    - [executor, approver]
+  pairwise_distinct_from_risk: high
+legacy_states: [intake, discovery, product-ready, design, design-ready, ready-for-build, documentation, ready-for-release]
 definition_of_ready:
   - user-and-problem-identified
   - acceptance-criteria-testable
@@ -117,7 +134,6 @@ definition_of_done:
   - security-findings-resolved-or-formally-waived
   - documentation-ledger-and-traceability-updated
   - observability-and-rollback-ready
-  - handoffs-and-memory-deltas-valid
   - human-approval-recorded-when-required
 boundaries:
   automatic_external_actions: false

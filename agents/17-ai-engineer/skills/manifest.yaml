@@ -11,12 +11,12 @@ assigned:
 - path: skills/ai/model-evaluation/agent-evaluation
 - path: skills/data/databricks/databricks-ai-functions
 - path: skills/data/mlflow/mlflow-agent
-- path: integrations/codebase_knowledge_graph.py
-- path: integrations/prompt_quality_optimizer.py
-- path: integrations/trajectory_refinement_engine.py
-- path: integrations/contextual_ast_chunker.py
-- path: integrations/gitingest.py
-- path: integrations/toon.py
+- path: integrations/experimental/codebase_knowledge_graph.py
+- path: integrations/experimental/prompt_quality_optimizer.py
+- path: integrations/experimental/trajectory_refinement_engine.py
+- path: integrations/experimental/contextual_ast_chunker.py
+- path: integrations/experimental/gitingest.py
+- path: integrations/experimental/toon.py
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
@@ -26,3 +26,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/ai-engineer.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

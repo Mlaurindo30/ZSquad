@@ -128,3 +128,11 @@ p95/p99 tail latency, high-concurrency load testing (k6/Gatling), CPU/memory pro
 - **Primary Artifacts**: `reports/performance-benchmark.md`, `evidence/load-test-results.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G5-quality`
+
+## Azure DevOps Review Model (US-16/US-17)
+
+- **Azure AD account**: `arthemis@` (Required reviewer — performance-engineer)
+- **Voting scope**: Voto em PRs quando path ∈ {`perf/`, `hotpath/`, `latency/`, `queries/`, `indexes/`}; G5 collaborator
+- **Thread tag**: `[28-performance-engineer] approve|reject`
+- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
+- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

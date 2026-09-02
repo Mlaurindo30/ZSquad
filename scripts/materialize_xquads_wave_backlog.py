@@ -36,7 +36,7 @@ def slug(value: str) -> str:
 
 def build_manifest(root: Path) -> dict:
     """Gera a estrutura de manifesto de work items para ondas de evolução."""
-    plan_path = root / "work/EPIC-SQUAD-EVOLUTION-20260818/plans/agents-squad-2.0-build-backlog.yaml"
+    plan_path = root / "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/plans/agents-squad-2.0-build-backlog.yaml"
     plan = yaml.safe_load(plan_path.read_text(encoding="utf-8"))
     epic = next(item for item in plan["epics"] if item["id"] == "EPIC-SQUAD-2-WAVES")
     squads = []
@@ -92,7 +92,7 @@ def main() -> int:
     args = parser.parse_args()
     root = args.root.resolve()
     manifest = build_manifest(root)
-    output = args.output or root / "work/EPIC-SQUAD-EVOLUTION-20260818/plans/xquads-wave-work-items.json"
+    output = args.output or root / "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/plans/xquads-wave-work-items.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if args.apply:

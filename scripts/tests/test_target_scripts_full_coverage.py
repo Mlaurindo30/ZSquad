@@ -723,7 +723,7 @@ def test_sync_mcp_main_and_script_entry(tmp_path: Path, monkeypatch, capsys):
 
 def backlog_plan(root: Path, count: int = 13) -> None:
     squads = [{"id": "cybersecurity" if i == 0 else f"s_{i}", "personas": 1, "tasks": 2, "workflows": 3} for i in range(count)]
-    path = root / "work/EPIC-SQUAD-EVOLUTION-20260818/plans/agents-squad-2.0-build-backlog.yaml"
+    path = root / "work/agent_squad/EPIC-SQUAD-EVOLUTION-20260818/plans/agents-squad-2.0-build-backlog.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump({"epics": [{"id": "OTHER"}, {"id": "EPIC-SQUAD-2-WAVES", "waves": [{"wave": 1, "squads": squads}]}]}), encoding="utf-8")
 

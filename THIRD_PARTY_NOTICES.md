@@ -1,29 +1,38 @@
-# Third-Party Notices
+# Third-Party Notices & Open Source Attributions
 
-## ayghri/i-have-adhd
+This project incorporates components, frameworks, and patterns from open-source projects under their respective licenses.
 
-The neuroinclusive communication contract in `AGENTS.md`, `CLAUDE.md`, `CODEX.md`, and `GEMINI.md` was informed by and independently adapted from the behavioral guidance in [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), revision `b42a45a068e080294924bfba19a7a2e8944c48ff`.
+---
 
-Copyright (c) 2026 Ayoub Ghriss
+## 1. Neuroinclusive Communication Principles
 
-The upstream project is provided under the MIT License:
+- **Project:** `ayghri/i-have-adhd`
+- **Author:** Ayoub Ghriss
+- **Repository:** https://github.com/ayghri/i-have-adhd
+- **Commit:** `b42a45a068e080294924bfba19a7a2e8944c48ff`
+- **License:** MIT License
 
-> Permission is hereby granted, free of charge, to any person obtaining a copy
-> of this software and associated documentation files (the "Software"), to deal
-> in the Software without restriction, including without limitation the rights
-> to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-> copies of the Software, and to permit persons to whom the Software is
-> furnished to do so, subject to the following conditions:
->
-> The above copyright notice and this permission notice shall be included in all
-> copies or substantial portions of the Software.
->
-> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-> IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-> FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-> LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-> OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-> SOFTWARE.
+```text
+MIT License
 
-The Agents Squad wording is original and adds autism-oriented requirements for literal language, explicit state transitions, and one concrete next action. The upstream project is not installed as a runtime dependency.
+Copyright (c) 2024 Ayoub Ghriss
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+```
+
+---
+
+## 2. Core Library Dependencies
+
+- **jsonschema**: MIT License (Julian Berman)
+- **PyYAML**: MIT License (Kirill Simonov)
+- **pytest & pytest-bdd**: MIT License (Holger Krekel and pytest-dev team)
+- **gherkin-official**: MIT License (Cucumber team)

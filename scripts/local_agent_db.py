@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 O que é: Camada de banco de dados local embedded (SQLite) de alta performance para o Agents Squad.
-Responsabilidade: Armazenar e consultar grafos de símbolos AST, dependências, blast radius, métricas de tokens e histórico de trajetórias de agentes.
+Responsabilidade: Armazenar e consultar AST, dependências, blast radius, métricas de tokens e histórico de trajetórias.
 Pra que serve: Prover inteligência de código em sub-milissegundos (L1/L2) para os agentes, calculando impacto de mudanças e consumo de tokens sem latência de rede.
 Comportamento em falha: Trata erros de I/O e SQL com transações atômicas seguras (WAL mode) e fallback para consultas estáticas.
 Conexões: Utilizado por agent_squad.py, evaluate_agent_trajectories.py, sync_mcp_servers.py e linters de Clean Code.
 Dependências & Imports:
   - sqlite3: Banco de dados relacional embedded embutido na standard library.
-  - ast: Parser sintático de código Python para extração determinística de grafos.
-  - json, pathlib, hashlib, time: Utilitários padrão de sistema e tipos.
+  - ast: Parser sintático de código Python para extração determinística.
+  - json, pathlib, hashlib, time: Utilitários padrão.
 """
 
 from __future__ import annotations
@@ -107,117 +107,129 @@ class LocalAgentDB:
         finally:
             conn.close()
 
-    _TABLE_DEFINITIONS = {
-        "symbols": """(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id TEXT NOT NULL,
-            file_path TEXT NOT NULL,
-            name TEXT NOT NULL,
-            kind TEXT NOT NULL,
-            line_number INTEGER NOT NULL,
-            docstring TEXT,
-            complexity INTEGER DEFAULT 1,
-            has_contract BOOLEAN DEFAULT 0,
-            updated_at REAL NOT NULL,
-            UNIQUE(project_id, file_path, name, kind)
-        )""",
-        "dependencies": """(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id TEXT NOT NULL,
-            source_file TEXT NOT NULL,
-            target_module TEXT NOT NULL,
-            target_symbol TEXT,
-            kind TEXT NOT NULL,
-            updated_at REAL NOT NULL,
-            UNIQUE(project_id, source_file, target_module, target_symbol, kind)
-        )""",
-        "token_metrics": """(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id TEXT NOT NULL,
-            work_item_id TEXT NOT NULL,
-            agent_id TEXT NOT NULL,
-            step_name TEXT NOT NULL,
-            prompt_tokens INTEGER NOT NULL,
-            completion_tokens INTEGER NOT NULL,
-            cost_usd REAL DEFAULT 0.0,
-            recorded_at REAL NOT NULL
-        )""",
-        "trajectory_logs": """(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id TEXT NOT NULL,
-            benchmark_name TEXT NOT NULL,
-            agent_id TEXT NOT NULL,
-            task_id TEXT NOT NULL,
-            status TEXT NOT NULL,
-            steps_count INTEGER NOT NULL,
-            tool_calls_count INTEGER NOT NULL,
-            duration_seconds REAL NOT NULL,
-            details_json TEXT,
-            recorded_at REAL NOT NULL
-        )""",
-        "quorum_votes": """(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            project_id TEXT NOT NULL,
-            work_item_id TEXT NOT NULL,
-            gate_id TEXT NOT NULL,
-            voter_agent TEXT NOT NULL,
-            vote TEXT NOT NULL,
-            weight REAL DEFAULT 1.0,
-            rationale TEXT,
-            voted_at REAL NOT NULL,
-            UNIQUE(project_id, work_item_id, gate_id, voter_agent)
-        )""",
+    _TABLE_NAMES = (
+        "symbols",
+        "dependencies",
+        "token_metrics",
+        "trajectory_logs",
+        "quorum_votes",
+        "ops_recovery",
+        "workflow_metrics",
+    )
+    _TABLE_COLUMNS = {
+        "symbols": ("file_path", "name", "kind", "line_number", "docstring", "complexity", "has_contract", "updated_at"),
+        "dependencies": ("source_file", "target_module", "target_symbol", "kind", "updated_at"),
+        "token_metrics": ("work_item_id", "agent_id", "step_name", "prompt_tokens", "completion_tokens", "cost_usd", "recorded_at"),
+        "trajectory_logs": ("benchmark_name", "agent_id", "task_id", "status", "steps_count", "tool_calls_count", "duration_seconds", "details_json", "recorded_at"),
+        "quorum_votes": ("work_item_id", "gate_id", "voter_agent", "vote", "weight", "rationale", "voted_at"),
+        "ops_recovery": ("target_key", "work_item_id", "agent_id", "provider", "model", "phase", "reason", "action", "attempt", "backoff_seconds", "error_message", "rationale", "recorded_at"),
+        "workflow_metrics": ("work_item_id", "item_type", "story_points", "t_shirt_size", "phase", "started_at", "ended_at", "cycle_time_hours", "lead_time_hours", "blocked_time_hours", "status", "recorded_at"),
     }
+
+    @classmethod
+    def _validate_table(cls, table: str) -> None:
+        """Rejeita qualquer identificador fora do conjunto fechado de tabelas internas."""
+        if table not in cls._TABLE_NAMES:
+            raise ValueError(f"tabela de esquema desconhecida: {table}")
+
+    @staticmethod
+    def _create_table(conn: sqlite3.Connection, table: str) -> None:
+        """Cria uma tabela interna por SQL literal após validação do chamador."""
+        LocalAgentDB._validate_table(table)
+        # Cada chamada usa DDL literal com identificador validado.
+        if table == "symbols":
+            conn.execute(
+                "CREATE TABLE symbols (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, file_path TEXT NOT NULL, name TEXT NOT NULL, kind TEXT NOT NULL, line_number INTEGER NOT NULL, docstring TEXT, complexity INTEGER DEFAULT 1, has_contract BOOLEAN DEFAULT 0, updated_at REAL NOT NULL, UNIQUE(project_id, file_path, name, kind))"
+            )
+            return
+        if table == "dependencies":
+            conn.execute(
+                "CREATE TABLE dependencies (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, source_file TEXT NOT NULL, target_module TEXT NOT NULL, target_symbol TEXT, kind TEXT NOT NULL, updated_at REAL NOT NULL, UNIQUE(project_id, source_file, target_module, target_symbol, kind))"
+            )
+            return
+        if table == "token_metrics":
+            conn.execute(
+                "CREATE TABLE token_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, agent_id TEXT NOT NULL, step_name TEXT NOT NULL, prompt_tokens INTEGER NOT NULL, completion_tokens INTEGER NOT NULL, cost_usd REAL DEFAULT 0.0, recorded_at REAL NOT NULL)"
+            )
+            return
+        if table == "trajectory_logs":
+            conn.execute(
+                "CREATE TABLE trajectory_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, benchmark_name TEXT NOT NULL, agent_id TEXT NOT NULL, task_id TEXT NOT NULL, status TEXT NOT NULL, steps_count INTEGER NOT NULL, tool_calls_count INTEGER NOT NULL, duration_seconds REAL NOT NULL, details_json TEXT, recorded_at REAL NOT NULL)"
+            )
+            return
+        if table == "quorum_votes":
+            conn.execute(
+                "CREATE TABLE quorum_votes (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, gate_id TEXT NOT NULL, voter_agent TEXT NOT NULL, vote TEXT NOT NULL, weight REAL DEFAULT 1.0, rationale TEXT, voted_at REAL NOT NULL, UNIQUE(project_id, work_item_id, gate_id, voter_agent))"
+            )
+            return
+        if table == "ops_recovery":
+            conn.execute(
+                "CREATE TABLE ops_recovery (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, target_key TEXT NOT NULL, work_item_id TEXT, agent_id TEXT, provider TEXT, model TEXT, phase TEXT NOT NULL, reason TEXT NOT NULL, action TEXT NOT NULL, attempt INTEGER NOT NULL, backoff_seconds REAL NOT NULL, error_message TEXT, rationale TEXT, recorded_at REAL NOT NULL)"
+            )
+            return
+        if table == "workflow_metrics":
+            conn.execute(
+                "CREATE TABLE workflow_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, item_type TEXT NOT NULL, story_points INTEGER, t_shirt_size TEXT, phase TEXT NOT NULL, started_at REAL NOT NULL, ended_at REAL, cycle_time_hours REAL DEFAULT 0.0, lead_time_hours REAL DEFAULT 0.0, blocked_time_hours REAL DEFAULT 0.0, status TEXT NOT NULL DEFAULT 'active', recorded_at REAL NOT NULL)"
+            )
+            return
+        # _validate_table já levantou ValueError para identificadores
+        # desconhecidos; o fluxo nunca alcança este ponto.
+
+    @staticmethod
+    def _table_columns(conn: sqlite3.Connection, table: str) -> set[str]:
+        """Consulta metadados com PRAGMAs literais para tabelas internas."""
+        LocalAgentDB._validate_table(table)
+        # Cada branch usa PRAGMA literal; o identificador ``table`` foi validado
+        # pela whitelist. Não há concatenação dinâmica com entrada do usuário.
+        if table == "symbols":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(symbols)")}
+        if table == "dependencies":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(dependencies)")}
+        if table == "token_metrics":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(token_metrics)")}
+        if table == "trajectory_logs":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(trajectory_logs)")}
+        if table == "quorum_votes":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(quorum_votes)")}
+        if table == "ops_recovery":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(ops_recovery)")}
+        if table == "workflow_metrics":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(workflow_metrics)")}
+        return set()
 
     def _init_db(self) -> None:
         """Cria ou migra atomicamente o esquema central namespaced."""
         with self._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
-            existing = {
-                row["name"]
-                for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
-            }
-            for table, definition in self._TABLE_DEFINITIONS.items():
+            existing = {row["name"] for row in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+            for table in self._TABLE_NAMES:
                 if table not in existing:
-                    conn.execute(f"CREATE TABLE {table} {definition}")
+                    self._create_table(conn, table)
                     continue
-                columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+                columns = self._table_columns(conn, table)
                 if "project_id" not in columns:
-                    self._migrate_legacy_table(conn, table, definition, columns)
+                    self._migrate_legacy_table(conn, table, columns)
 
-            conn.executescript("""
-                CREATE INDEX IF NOT EXISTS idx_symbols_project_file ON symbols(project_id, file_path);
-                CREATE INDEX IF NOT EXISTS idx_symbols_project_name ON symbols(project_id, name);
-                CREATE INDEX IF NOT EXISTS idx_deps_project_source ON dependencies(project_id, source_file);
-                CREATE INDEX IF NOT EXISTS idx_deps_project_target ON dependencies(project_id, target_module);
-                CREATE INDEX IF NOT EXISTS idx_tokens_project_work_item ON token_metrics(project_id, work_item_id);
-                CREATE INDEX IF NOT EXISTS idx_trajectory_project_task ON trajectory_logs(project_id, task_id);
-                CREATE INDEX IF NOT EXISTS idx_quorum_project_work_item ON quorum_votes(project_id, work_item_id, gate_id);
-            """)
-
-    def _migrate_legacy_table(
-        self,
-        conn: sqlite3.Connection,
-        table: str,
-        definition: str,
-        old_columns: set[str],
-    ) -> None:
-        """Move registros sem namespace para ``legacy`` sem perda de dados."""
-        legacy_table = f"{table}__legacy_migration"
-        conn.execute(f"ALTER TABLE {table} RENAME TO {legacy_table}")
-        conn.execute(f"CREATE TABLE {table} {definition}")
-        target_columns = [
-            row["name"]
-            for row in conn.execute(f"PRAGMA table_info({table})")
-            if row["name"] != "project_id" and row["name"] in old_columns
-        ]
-        columns_sql = ", ".join(target_columns)
-        conn.execute(
-            f"INSERT INTO {table} (project_id, {columns_sql}) "
-            f"SELECT ?, {columns_sql} FROM {legacy_table}",
-            (self.LEGACY_PROJECT_ID,),
-        )
-        conn.execute(f"DROP TABLE {legacy_table}")
+    @classmethod
+    def _migrate_legacy_table(cls, conn: sqlite3.Connection, table: str, legacy_columns: set[str]) -> None:
+        """Reconstrói uma tabela legada usando somente instruções SQL literais."""
+        cls._validate_table(table)
+        statements = {
+            "symbols": ("ALTER TABLE symbols RENAME TO symbols_legacy", "INSERT INTO symbols (project_id, file_path, name, kind, line_number, docstring, complexity, has_contract, updated_at) SELECT ?, file_path, name, kind, line_number, docstring, complexity, has_contract, updated_at FROM symbols_legacy", "DROP TABLE symbols_legacy"),
+            "dependencies": ("ALTER TABLE dependencies RENAME TO dependencies_legacy", "INSERT INTO dependencies (project_id, source_file, target_module, target_symbol, kind, updated_at) SELECT ?, source_file, target_module, target_symbol, kind, updated_at FROM dependencies_legacy", "DROP TABLE dependencies_legacy"),
+            "token_metrics": ("ALTER TABLE token_metrics RENAME TO token_metrics_legacy", "INSERT INTO token_metrics (project_id, work_item_id, agent_id, step_name, prompt_tokens, completion_tokens, cost_usd, recorded_at) SELECT ?, work_item_id, agent_id, step_name, prompt_tokens, completion_tokens, cost_usd, recorded_at FROM token_metrics_legacy", "DROP TABLE token_metrics_legacy"),
+            "trajectory_logs": ("ALTER TABLE trajectory_logs RENAME TO trajectory_logs_legacy", "INSERT INTO trajectory_logs (project_id, benchmark_name, agent_id, task_id, status, steps_count, tool_calls_count, duration_seconds, details_json, recorded_at) SELECT ?, benchmark_name, agent_id, task_id, status, steps_count, tool_calls_count, duration_seconds, details_json, recorded_at FROM trajectory_logs_legacy", "DROP TABLE trajectory_logs_legacy"),
+            "quorum_votes": ("ALTER TABLE quorum_votes RENAME TO quorum_votes_legacy", "INSERT INTO quorum_votes (project_id, work_item_id, gate_id, voter_agent, vote, weight, rationale, voted_at) SELECT ?, work_item_id, gate_id, voter_agent, vote, weight, rationale, voted_at FROM quorum_votes_legacy", "DROP TABLE quorum_votes_legacy"),
+        }
+        required = set(cls._TABLE_COLUMNS[table])
+        if not required.issubset(legacy_columns):
+            missing = sorted(required - legacy_columns)
+            raise ValueError(f"colunas legadas ausentes em {table}: {missing}")
+        rename_sql, insert_sql, drop_sql = statements[table]
+        conn.execute(rename_sql)
+        cls._create_table(conn, table)
+        conn.execute(insert_sql, (cls.LEGACY_PROJECT_ID,))
+        conn.execute(drop_sql)
 
     @staticmethod
     def _extract_ast_symbols_and_deps(
@@ -601,6 +613,73 @@ class LocalAgentDB:
             "votes": [dict(v) for v in votes],
         }
 
+    def record_recovery_event(
+        self,
+        target_key: str,
+        phase: str,
+        reason: str,
+        action: str,
+        attempt: int,
+        backoff_seconds: float,
+        work_item_id: str | None = None,
+        agent_id: str | None = None,
+        provider: str | None = None,
+        model: str | None = None,
+        error_message: str | None = None,
+        rationale: str | None = None,
+    ) -> int:
+        """Persiste um ``RecoveryDecision`` (Etapa 6) usando binds de parâmetros."""
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "INSERT INTO ops_recovery ("
+                "project_id, target_key, work_item_id, agent_id, provider, model,"
+                " phase, reason, action, attempt, backoff_seconds,"
+                " error_message, rationale, recorded_at"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    self.project_id,
+                    target_key,
+                    work_item_id,
+                    agent_id,
+                    provider,
+                    model,
+                    phase,
+                    reason,
+                    action,
+                    attempt,
+                    backoff_seconds,
+                    error_message,
+                    rationale,
+                    time.time(),
+                ),
+            )
+            return int(cursor.lastrowid or 0)
+
+    def list_recovery_events(
+        self,
+        target_key: str | None = None,
+        since: float | None = None,
+        limit: int | None = 100,
+    ) -> list[dict[str, Any]]:
+        """Lista eventos de recuperação do projeto, mais recentes primeiro."""
+        clauses = ["project_id = ?"]
+        params: list[Any] = [self.project_id]
+        if target_key:
+            clauses.append("target_key = ?")
+            params.append(target_key)
+        if since is not None:
+            clauses.append("recorded_at >= ?")
+            params.append(since)
+        order = "DESC" if limit is not None else "ASC"
+        query = f"SELECT * FROM ops_recovery WHERE {' AND '.join(clauses)} ORDER BY recorded_at {order}"
+        params_list: list[Any] = list(params)
+        if limit is not None:
+            query += " LIMIT ?"
+            params_list.append(limit)
+        with self._connection() as conn:
+            rows = conn.execute(query, params_list).fetchall()
+        return [dict(r) for r in rows]
+
     def log_trajectory(
         self,
         benchmark_name: str,
@@ -660,4 +739,55 @@ class LocalAgentDB:
             rows = conn.execute(query, params).fetchall()
         result = [dict(row) for row in rows]
         return list(reversed(result)) if limit is not None else result
+
+    def record_workflow_metric(
+        self,
+        work_item_id: str,
+        item_type: str,
+        phase: str,
+        story_points: int | None = None,
+        t_shirt_size: str | None = None,
+        started_at: float | None = None,
+        ended_at: float | None = None,
+        cycle_time_hours: float = 0.0,
+        lead_time_hours: float = 0.0,
+        blocked_time_hours: float = 0.0,
+        status: str = "active",
+    ) -> None:
+        """Registra métricas de fluxo e ciclo de vida de um work item."""
+        now_ts = time.time()
+        start_ts = started_at if started_at is not None else now_ts
+        with self._connection() as conn:
+            conn.execute("""
+                INSERT INTO workflow_metrics (
+                    project_id, work_item_id, item_type, story_points, t_shirt_size,
+                    phase, started_at, ended_at, cycle_time_hours, lead_time_hours,
+                    blocked_time_hours, status, recorded_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                self.project_id, work_item_id, item_type, story_points, t_shirt_size,
+                phase, start_ts, ended_at, cycle_time_hours, lead_time_hours,
+                blocked_time_hours, status, now_ts
+            ))
+
+    def get_workflow_metrics(
+        self,
+        work_item_id: str | None = None,
+        phase: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Recupera métricas de fluxo do projeto atual."""
+        clauses = ["project_id = ?"]
+        params: list[Any] = [self.project_id]
+        if work_item_id:
+            clauses.append("work_item_id = ?")
+            params.append(work_item_id)
+        if phase:
+            clauses.append("phase = ?")
+            params.append(phase)
+        query = f"SELECT * FROM workflow_metrics WHERE {' AND '.join(clauses)} ORDER BY recorded_at DESC"
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
 

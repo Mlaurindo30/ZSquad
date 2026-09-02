@@ -39,3 +39,12 @@ O fluxo de entrega do Agents Squad divide-se em 6 fases sequenciais governadas p
 - **Papéis**: `devops-release-engineer`, `sre-observability-engineer`, `governance-auditor`.
 - **Artefatos**: `release/release-record.md`, `documentation/delivery-ledger.md`, `gate-decisions/GD-*.yaml`.
 - **Critério de Saída**: Rastreabilidade 100% verificada, telemetria pronta, rollback testado e aprovação humana final.
+
+## Cycles Especiais
+
+Além do ciclo padrão de desenvolvimento, o Agents Squad define cycles especiais em `config/cycles.yaml`:
+
+- **spike**: investigação time-boxed 3 dias, sem quality/gov; foco em "achado documentado".
+- **release**: corte de versão 5 dias, foco em rollout/rollback ready.
+- **evolution**: mudanças de longo prazo, requer ADR + blast-radius + deprecation-strategy.
+- **incident**: SRE incident, triage 15min, blameless postmortem obrigatório.

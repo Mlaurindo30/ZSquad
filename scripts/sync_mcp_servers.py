@@ -34,6 +34,16 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
 
     return {
         "mcpServers": {
+            "azure-devops": {
+                "command": "npx",
+                "args": ["-y", "@azure-devops/mcp"],
+                "env": {
+                    "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}",
+                    "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
+                    "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+                },
+                "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
+            },
             # squad-local-db foi removido: local_agent_db.py é biblioteca, não servidor MCP.
             # Um wrapper MCP real para o banco do squad entra como fase futura do
             # EVOL-LIVING-MEMORY-20260822 (ver plans/delivery-plan.md).

@@ -26,3 +26,12 @@ banco/*.db
 banco/*.db-journal
 banco/*.db-shm
 banco/*.db-wal
+
+# work/ mistura dados de múltiplos projetos/clientes (SmartSub, Arthemis, Hive-Mind,
+# buzz-squad etc.) — nunca commitar isso junto num repo de cliente específico.
+work/
+
+# Lixo da máquina local — não versionar
+.temp-prior-user-requests.txt
+INTEGRATION_TEST_REPORT.md
+.env.local

@@ -1,0 +1,8 @@
+{
+  "markers": [
+    {"label": "f-string", "marker": "f'"},
+    {"label": "f-string", "marker": "f\""},
+    {"label": "formatação %", "marker": "% "},
+    {"label": ".format()", "marker": ".format("}
+  ]
+}

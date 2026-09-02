@@ -4,7 +4,7 @@ O que é: Script de instalação, provisionamento e validação de ambiente unif
 Responsabilidade: Sincronizar repositórios vendor, criar ambiente virtual isolado (.venv/uv), instalar dependências, inicializar banco SQLite, sincronizar MCPs, provisionar Docker e validar testes.
 Pra que serve: Permitir que qualquer desenvolvedor ou agente configure e execute o Agents Squad do zero com um único comando sem depender de configurações manuais.
 Comportamento em falha: Interrompe a execução exibindo a causa raiz clara e orientações de correção.
-Conexões: Conecta-se com banco/schema.sql, banco/squad.db, integrations/clone_or_update_repos.py, docker-compose.yml e scripts/validate_structure.py.
+Conexões: Conecta-se com banco/schema.sql, banco/squad.db, integrations/experimental/clone_or_update_repos.py, docker-compose.yml e scripts/validate_structure.py.
 Dependências & Imports:
   - os, pathlib, shutil, sqlite3, subprocess, sys: Operações de sistema, git e banco.
 """
@@ -175,3 +175,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

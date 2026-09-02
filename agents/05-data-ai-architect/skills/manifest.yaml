@@ -10,8 +10,8 @@ assigned:
 - path: skills/data/data-architecture/database-design
 - path: skills/data/databricks/databricks-core
 - path: skills/data/databricks/databricks-unity-catalog
-- path: integrations/codebase_knowledge_graph.py
-- path: integrations/code_health_analyzer.py
+- path: integrations/experimental/codebase_knowledge_graph.py
+- path: integrations/experimental/code_health_analyzer.py
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
@@ -21,3 +21,4 @@ handoff:
 memory:
   private: work/<WORK-ID>/memory/agents/data-ai-architect.md
   shared: work/<WORK-ID>/memory/shared/summary.md
+

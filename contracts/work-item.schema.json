@@ -8,9 +8,11 @@
   "properties": {
     "id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
     "type": {"enum": ["epic", "story", "task", "bug", "release", "evolution", "study", "spike"]},
-    "state": {"enum": ["intake", "discovery", "product-ready", "design", "design-ready", "ready-for-build", "implementation", "review", "validation", "documentation", "ready-for-release", "done"]},
+    "state": {"enum": ["blueprint", "scaffolding", "implementation", "code-security-review", "quality-validation", "governance-release", "done", "intake", "discovery", "product-ready", "design", "design-ready", "ready-for-build", "review", "validation", "documentation", "ready-for-release", "triage", "mitigation", "postmortem"]},
     "risk": {"enum": ["low", "medium", "high", "critical"]},
-    "mode": {"enum": ["consult", "light", "full"]},
+    "story_points": {"enum": [1, 2, 3, 5, 8]},
+    "t_shirt_size": {"enum": ["PP", "P", "M", "G", "GG"]},
+    "mode": {"description": "consult=read-only, light=1 persona no gate, full=gates G1-G6", "enum": ["consult", "light", "full"]},
     "owner": {"type": "string"},
     "active_agents": {"type": "array", "maxItems": 10, "items": {"type": "string"}},
     "current_gate": {"type": ["string", "null"]},
@@ -41,6 +43,7 @@
     "squad_root": {"type": "string"},
     "baseline": {"type": "string"},
     "status_note": {"type": "string"},
+    "devops_id": {"type": ["string", "integer", "null"]},
 
     "constraints": {"type": "array", "items": {"type": "string"}},
     "open_conditions": {"type": "array", "items": {"type": "string"}},
@@ -61,12 +64,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "GT-entry": {"type": "string"},
+        "GT-design-review": {"type": "string"},
+        "GT-done": {"type": "string"},
         "G1": {"type": "string"},
         "G2": {"type": "string"},
         "G3": {"type": "string"},
         "G4": {"type": "string"},
         "G5": {"type": "string"},
-        "G6": {"type": "string"}
+        "G6": {"type": "string"},
+        "G1-product": {"type": "string"},
+        "G2-design": {"type": "string"},
+        "G3-readiness": {"type": "string"},
+        "G4-code-security": {"type": "string"},
+        "G5-quality": {"type": "string"},
+        "G6-governance-release": {"type": "string"}
       }
     },
 
@@ -85,6 +97,7 @@
       }
     },
 
-    "updated_at": {"type": "string", "format": "date-time"}
+    "updated_at": {"type": "string", "format": "date-time"},
+    "phase_started_at": {"type": ["string", "null"], "format": "date-time"}
   }
 }

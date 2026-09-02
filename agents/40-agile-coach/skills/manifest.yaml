@@ -1,0 +1,17 @@
+agent: agile-coach
+native:
+- path: agents/40-agile-coach/skills/native/agile-coach-native
+assigned:
+- path: skills/delivery/planning/concise-planning
+- path: skills/delivery/superpowers/using-superpowers
+- path: skills/delivery/superpowers/writing-plans
+- path: skills/delivery/orchestration/closed-loop-delivery
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/agile-coach.md
+  shared: work/<WORK-ID>/memory/shared/summary.md
