@@ -1,0 +1,17 @@
+agent: requirements-analyst
+native:
+- path: agents/01-requirements-analyst/skills/native/requirements-analyst-native
+assigned:
+- path: skills/delivery/superpowers/brainstorming
+- path: skills/memory/agent-memory
+- path: skills/product/business-analyst
+- path: skills/requirements/refine-requirements-stories
+- path: skills/requirements/security-requirement-extraction
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/requirements-analyst.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -1,0 +1,28 @@
+agent: delivery-orchestrator
+native:
+- path: agents/00-delivery-orchestrator/skills/native/delivery-orchestrator-native
+assigned:
+- path: skills/delivery/orchestration/closed-loop-delivery
+- path: skills/delivery/orchestration/govern-agent-handoffs
+- path: skills/delivery/orchestration/orchestrate-sdlc-gates
+- path: skills/delivery/planning/concise-planning
+- path: skills/delivery/superpowers/executing-plans
+- path: skills/delivery/superpowers/using-superpowers
+- path: skills/delivery/superpowers/writing-plans
+- path: skills/delivery/token-efficiency/caveman
+- path: integrations/clone_or_update_repos.py
+- path: integrations/sdlc_role_mapper.py
+- path: integrations/trajectory_refinement_engine.py
+- path: integrations/gitingest.py
+- path: integrations/toon.py
+- path: integrations/zcode_subagents.py
+- path: skills/memory/agent-memory
+- path: skills/memory/conversation-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/delivery-orchestrator.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

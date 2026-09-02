@@ -1,0 +1,5 @@
+interface:
+  display_name: "Delivery Orchestrator Native"
+  short_description: "Coordenar o ciclo completo, selecionar agentes, controlar WIP, validar handoffs e manter o work item íntegro."
+policy:
+  allow_implicit_invocation: true

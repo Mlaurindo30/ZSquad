@@ -1,0 +1,4 @@
+interface:
+  display_name: "Operar Scrum com Kanban"
+  short_description: "Aplica cadência Scrum e fluxo Kanban"
+  default_prompt: "Use $operate-scrum-kanban para planejar a sprint, limitar WIP e acompanhar fluxo e riscos."

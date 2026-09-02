@@ -1,0 +1,18 @@
+agent: product-owner
+native:
+- path: agents/02-product-owner/skills/native/product-owner-native
+assigned:
+- path: skills/delivery/scrum-kanban/operate-scrum-kanban
+- path: skills/memory/agent-memory
+- path: skills/product/business-analyst
+- path: skills/product/product-manager-toolkit
+- path: skills/requirements/refine-requirements-stories
+- path: skills/testing/bdd/behavior-driven-development
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/product-owner.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

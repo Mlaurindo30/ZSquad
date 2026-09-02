@@ -1,0 +1,5 @@
+interface:
+  display_name: "AI Engineer Native"
+  short_description: "Construir aplicações de IA e agentes com contratos de prompt, ferramentas, memória, avaliação e guardrails."
+policy:
+  allow_implicit_invocation: true

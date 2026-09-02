@@ -1,0 +1,5 @@
+interface:
+  display_name: "DevOps and Release Engineer Native"
+  short_description: "Preparar automação, rollout, rollback e evidência de release sem executar mudança externa sem autorização."
+policy:
+  allow_implicit_invocation: true

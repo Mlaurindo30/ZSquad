@@ -1,0 +1,19 @@
+agent: technical-writer
+native:
+- path: agents/19-technical-writer/skills/native/technical-writer-native
+assigned:
+- path: skills/documentation/api-documentation
+- path: skills/documentation/documentation
+- path: skills/documentation/documentation-and-adrs
+- path: skills/documentation/documentation-templates
+- path: skills/engineering/code-documentation/code-documentation-code-explain
+- path: skills/engineering/code-documentation/code-documentation-doc-generate
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/technical-writer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

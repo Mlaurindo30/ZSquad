@@ -1,0 +1,18 @@
+agent: swarm-consensus-coordinator
+native:
+- path: agents/35-swarm-consensus-coordinator/skills/native/swarm-consensus-coordinator-native
+assigned:
+- path: skills/ai/agent-development/ai-agents-architect
+- path: skills/ai/ai-engineering/ai-engineering
+- path: skills/delivery/orchestration/govern-agent-handoffs
+- path: skills/delivery/orchestration/orchestrate-sdlc-gates
+- path: skills/memory/agent-memory
+- path: skills/memory/agent-memory-systems
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/swarm-consensus-coordinator.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

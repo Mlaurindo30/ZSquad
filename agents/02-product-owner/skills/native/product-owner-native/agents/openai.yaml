@@ -1,0 +1,5 @@
+interface:
+  display_name: "Product Owner Native"
+  short_description: "Maximizar valor, ordenar backlog, negociar escopo e registrar aceite ou devolução do produto."
+policy:
+  allow_implicit_invocation: true

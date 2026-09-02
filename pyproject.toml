@@ -1,0 +1,20 @@
+[tool.pytest.ini_options]
+testpaths = ["scripts/tests"]
+markers = [
+  "AC_QUALITY_1: critério BDD para rejeição de alegações sem evidência",
+  "AC_QUALITY_2: critério BDD para ciclo TDD completo",
+]
+
+[tool.coverage.run]
+source = ["scripts", "integrations"]
+branch = true
+omit = [
+  "scripts/tests/*",
+  "integrations/vendor/*",
+  "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 100

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Technical Writer Native"
+  short_description: "Manter documentação de produto, arquitetura, operação e usuário coerente com o que foi entregue."
+policy:
+  allow_implicit_invocation: true

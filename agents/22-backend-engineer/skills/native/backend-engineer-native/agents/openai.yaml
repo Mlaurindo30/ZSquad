@@ -1,0 +1,5 @@
+interface:
+  display_name: "Backend Engineer Native"
+  short_description: "Construir serviços e APIs seguras, resilientes, observáveis e compatíveis com seus contratos."
+policy:
+  allow_implicit_invocation: true

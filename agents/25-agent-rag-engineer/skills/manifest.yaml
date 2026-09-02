@@ -1,0 +1,23 @@
+agent: agent-rag-engineer
+native:
+- path: agents/25-agent-rag-engineer/skills/native/agent-rag-engineer-native
+assigned:
+- path: skills/ai/agent-development/ai-agents-architect
+- path: skills/ai/agent-development/langgraph
+- path: skills/ai/model-evaluation/agent-evaluation
+- path: skills/ai/rag/rag-engineer
+- path: skills/ai/rag/rag-implementation
+- path: skills/data/databricks/databricks-agent-bricks
+- path: skills/data/databricks/databricks-genie-agents
+- path: skills/data/databricks/databricks-unstructured-pdf-generation
+- path: skills/data/databricks/databricks-vector-search
+- path: skills/memory/agent-memory
+- path: skills/memory/agent-memory-systems
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/agent-rag-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -1,0 +1,20 @@
+agent: solution-architect
+native:
+- path: agents/04-solution-architect/skills/native/solution-architect-native
+assigned:
+- path: skills/architecture/api-and-interface-design
+- path: skills/architecture/architecture-decision-records
+- path: skills/architecture/design-evidence-architecture
+- path: skills/architecture/senior-architect
+- path: skills/architecture/software-architecture
+- path: integrations/sdlc_role_mapper.py
+- path: skills/memory/agent-memory
+- path: skills/security/threat-modeling-expert
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/solution-architect.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

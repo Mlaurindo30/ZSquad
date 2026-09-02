@@ -1,0 +1,5 @@
+interface:
+  display_name: "Data and AI Architect Native"
+  short_description: "Desenhar dados, ML, RAG e agentes com governança, avaliação, segurança e custo explícitos."
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,20 @@
+agent: ux-ui-designer
+native:
+- path: agents/20-ux-ui-designer/skills/native/ux-ui-designer-native
+assigned:
+- path: skills/engineering/frontend/frontend-design
+- path: skills/engineering/mobile/mobile-design
+- path: skills/engineering/ui-ux/accessibility-compliance-accessibility-audit
+- path: skills/engineering/ui-ux/design
+- path: skills/engineering/ui-ux/design-system
+- path: skills/engineering/ui-ux/ui-styling
+- path: skills/engineering/ui-ux/ui-ux-pro-max
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/ux-ui-designer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

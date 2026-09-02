@@ -1,0 +1,20 @@
+decision_id: GD-EPIC-000-G2
+gate_id: G2-design
+work_item_id: EPIC-000
+decision: approved
+decider: solution-architect
+criteria:
+  - name: options-compared
+    result: pass
+    note: Alternativas e trade-offs registrados no ADR.
+evidence:
+  - specs/solution-design.md
+  - adr/ADR-EPIC-000-001.md
+human_approval:
+  required: true
+  status: approved
+  approved_by: architecture-stakeholder
+  evidence: reviews/human-approval-G2.md
+conditions: []
+valid_until: null
+decided_at: '2026-01-01T00:00:00Z'

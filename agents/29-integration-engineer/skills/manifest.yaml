@@ -1,0 +1,17 @@
+agent: integration-engineer
+native:
+- path: agents/29-integration-engineer/skills/native/integration-engineer-native
+assigned:
+- path: skills/architecture/api-and-interface-design
+- path: skills/engineering/backend/api-patterns
+- path: skills/memory/agent-memory
+- path: skills/platform/integration/api-integration
+- path: skills/security/api-security-best-practices
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/integration-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -1,0 +1,17 @@
+agent: offensive-cyber-operator
+native:
+- path: agents/34-offensive-cyber-operator/skills/native/offensive-cyber-operator-native
+assigned:
+- path: skills/memory/agent-memory
+- path: skills/security/api-security-best-practices
+- path: skills/security/owasp-security
+- path: skills/security/security-auditor
+- path: skills/security/security-review
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/offensive-cyber-operator.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

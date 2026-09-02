@@ -1,0 +1,16 @@
+agent: performance-engineer
+native:
+- path: agents/28-performance-engineer/skills/native/performance-engineer-native
+assigned:
+- path: skills/data/databricks/databricks-execution-compute
+- path: skills/memory/agent-memory
+- path: skills/platform/observability/observability-engineer
+- path: skills/platform/performance/performance-engineer
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/performance-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

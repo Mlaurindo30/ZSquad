@@ -1,0 +1,43 @@
+name: Squad Verification CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+          pip check
+
+      - name: Validate squad structure
+        run: python scripts/validate_structure.py
+
+      - name: Audit agent squad
+        run: python scripts/agent_squad.py audit
+
+      - name: Verify first-party clean code
+        run: python scripts/verify_clean_code.py scripts/*.py integrations/*.py
+
+      - name: Run tests with full first-party branch coverage
+        run: python -m pytest scripts/tests/ --cov --cov-report=term-missing
+
+      - name: Verify security guardrails
+        run: python scripts/audit_security_guardrails.py --target scripts

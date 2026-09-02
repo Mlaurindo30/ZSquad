@@ -1,0 +1,5 @@
+interface:
+  display_name: "SRE and Observability Engineer Native"
+  short_description: "Definir SLI/SLO, telemetria, alertas, capacidade e resposta a incidentes."
+policy:
+  allow_implicit_invocation: true

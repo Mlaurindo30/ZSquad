@@ -1,0 +1,24 @@
+agent: data-engineer
+native:
+- path: agents/07-data-engineer/skills/native/data-engineer-native
+assigned:
+- path: skills/data/data-engineering/airflow-dag-patterns
+- path: skills/data/data-engineering/data-engineer
+- path: skills/data/data-engineering/data-engineering-data-pipeline
+- path: skills/data/data-engineering/data-quality-frameworks
+- path: skills/data/data-engineering/dbt-transformation-patterns
+- path: skills/data/databricks/databricks-iceberg
+- path: skills/data/databricks/databricks-jobs
+- path: skills/data/databricks/databricks-lakeflow-connect
+- path: skills/data/databricks/databricks-pipelines
+- path: skills/data/databricks/databricks-spark-structured-streaming
+- path: skills/data/databricks/databricks-zerobus-ingest
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/data-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

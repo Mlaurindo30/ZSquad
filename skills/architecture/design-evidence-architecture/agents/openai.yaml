@@ -1,0 +1,4 @@
+interface:
+  display_name: "Projetar arquitetura com evidências"
+  short_description: "Produz desenho, ADRs, riscos e testes"
+  default_prompt: "Use $design-evidence-architecture para desenhar a solução, registrar trade-offs e definir evidências."

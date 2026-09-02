@@ -1,0 +1,44 @@
+# Rollback Plan & SRE Incident Automation Contract
+# Schema Version: 1.0.0
+
+work_item_id: "REL-000"
+environment: "production" # staging | production | canary
+service_name: "core-service"
+owner_persona: "13-devops-release-engineer"
+sre_persona: "26-sre-observability-engineer"
+
+triggers:
+  - id: "high_error_rate_5xx"
+    metric: "http_requests_5xx_ratio"
+    threshold: "> 0.01" # 1% de erros 5xx
+    window_seconds: 60
+    action: "immediate_rollback"
+
+  - id: "latency_p99_spike"
+    metric: "http_request_duration_p99_seconds"
+    threshold: "> 0.500" # p99 > 500ms
+    window_seconds: 120
+    action: "drain_canary_traffic"
+
+  - id: "health_check_consecutive_failures"
+    metric: "health_check_failed_count"
+    threshold: ">= 3"
+    window_seconds: 30
+    action: "immediate_rollback"
+
+rollback_procedure:
+  steps:
+    - step: 1
+      action: "Roteamento de tráfego de volta para versão estável anterior (blue/green ou canary 0%)."
+      command: "kubectl rollout undo deployment/core-service"
+    - step: 2
+      action: "Validação de drenagem de conexões e encerramento seguro de pods afetados."
+      command: "kubectl get pods -l app=core-service"
+    - step: 3
+      action: "Geração automática de work item de incidente via SRE Incident Loop."
+      command: "python scripts/sre_incident_loop.py --alert high_error_rate_5xx --service core-service"
+
+verification_post_rollback:
+  - "Garantir taxa de erro 5xx < 0.05%"
+  - "Garantir p99 < 200ms"
+  - "Emitir relatório pós-incidente (Post-Mortem) via 26-sre-observability-engineer"

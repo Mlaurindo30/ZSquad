@@ -1,0 +1,17 @@
+agent: sre-observability-engineer
+native:
+- path: agents/26-sre-observability-engineer/skills/native/sre-observability-engineer-native
+assigned:
+- path: skills/memory/agent-memory
+- path: skills/platform/observability/observability-engineer
+- path: skills/platform/performance/performance-engineer
+- path: skills/platform/sre/incident-responder
+- path: skills/platform/sre/slo-implementation
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/sre-observability-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

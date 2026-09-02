@@ -1,0 +1,19 @@
+agent: platform-engineer
+native:
+- path: agents/27-platform-engineer/skills/native/platform-engineer-native
+assigned:
+- path: integrations/procedural_skill_engine.py
+- path: integrations/zcode_subagents.py
+- path: skills/memory/agent-memory
+- path: skills/platform/containers/docker-expert
+- path: skills/platform/containers/kubernetes-architect
+- path: skills/platform/devops/ci-cd-and-automation
+- path: skills/platform/iac/terraform-specialist
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/platform-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

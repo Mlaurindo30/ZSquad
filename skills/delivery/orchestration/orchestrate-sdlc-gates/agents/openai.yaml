@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orquestrar gates do SDLC"
+  short_description: "Coordena agentes, gates e ciclos de feedback"
+  default_prompt: "Use $orchestrate-sdlc-gates para coordenar esta entrega com handoffs e gates verificáveis."

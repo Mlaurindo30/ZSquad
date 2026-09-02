@@ -1,0 +1,5 @@
+interface:
+  display_name: "Test Engineer Native"
+  short_description: "Planejar testes por risco antes da implementação e manter rastreabilidade requisito-teste."
+policy:
+  allow_implicit_invocation: true

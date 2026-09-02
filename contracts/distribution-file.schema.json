@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-squad.local/contracts/distribution-file.schema.json",
+  "title": "Agents Squad 2.0 distribution FileRecord",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "sha256", "size", "origin", "source_revision", "classification", "treatment", "lifecycle", "executable", "license", "sensitivity", "owner", "reason", "destination"],
+  "properties": {
+    "path": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "size": {"type": "integer", "minimum": 0},
+    "origin": {"enum": ["agents-squad-baseline", "agents-squad-2.0", "xquads-snapshot", "generated-local"]},
+    "source_revision": {"type": "string", "minLength": 1},
+    "classification": {"enum": ["core", "adapter", "module", "doc", "test", "tooling", "archive"]},
+    "treatment": {"enum": ["new", "adapted", "reused", "generated"]},
+    "lifecycle": {"enum": ["runtime", "release-evidence", "historical", "transient"]},
+    "executable": {"type": "boolean"},
+    "license": {"type": "string", "minLength": 1},
+    "sensitivity": {"enum": ["public", "internal", "restricted", "unknown"]},
+    "owner": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "destination": {"enum": ["distribution", "archive", "excluded"]}
+  }
+}

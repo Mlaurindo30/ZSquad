@@ -1,0 +1,33 @@
+id: example-governed-workflow
+version: 1
+state: proposed
+enabled: false
+title: Example governed workflow
+owner_persona: delivery-orchestrator
+squad_id: example-squad
+type: sequential-with-handoff
+maximum_links: 1
+inputs: [approved-brief]
+outputs: [validated-result]
+steps:
+  - id: produce-result
+    owner_persona: delivery-orchestrator
+    task_template: example-governed-task
+    depends_on: []
+    condition: null
+    checkpoint:
+      criteria: [result-produced]
+      evidence_required: [artifact-reference]
+    failure_route: blocked
+recovery:
+  checkpointed: true
+  idempotent_resume: true
+  rollback: Disable the proposed template and preserve its evidence.
+governance:
+  gates: [G2-design, G5-quality]
+  author_cannot_approve_own_artifact: true
+  human_approval_when_required: true
+provenance:
+  kind: adapted
+  source_refs: [XSQ-0571108-WORKFLOW-0001]
+  disposition_refs: [DISP-XQ-WORKFLOW-0001]

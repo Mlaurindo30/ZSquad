@@ -1,0 +1,36 @@
+id: example-squad
+title: Example proposed squad
+version: 1
+state: proposed
+enabled: false
+mission: Compose reviewed capabilities without granting additional authority.
+virtual_chief:
+  role: example-squad-chief
+  persona: delivery-orchestrator
+  persona_state: existing
+primary_members: [delivery-orchestrator]
+secondary_members: []
+routing:
+  domains: [example]
+  intents: [classify]
+  keywords: []
+  not_for: [production-execution]
+  tie_breakers:
+    - Use only when a reviewed disposition maps the request to this squad.
+  allowed_next_squads: []
+composition:
+  wip_limit: 1
+  one_active_chief: true
+  author_cannot_approve_own_artifact: true
+  risk_high_or_critical_total: 1
+quality:
+  required_inputs: [approved-brief]
+  required_outputs: [evidenced-result]
+  independent_review_by: [governance-auditor]
+  prohibited_actions: [approve-own-artifact]
+workflows: []
+provenance:
+  kind: adapted
+  source_refs: [XSQ-0571108-SQUAD-0001]
+  disposition_refs: [DISP-XQ-SQUAD-0001]
+  generated_from: null

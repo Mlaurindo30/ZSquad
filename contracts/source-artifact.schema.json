@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agents-squad.local/contracts/source-artifact.schema.json",
+  "title": "Agents Squad source artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["source_item_id", "source_type", "source_catalog", "source_revision", "source_squad", "source_path", "source_hash", "source_name", "source_state", "disposition", "runtime_targets", "evidence_refs", "provenance"],
+  "properties": {
+    "source_item_id": {"type": "string", "pattern": "^XSQ-[A-Fa-f0-9]{7,40}-(SQUAD|PERSONA|TASK|WORKFLOW|CHECKLIST|DATA|CONFIG)-[0-9]{4}$"},
+    "source_type": {"enum": ["squad", "persona", "task", "workflow", "checklist", "data", "config"]},
+    "source_catalog": {"const": "xquads"},
+    "source_revision": {"type": "string", "pattern": "^[A-Fa-f0-9]{40}$"},
+    "source_squad": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "source_path": {"type": "string", "minLength": 3, "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "source_hash": {"type": "string", "pattern": "^sha256:[A-Fa-f0-9]{64}$"},
+    "source_name": {"type": "string", "minLength": 1},
+    "source_state": {"const": "source"},
+    "disposition": {"enum": ["pending", "source", "adapt", "fuse", "reject", "proposed", "promoted"]},
+    "runtime_targets": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "captured_at", "executable", "bytes_preserved"],
+      "properties": {
+        "origin": {"type": "string", "minLength": 1},
+        "captured_at": {"type": "string", "format": "date-time"},
+        "executable": {"const": false},
+        "bytes_preserved": {"type": "boolean"}
+      }
+    }
+  }
+}

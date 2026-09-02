@@ -1,0 +1,22 @@
+agent: security-reviewer
+native:
+- path: agents/10-security-reviewer/skills/native/security-reviewer-native
+assigned:
+- path: skills/memory/agent-memory
+- path: skills/platform/devops/ci-cd-and-automation
+- path: skills/security/api-security-best-practices
+- path: skills/security/dependency-management-deps-audit
+- path: skills/security/gha-security-review
+- path: skills/security/owasp-security
+- path: skills/security/security-auditor
+- path: skills/security/security-review
+- path: skills/security/security-review-gates
+- path: skills/security/threat-modeling-expert
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/security-reviewer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

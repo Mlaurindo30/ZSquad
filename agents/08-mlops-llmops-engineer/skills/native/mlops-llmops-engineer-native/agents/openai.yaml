@@ -1,0 +1,5 @@
+interface:
+  display_name: "MLOps and LLMOps Engineer Native"
+  short_description: "Versionar, avaliar, instrumentar e monitorar modelos, prompts, agentes e traces."
+policy:
+  allow_implicit_invocation: true

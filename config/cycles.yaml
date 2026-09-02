@@ -1,0 +1,141 @@
+version: 1
+managed_by: agents-squad
+default_cycle: development
+# Um ciclo por função do pedido. Novas funções entram como novas entradas aqui,
+# sem alterar prompts: o orquestrador identifica a função e segue o ciclo correspondente.
+cycles:
+  development:
+    description: Ciclo completo de entrega de software (Spec-Driven com gates proporcionais).
+    entry: blueprint
+    source: config/workflow.yaml
+    states:
+      - blueprint         # BDD: especificação nasce aqui
+      - scaffolding       # testes RED pré-escritos
+      - implementation    # TDD: red-green-refactor, teste falhando primeiro
+      - code-security-review
+      - quality-validation
+      - governance-release
+      - done
+    practices:
+      blueprint:
+        - bdd-specification-valid       # GT-entry
+      scaffolding:
+        - tests-red-exist-and-fail      # GT-design-review
+      implementation:
+        - tdd-cycle-valid               # GT-done
+        - tests-green                   # GT-done
+      code-security-review:
+        - security-executed             # G4-code-security
+        - spec-conformance              # G4-code-security
+      quality-validation:
+        - acceptance-bdd-executed       # G5-quality
+        - regression-executed           # G5-quality
+        - coverage-executed             # G5-quality
+      governance-release:
+        - traceability-complete         # G6-governance-release
+        - rollout-rollback-ready        # G6-governance-release
+  user-story:
+    description: Golden Path completo de User Story (PO -> UX -> Agile Coach -> UI -> Code -> QA).
+    entry: blueprint
+    source: config/workflow.yaml
+    states:
+      - blueprint
+      - scaffolding
+      - implementation
+      - code-security-review
+      - quality-validation
+      - governance-release
+      - done
+  new-project:
+    description: Setup & Architecture para novos projetos.
+    entry: blueprint
+    source: config/workflow.yaml
+    states:
+      - blueprint
+      - scaffolding
+      - done
+  bugfix:
+    description: Correção expressa de incidente.
+    entry: implementation
+    source: config/workflow.yaml
+    states:
+      - implementation
+      - code-security-review
+      - quality-validation
+      - governance-release
+      - done
+  spike:
+    description: Investigação time-boxed para reduzir incerteza técnica. Sem quality/gov; foco em "achado documentado".
+    entry: blueprint
+    source: config/workflow.yaml
+    timeboxes:
+      blueprint: 3d
+    states:
+      - blueprint
+      - done
+    practices:
+      blueprint:
+        - timebox-defined
+        - question-stated
+        - finding-documented
+  release:
+    description: Corte de versão e rollout. Foco em change-record, rollout/rollback ready.
+    entry: implementation
+    source: config/workflow.yaml
+    timeboxes:
+      implementation: 5d
+    states:
+      - implementation
+      - code-security-review
+      - governance-release
+      - done
+    practices:
+      implementation:
+        - rollout-plan-defined
+        - rollback-plan-defined
+        - runbook-updated
+      governance-release:
+        - change-record-created
+  evolution:
+    description: Mudança de longo prazo (deprecation, migration, breaking change). ADR + blast radius + deprecation strategy obrigatórios.
+    entry: blueprint
+    source: config/workflow.yaml
+    states:
+      - blueprint
+      - scaffolding
+      - implementation
+      - code-security-review
+      - quality-validation
+      - governance-release
+      - done
+    practices:
+      blueprint:
+        - adr-recorded
+        - blast-radius-defined
+        - deprecation-strategy-defined
+        - migration-plan-defined
+  incident:
+    description: SRE incident (runbook, comms, blameless postmortem). Sem quality formal; postmortem obrigatório.
+    entry: triage
+    gate_bypass: true  # Incident triage/mitigation/postmortem bypass G1-G6 gates; practices are SRE-specific, not gate criteria
+    source: config/workflow.yaml
+    states:
+      - triage
+      - mitigation
+      - postmortem
+      - done
+    timeboxes:
+      triage: 15m
+      mitigation: 4h
+      postmortem: 5d
+    practices:
+      triage:
+        - severity-classified
+        - comms-published
+        - on-call-paged
+      mitigation:
+        - runbook-followed
+        - service-restored-or-degraded-acceptable
+      postmortem:
+        - blameless-postmortem-recorded
+        - action-items-tracked

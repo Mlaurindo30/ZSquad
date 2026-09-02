@@ -1,0 +1,20 @@
+agent: ml-engineer
+native:
+- path: agents/24-ml-engineer/skills/native/ml-engineer-native
+assigned:
+- path: skills/ai/model-evaluation/advanced-evaluation
+- path: skills/data/databricks/databricks-ml-training
+- path: skills/data/databricks/databricks-model-serving
+- path: skills/data/mlflow/analyzing-mlflow-trace
+- path: skills/data/mlflow/instrumenting-with-mlflow-tracing
+- path: skills/data/mlflow/mlflow-agent
+- path: skills/data/mlflow/querying-mlflow-metrics
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/ml-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

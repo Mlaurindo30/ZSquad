@@ -1,0 +1,4 @@
+interface:
+  display_name: "Governar handoffs de agentes"
+  short_description: "Valida contratos, rastreabilidade e aprovações"
+  default_prompt: "Use $govern-agent-handoffs para auditar handoffs, evidências, aprovações e rastreabilidade."

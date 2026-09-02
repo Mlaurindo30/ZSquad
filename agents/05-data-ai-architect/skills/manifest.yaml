@@ -1,0 +1,23 @@
+agent: data-ai-architect
+native:
+- path: agents/05-data-ai-architect/skills/native/data-ai-architect-native
+assigned:
+- path: skills/ai/agent-development/ai-agents-architect
+- path: skills/ai/ai-engineering/ai-engineering
+- path: skills/ai/model-evaluation/agent-evaluation
+- path: skills/ai/rag/rag-engineer
+- path: skills/data/data-architecture/database-architect
+- path: skills/data/data-architecture/database-design
+- path: skills/data/databricks/databricks-core
+- path: skills/data/databricks/databricks-unity-catalog
+- path: integrations/codebase_knowledge_graph.py
+- path: integrations/code_health_analyzer.py
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/data-ai-architect.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

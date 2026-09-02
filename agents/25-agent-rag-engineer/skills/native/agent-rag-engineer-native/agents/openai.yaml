@@ -1,0 +1,5 @@
+interface:
+  display_name: "Agent and RAG Engineer Native"
+  short_description: "Construir agentes e RAG com recuperação, memória, tools e orquestração avaliáveis."
+policy:
+  allow_implicit_invocation: true

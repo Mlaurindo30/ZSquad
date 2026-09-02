@@ -1,0 +1,5 @@
+interface:
+  display_name: "UX and UI Designer Native"
+  short_description: "Converter jornadas e requisitos em experiência acessível, consistente e testável."
+policy:
+  allow_implicit_invocation: true

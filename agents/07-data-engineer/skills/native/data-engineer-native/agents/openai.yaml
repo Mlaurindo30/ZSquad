@@ -1,0 +1,5 @@
+interface:
+  display_name: "Data Engineer Native"
+  short_description: "Construir pipelines confiáveis, idempotentes, observáveis e governados."
+policy:
+  allow_implicit_invocation: true

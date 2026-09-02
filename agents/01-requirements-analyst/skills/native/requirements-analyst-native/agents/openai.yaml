@@ -1,0 +1,5 @@
+interface:
+  display_name: "Requirements Analyst Native"
+  short_description: "Transformar uma necessidade do usuário em problema validado, requisitos, épicos e histórias testáveis."
+policy:
+  allow_implicit_invocation: true

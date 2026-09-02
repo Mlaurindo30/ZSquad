@@ -1,0 +1,5 @@
+interface:
+  display_name: "Governance Auditor Native"
+  short_description: "Auditar rastreabilidade, segregação de função, decisões, exceções e completude das evidências."
+policy:
+  allow_implicit_invocation: true

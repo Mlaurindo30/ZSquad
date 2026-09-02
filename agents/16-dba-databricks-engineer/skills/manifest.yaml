@@ -1,0 +1,46 @@
+agent: dba-databricks-engineer
+native:
+- path: agents/16-dba-databricks-engineer/skills/native/dba-databricks-engineer-native
+assigned:
+- path: skills/data/database-administration/postgres-best-practices
+- path: skills/data/database-administration/sql-pro
+- path: skills/data/databricks/azure-databricks
+- path: skills/data/databricks/databricks-agent-bricks
+- path: skills/data/databricks/databricks-ai-functions
+- path: skills/data/databricks/databricks-aibi-dashboards
+- path: skills/data/databricks/databricks-app-design
+- path: skills/data/databricks/databricks-apps
+- path: skills/data/databricks/databricks-apps-python
+- path: skills/data/databricks/databricks-core
+- path: skills/data/databricks/databricks-dabs
+- path: skills/data/databricks/databricks-data-discovery
+- path: skills/data/databricks/databricks-dbsql
+- path: skills/data/databricks/databricks-docs
+- path: skills/data/databricks/databricks-execution-compute
+- path: skills/data/databricks/databricks-genie-agents
+- path: skills/data/databricks/databricks-iceberg
+- path: skills/data/databricks/databricks-jobs
+- path: skills/data/databricks/databricks-lakebase
+- path: skills/data/databricks/databricks-lakeflow-connect
+- path: skills/data/databricks/databricks-metric-views
+- path: skills/data/databricks/databricks-ml-training
+- path: skills/data/databricks/databricks-mlflow-evaluation
+- path: skills/data/databricks/databricks-model-serving
+- path: skills/data/databricks/databricks-pipelines
+- path: skills/data/databricks/databricks-python-sdk
+- path: skills/data/databricks/databricks-serverless-migration
+- path: skills/data/databricks/databricks-spark-structured-streaming
+- path: skills/data/databricks/databricks-synthetic-data-gen
+- path: skills/data/databricks/databricks-unity-catalog
+- path: skills/data/databricks/databricks-unstructured-pdf-generation
+- path: skills/data/databricks/databricks-vector-search
+- path: skills/data/databricks/databricks-zerobus-ingest
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/dba-databricks-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

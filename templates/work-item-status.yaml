@@ -1,0 +1,12 @@
+id: EPIC-000
+type: epic
+state: discovery
+risk: medium
+owner: delivery-orchestrator
+active_agents: [requirements-analyst]
+current_gate: null
+next_action: Concluir discovery e histórias iniciais.
+artifacts:
+  - epic.md
+  - stories/US-000.md
+updated_at: '2026-01-01T00:00:00Z'

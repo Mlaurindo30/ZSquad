@@ -1,0 +1,19 @@
+agent: backend-engineer
+native:
+- path: agents/22-backend-engineer/skills/native/backend-engineer-native
+assigned:
+- path: skills/engineering/backend/api-patterns
+- path: skills/engineering/backend/backend-architect
+- path: skills/engineering/backend/backend-dev-guidelines
+- path: skills/engineering/clean-code/clean-code
+- path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/memory/agent-memory
+- path: skills/security/api-security-best-practices
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/backend-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

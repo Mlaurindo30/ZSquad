@@ -1,0 +1,19 @@
+agent: governance-auditor
+native:
+- path: agents/14-governance-auditor/skills/native/governance-auditor-native
+assigned:
+- path: skills/delivery/orchestration/govern-agent-handoffs
+- path: skills/delivery/orchestration/orchestrate-sdlc-gates
+- path: skills/documentation/documentation-and-adrs
+- path: skills/engineering/clean-code/verification-before-completion
+- path: skills/memory/agent-memory
+- path: skills/security/security-auditor
+- path: skills/security/security-review-gates
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/governance-auditor.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

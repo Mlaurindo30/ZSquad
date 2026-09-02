@@ -1,0 +1,20 @@
+agent: code-reviewer
+native:
+- path: agents/09-code-reviewer/skills/native/code-reviewer-native
+assigned:
+- path: skills/engineering/clean-code/clean-code-guard
+- path: skills/engineering/clean-code/verification-before-completion
+- path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/engineering/code-documentation/code-documentation-code-explain
+- path: skills/engineering/code-documentation/code-documentation-doc-generate
+- path: skills/engineering/review/code-review-checklist
+- path: skills/engineering/review/code-review-excellence
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/code-reviewer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

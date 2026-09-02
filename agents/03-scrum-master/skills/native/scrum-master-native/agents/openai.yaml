@@ -1,0 +1,5 @@
+interface:
+  display_name: "Scrum Master e Flow Manager Native"
+  short_description: "Operar Scrum com fluxo Kanban, proteger limites de WIP e tornar impedimentos e envelhecimento visíveis."
+policy:
+  allow_implicit_invocation: true

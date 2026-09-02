@@ -1,0 +1,5 @@
+interface:
+  display_name: "Machine Learning Engineer Native"
+  short_description: "Construir e validar pipelines de treino, features, modelos e serving reproduzíveis."
+policy:
+  allow_implicit_invocation: true

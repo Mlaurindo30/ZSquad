@@ -1,0 +1,35 @@
+route_id: ROUTE-EPIC-SQUAD-EVOLUTION-20260818-001
+work_item_id: EPIC-SQUAD-EVOLUTION-20260818
+schema_version: 1
+catalog_version: 1
+state: diagnosing
+router: delivery-orchestrator
+created_at: '2026-08-19T00:00:00Z'
+updated_at: '2026-08-19T00:00:00Z'
+request_fingerprint: sha256:0000000000000000000000000000000000000000000000000000000000000000
+normalized_intent: Classify a governed work request.
+risk: medium
+mode: full
+candidates: []
+confidence: 0
+confidence_band: low
+facts: []
+assumptions: []
+out_of_scope: []
+disambiguation:
+  questions_asked: 0
+  question: null
+  answer: null
+selected_squad: null
+chain:
+  maximum_links: 5
+  current_link: null
+  links: []
+reroutes: []
+authorization:
+  required: false
+  reference: null
+  blocked_reason: null
+source_refs:
+  - config/squad-registry.yaml
+routing_verdict_ref: null

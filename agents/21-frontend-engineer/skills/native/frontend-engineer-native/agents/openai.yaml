@@ -1,0 +1,5 @@
+interface:
+  display_name: "Frontend Engineer Native"
+  short_description: "Construir interfaces acessíveis, responsivas, testáveis e alinhadas ao contrato de API e design."
+policy:
+  allow_implicit_invocation: true

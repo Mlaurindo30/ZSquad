@@ -1,0 +1,5 @@
+interface:
+  display_name: "Skill Curator Native"
+  short_description: "Descobrir, baixar, inspecionar, licenciar, testar, promover ou colocar skills em quarentena."
+policy:
+  allow_implicit_invocation: true

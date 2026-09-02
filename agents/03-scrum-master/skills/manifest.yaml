@@ -1,0 +1,15 @@
+agent: scrum-master
+native:
+- path: agents/03-scrum-master/skills/native/scrum-master-native
+assigned:
+- path: skills/delivery/planning/planning-with-files
+- path: skills/delivery/scrum-kanban/operate-scrum-kanban
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/scrum-master.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

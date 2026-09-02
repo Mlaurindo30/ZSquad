@@ -1,0 +1,5 @@
+interface:
+  display_name: "Solution Architect Native"
+  short_description: "Converter requisitos aprovados em uma solução verificável, segura, evolutiva e reversível."
+policy:
+  allow_implicit_invocation: true

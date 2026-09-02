@@ -1,0 +1,5 @@
+interface:
+  display_name: "Software Engineer Native"
+  short_description: "Implementar incrementos pequenos, limpos, padronizados, comentados, testados e observáveis."
+policy:
+  allow_implicit_invocation: true

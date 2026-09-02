@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "codebase-memory": {
+      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "-m",
+        "codebase_memory_mcp"
+      ],
+      "env": {
+        "PYTHONPATH": "C:/Users/miche/OneDrive/Documentos/agent_squad/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
+      },
+      "description": "High-performance persistent structural symbol knowledge graph.",
+      "tools": [
+        "query_symbol",
+        "find_callers",
+        "find_dependencies"
+      ]
+    },
+    "sinapse-hivemind": {
+      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "args": [
+        "D:/Hive-Mind/scripts/services/sinapse-mcp.py"
+      ],
+      "description": "Global durable semantic memory bridge for Hive-Mind vault.",
+      "tools": [
+        "sinapse_health",
+        "sinapse_query",
+        "sinapse_save_decision",
+        "sinapse_save_learning",
+        "sinapse_session_end",
+        "sinapse_temporal_search",
+        "sinapse_temporal_timeline",
+        "sinapse_temporal_get_observations",
+        "sinapse_temporal_save",
+        "sinapse_zettelkasten_split",
+        "sinapse_capture_screen",
+        "sinapse_plan_goal",
+        "sinapse_promote_knowledge",
+        "sinapse_temporal_graph_search",
+        "sinapse_rag_query",
+        "search_memories"
+      ]
+    }
+  }
+}

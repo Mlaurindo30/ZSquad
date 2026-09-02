@@ -1,0 +1,11 @@
+id: MEM-EPIC-000-001
+work_item_id: EPIC-000
+author: requirements-analyst
+recorded_at: '2026-01-01T00:00:00Z'
+entries:
+  - kind: fact
+    statement: Fato confirmado e útil ao próximo agente.
+    source: discovery/brief.md
+    confidence: high
+    sensitivity: internal
+    invalidates_when: null

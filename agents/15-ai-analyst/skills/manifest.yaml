@@ -1,0 +1,22 @@
+agent: ai-analyst
+native:
+- path: agents/15-ai-analyst/skills/native/ai-analyst-native
+assigned:
+- path: skills/ai/ai-analysis/ai-analysis
+- path: skills/ai/model-evaluation/agent-evaluation
+- path: skills/ai/model-evaluation/llm-evaluation
+- path: skills/data/databricks/databricks-aibi-dashboards
+- path: skills/data/databricks/databricks-data-discovery
+- path: skills/data/databricks/databricks-metric-views
+- path: skills/data/mlflow/analyzing-mlflow-trace
+- path: skills/data/mlflow/querying-mlflow-metrics
+- path: skills/data/mlflow/retrieving-mlflow-traces
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/ai-analyst.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

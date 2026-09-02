@@ -1,0 +1,16 @@
+version: 1
+kind: project-squad-provenance
+created_at: '2026-08-19T15:00:00-03:00'
+source:
+  path: C:/Users/miche/OneDrive/Documentos/.agents_squad
+  git_history_copied: false
+governance:
+  workflow: config/workflow.yaml
+  registry: config/agent-registry.yaml
+  operating_contract: agents/_shared/OPERATING_CONTRACT.md
+  memory_contract: agents/_shared/MEMORY_CONTRACT.md
+constraints:
+  - Keep work-item state, evidence, handoffs, memory and gates authoritative.
+  - Require executed evidence before claiming completion.
+  - Segregation of duties enforced at risk >= medium.
+  - Never request, store or expose chain-of-thought.

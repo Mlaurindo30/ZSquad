@@ -1,0 +1,15 @@
+agent: growth-marketing-strategist
+native:
+- path: agents/32-growth-marketing-strategist/skills/native/growth-marketing-strategist-native
+assigned:
+- path: skills/ai/ai-analysis/ai-analysis
+- path: skills/memory/agent-memory
+- path: skills/product/product-manager-toolkit
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/growth-marketing-strategist.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

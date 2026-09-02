@@ -1,0 +1,5 @@
+interface:
+  display_name: "DBA and Databricks Engineer Native"
+  short_description: "Administrar bancos e lakehouse com segurança, desempenho, governança, backup e recuperação."
+policy:
+  allow_implicit_invocation: true

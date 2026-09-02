@@ -1,0 +1,24 @@
+disposition_id: DISP-XQ-PERSONA-0001
+source_item_id: XSQ-0571108-PERSONA-0001
+source_type: persona
+state: source
+decision: Await the complete persona census.
+reason: No runtime cardinality is decided before the 170 of 170 census.
+capabilities: []
+runtime_targets: []
+risks: []
+evidence_refs:
+  - source/xquads/0571108/personas/XSQ-0571108-PERSONA-0001.yaml
+author: skill-curator
+review:
+  required: true
+  status: not_started
+  reviewer: null
+  evidence_refs: []
+recorded_at: '2026-08-19T00:00:00Z'
+provenance:
+  kind: source
+  source_refs:
+    - XSQ-0571108-PERSONA-0001
+  input_hashes:
+    - sha256:0000000000000000000000000000000000000000000000000000000000000000

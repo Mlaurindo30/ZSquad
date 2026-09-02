@@ -1,0 +1,15 @@
+agent: storytelling-strategist
+native:
+- path: agents/33-storytelling-strategist/skills/native/storytelling-strategist-native
+assigned:
+- path: skills/documentation/documentation
+- path: skills/memory/agent-memory
+- path: skills/product/product-manager-toolkit
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/storytelling-strategist.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

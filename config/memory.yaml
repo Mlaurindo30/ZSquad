@@ -1,0 +1,19 @@
+version: 1
+model: private-shared-episodic-semantic
+locations:
+  private: work/<WORK-ID>/memory/agents/<AGENT-ID>.md
+  shared: work/<WORK-ID>/memory/shared/summary.md
+  deltas: work/<WORK-ID>/memory/deltas/MEM-<SEQ>.yaml
+  episodic: work/<WORK-ID>/handoffs
+  durable: docs/knowledge
+promotion:
+  proposer: any-active-agent
+  validator: delivery-orchestrator
+  durable_reviewers: [skill-curator, governance-auditor, domain-owner]
+required_metadata: [source, recorded_at, confidence, sensitivity, invalidates_when]
+forbidden: [credentials, tokens, unnecessary_personal_data, unverified_claim_as_fact]
+retention:
+  private: work-item-lifetime
+  shared: work-item-lifetime
+  episodic: repository-policy
+  durable: version-controlled

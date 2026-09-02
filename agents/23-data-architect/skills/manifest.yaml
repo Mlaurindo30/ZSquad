@@ -1,0 +1,19 @@
+agent: data-architect
+native:
+- path: agents/23-data-architect/skills/native/data-architect-native
+assigned:
+- path: skills/data/data-architecture/database-architect
+- path: skills/data/data-architecture/database-design
+- path: skills/data/data-engineering/data-quality-frameworks
+- path: skills/data/database-administration/postgres-best-practices
+- path: skills/data/database-administration/sql-pro
+- path: skills/data/databricks/databricks-unity-catalog
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/data-architect.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

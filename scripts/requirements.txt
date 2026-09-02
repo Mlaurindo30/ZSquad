@@ -1,0 +1,2 @@
+-r ../requirements.txt
+-e ./integrations/vendor/codebase-memory-mcp/pkg/pypi/

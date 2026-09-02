@@ -1,0 +1,4 @@
+interface:
+  display_name: "Refinar requisitos e histórias"
+  short_description: "Transforma necessidades em histórias testáveis"
+  default_prompt: "Use $refine-requirements-stories para converter esta necessidade em histórias INVEST e critérios de aceite."

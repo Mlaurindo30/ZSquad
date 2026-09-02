@@ -1,0 +1,16 @@
+agent: brand-strategist
+native:
+- path: agents/30-brand-strategist/skills/native/brand-strategist-native
+assigned:
+- path: skills/engineering/ui-ux/design
+- path: skills/engineering/ui-ux/ui-ux-pro-max
+- path: skills/memory/agent-memory
+- path: skills/product/product-manager-toolkit
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/brand-strategist.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Data Architect Native"
+  short_description: "Definir modelo, contratos, governança, lineage e evolução do patrimônio de dados."
+policy:
+  allow_implicit_invocation: true

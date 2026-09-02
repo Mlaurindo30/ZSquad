@@ -1,0 +1,22 @@
+agent: frontend-engineer
+native:
+- path: agents/21-frontend-engineer/skills/native/frontend-engineer-native
+assigned:
+- path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/engineering/frontend/frontend-design
+- path: skills/engineering/frontend/frontend-developer
+- path: skills/engineering/frontend/nextjs-best-practices
+- path: skills/engineering/frontend/react-best-practices
+- path: skills/engineering/mobile/mobile-design
+- path: skills/engineering/mobile/mobile-developer
+- path: skills/engineering/ui-ux/accessibility-compliance-accessibility-audit
+- path: skills/engineering/ui-ux/ui-styling
+- path: skills/memory/agent-memory
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/frontend-engineer.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

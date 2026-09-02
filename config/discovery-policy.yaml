@@ -1,0 +1,38 @@
+version: 1
+strategy: local-first-curated
+runtime_limits:
+  maximum_discovered_skills_per_agent: 3
+  maximum_total_skills_loaded_per_agent: 7
+  network_discovery_requires: skill-curator
+# Ordem de resolução em runtime. Intake e quarentena não aparecem aqui:
+# são etapas do pipeline de curadoria, não fontes carregáveis por agente.
+resolution_order:
+  - agent-native
+  - assigned-local
+  - approved-catalog
+intake:
+  path: skills/discovery/intake
+  quarantine: skills/discovery/quarantine
+  # Acessível apenas ao skill-curator, fora do runtime dos demais agentes.
+  accessible_by: skill-curator
+  temporary_retention_days: 7
+  required_checks:
+    - source-and-version
+    - checksum
+    - license
+    - prompt-injection
+    - executable-and-permissions
+    - secret-and-network-behavior
+    - overlap-and-context-cost
+    - activation-test
+promotion:
+  decision_record: skills/discovery/reviews/SKILL-<ID>.md
+  allowed_status: [approved, rejected, quarantined, superseded]
+  approved_destination: skills/<DOMAIN>/<SPECIALIZATION>/<SKILL-NAME>
+  rejected_action: remove-content-keep-decision-record
+prohibitions:
+  - direct-agent-download
+  - runtime-use-from-intake
+  - runtime-use-from-quarantine
+  - unlicensed-redistribution
+  - silent-auto-update

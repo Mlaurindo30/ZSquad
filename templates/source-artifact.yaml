@@ -1,0 +1,17 @@
+source_item_id: XSQ-0571108-PERSONA-0001
+source_type: persona
+source_catalog: xquads
+source_revision: 05711088e9e35483f49e431b6699f62ff243fe3f
+source_squad: xquads
+source_path: xquads/agents/xquads-chief.md
+source_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+source_name: xquads-chief
+source_state: source
+disposition: pending
+runtime_targets: []
+evidence_refs: []
+provenance:
+  origin: local xquads snapshot
+  captured_at: '2026-08-19T00:00:00Z'
+  executable: false
+  bytes_preserved: true

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Platform Engineer Native"
+  short_description: "Projetar uma plataforma interna segura, repetível e autônoma para desenvolvimento e entrega."
+policy:
+  allow_implicit_invocation: true

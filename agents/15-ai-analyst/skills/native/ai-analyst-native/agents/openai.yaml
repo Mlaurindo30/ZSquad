@@ -1,0 +1,5 @@
+interface:
+  display_name: "AI Analyst Native"
+  short_description: "Transformar métricas, traces, avaliações e dados em conclusões reproduzíveis sobre sistemas de IA."
+policy:
+  allow_implicit_invocation: true

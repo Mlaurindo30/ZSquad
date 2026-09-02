@@ -1,0 +1,28 @@
+version: 1
+manifest_input: distribution/files.manifest.jsonl
+distribution_destination: distribution/materialized
+archive_destination: archive/materialized
+archive_manifest: archive/archive-manifest.jsonl
+allow_destination: distribution
+blocked_runtime_prefixes:
+  - work/
+  - archive/
+  - distribution/materialized/
+  - .temp/
+  - .pytest_cache/
+blocked_runtime_parts:
+  - __pycache__
+  - .git
+blocked_runtime_suffixes:
+  - .pyc
+  - .pyo
+self_outputs:
+  - distribution/source-snapshot.json
+  - distribution/files.manifest.jsonl
+  - distribution/allowlist.yaml
+  - archive/archive-manifest.jsonl
+  - distribution/materialized/
+  - archive/materialized/
+source_preservation: required
+hash_verification: before_and_after_copy
+atomic_publish: sibling_staging_then_rename

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Security Reviewer Native"
+  short_description: "Atuar como revisor de segurança independente de arquitetura, código, dependências, CI/CD e dados."
+policy:
+  allow_implicit_invocation: true

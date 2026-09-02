@@ -1,0 +1,19 @@
+agent: skill-curator
+native:
+- path: agents/18-skill-curator/skills/native/skill-curator-native
+assigned:
+- path: skills/delivery/orchestration/govern-agent-handoffs
+- path: skills/delivery/orchestration/orchestrate-sdlc-gates
+- path: skills/delivery/planning/concise-planning
+- path: skills/discovery/catalog/skill-router
+- path: skills/discovery/catalog/skill-suggester
+- path: skills/memory/agent-memory
+- path: skills/security/security-auditor
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/skill-curator.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Code Reviewer Native"
+  short_description: "Revisar código contra requisito, desenho, padrões, riscos e testes sem reescrever a implementação."
+policy:
+  allow_implicit_invocation: true

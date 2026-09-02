@@ -1,0 +1,15 @@
+agent: direct-response-copywriter
+native:
+- path: agents/31-direct-response-copywriter/skills/native/direct-response-copywriter-native
+assigned:
+- path: skills/documentation/documentation
+- path: skills/memory/agent-memory
+- path: skills/product/product-manager-toolkit
+discovery:
+  policy: curated-local-first
+  maximum_loaded: 3
+handoff:
+  schema: contracts/handoff.schema.json
+memory:
+  private: work/<WORK-ID>/memory/agents/direct-response-copywriter.md
+  shared: work/<WORK-ID>/memory/shared/summary.md

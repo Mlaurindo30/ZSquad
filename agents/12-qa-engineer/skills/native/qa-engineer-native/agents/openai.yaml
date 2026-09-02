@@ -1,0 +1,5 @@
+interface:
+  display_name: "Quality Assurance Engineer Native"
+  short_description: "Executar validação independente funcional, não funcional, exploratória e de aceitação."
+policy:
+  allow_implicit_invocation: true

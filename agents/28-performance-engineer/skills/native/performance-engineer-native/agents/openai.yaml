@@ -1,0 +1,5 @@
+interface:
+  display_name: "Performance Engineer Native"
+  short_description: "Caracterizar carga, localizar gargalos e provar capacidade, latência e custo."
+policy:
+  allow_implicit_invocation: true

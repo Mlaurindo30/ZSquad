@@ -1,0 +1,23 @@
+version: 1
+managed_by: agents-squad-zcode-adapter
+profiles:
+- id: delivery-orchestrator
+  color: blue
+  tools: ['*']
+  max_turns: 80
+- id: requirements-analyst
+  color: cyan
+  tools: [Read, Glob, Grep, WebFetch, WebSearch, Write, Edit, TodoWrite]
+  max_turns: 40
+- id: solution-architect
+  color: purple
+  tools: [Read, Glob, Grep, Bash, WebFetch, WebSearch, Write, Edit, TodoWrite]
+  max_turns: 50
+- id: software-engineer
+  color: green
+  tools: [Read, Glob, Grep, Bash, Write, Edit, TodoWrite]
+  max_turns: 80
+- id: qa-engineer
+  color: yellow
+  tools: [Read, Glob, Grep, Bash, Write, Edit, TodoWrite]
+  max_turns: 60

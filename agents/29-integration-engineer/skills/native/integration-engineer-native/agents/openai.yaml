@@ -1,0 +1,5 @@
+interface:
+  display_name: "Integration Engineer Native"
+  short_description: "Projetar e implementar integrações com contratos, compatibilidade, resiliência e rastreabilidade."
+policy:
+  allow_implicit_invocation: true

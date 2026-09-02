@@ -1,0 +1,262 @@
+version: 2
+registry:
+  owner: delivery-orchestrator
+  runtime_adapter: filesystem-portable
+  discovery: curated-local-first
+  handoff_transport: work-item-files
+  memory: private-and-shared
+  maximum_active_agents_per_item: 10
+agents:
+- id: delivery-orchestrator
+  path: agents/00-delivery-orchestrator
+  title: Swarm & SDLC Delivery Orchestrator
+  mode: core
+  purpose: SDLC orchestration, WIP control, gate verification, handoff schema enforcement,
+    blocker escalation, dependency tracking.
+  manifest: agents/00-delivery-orchestrator/skills/manifest.yaml
+- id: requirements-analyst
+  path: agents/01-requirements-analyst
+  title: Requirements & Specification Engineer
+  mode: core
+  purpose: INVEST user stories, BDD/Gherkin specifications, non-functional requirements
+    (NFRs), discovery briefs, edge-case elicitation.
+  manifest: agents/01-requirements-analyst/skills/manifest.yaml
+- id: product-owner
+  path: agents/02-product-owner
+  title: Product Value & Discovery Strategist
+  mode: core
+  purpose: Product Goal definition, value vs risk prioritization, backlog ordering,
+    scope negotiation, G1-product gate decisions.
+  manifest: agents/02-product-owner/skills/manifest.yaml
+- id: scrum-master
+  path: agents/03-scrum-master
+  title: Flow & Kanban Master
+  mode: core
+  purpose: WIP limit enforcement, cycle time reduction, blocker removal, cumulative
+    flow diagrams (CFD), flow efficiency.
+  manifest: agents/03-scrum-master/skills/manifest.yaml
+- id: solution-architect
+  path: agents/04-solution-architect
+  title: Clean Architecture & Systems Pioneer
+  mode: core
+  purpose: C4 Model architecture, ADRs, interface contracts, fault-isolation, STRIDE
+    threat modeling, rollback design, G2-design evaluation.
+  manifest: agents/04-solution-architect/skills/manifest.yaml
+- id: data-ai-architect
+  path: agents/05-data-ai-architect
+  title: Lakehouse & AI Systems Architect
+  mode: core
+  purpose: Medallion Lakehouse architecture, Data Mesh domain contracts, AI pipeline
+    topologies, MLflow tracing, LLM safety guardrails.
+  manifest: agents/05-data-ai-architect/skills/manifest.yaml
+- id: software-engineer
+  path: agents/06-software-engineer
+  title: Clean Code & TDD Craftsman
+  mode: on_demand
+  purpose: Red-Green-Refactor TDD, SOLID design principles, clean code contracts,
+    component failure handling, unit & integration tests.
+  manifest: agents/06-software-engineer/skills/manifest.yaml
+- id: data-engineer
+  path: agents/07-data-engineer
+  title: Idempotent Pipeline & ETL Specialist
+  mode: on_demand
+  purpose: Idempotent DAGs, dbt transformations, Airflow orchestration, data quality
+    testing (Great Expectations), schema drift management.
+  manifest: agents/07-data-engineer/skills/manifest.yaml
+- id: mlops-llmops-engineer
+  path: agents/08-mlops-llmops-engineer
+  title: MLflow & LLM Observability Engineer
+  mode: on_demand
+  purpose: MLflow tracking & registry, LLM tracing, prompt versioning, automated evaluation
+    harnesses, data & concept drift detection, latency/token profiling.
+  manifest: agents/08-mlops-llmops-engineer/skills/manifest.yaml
+- id: code-reviewer
+  path: agents/09-code-reviewer
+  title: Static Analysis & Code Quality Auditor
+  mode: on_demand
+  purpose: Spec conformance, clean code standards, component contract verification,
+    cognitive complexity, dead code removal, G4-code gate decisions.
+  manifest: agents/09-code-reviewer/skills/manifest.yaml
+- id: security-reviewer
+  path: agents/10-security-reviewer
+  title: AppSec & Threat Modeling Specialist
+  mode: on_demand
+  purpose: OWASP Top 10, ASVS 4.0, STRIDE threat modeling, dependency CVE auditing,
+    CSAF 2.0 / VEX, cryptographic hygiene, G4-security evaluation.
+  manifest: agents/10-security-reviewer/skills/manifest.yaml
+- id: test-engineer
+  path: agents/11-test-engineer
+  title: Test Automation & Quality Strategist
+  mode: on_demand
+  purpose: Test automation pyramid, contract testing (Pact), mutation testing, E2E
+    test suites, edge case generation, test data management.
+  manifest: agents/11-test-engineer/skills/manifest.yaml
+- id: qa-engineer
+  path: agents/12-qa-engineer
+  title: Exploratory & Resilience QA Specialist
+  mode: on_demand
+  purpose: Exploratory testing, session-based test management (SBTM), boundary value
+    analysis, error recovery testing, G5-quality gate evaluation.
+  manifest: agents/12-qa-engineer/skills/manifest.yaml
+- id: devops-release-engineer
+  path: agents/13-devops-release-engineer
+  title: GitOps & Safe Deployment Engineer
+  mode: on_demand
+  purpose: Canary & Blue-Green deployments, automated rollback, CI/CD hardening, Terraform/IaC,
+    container build security, G6-release evaluation.
+  manifest: agents/13-devops-release-engineer/skills/manifest.yaml
+- id: governance-auditor
+  path: agents/14-governance-auditor
+  title: Compliance & Segregation of Duties Auditor
+  mode: on_demand
+  purpose: Delivery ledger integrity, SoD enforcement, gate decision verification,
+    compliance checklists, G6 gate authoring.
+  manifest: agents/14-governance-auditor/skills/manifest.yaml
+- id: ai-analyst
+  path: agents/15-ai-analyst
+  title: AI Evaluation & Metrics Analyst
+  mode: on_demand
+  purpose: LLM benchmarking, hallucination rate scoring, cost vs accuracy Pareto frontiers,
+    prompt sensitivity analysis, statistical significance testing.
+  manifest: agents/15-ai-analyst/skills/manifest.yaml
+- id: dba-databricks-engineer
+  path: agents/16-dba-databricks-engineer
+  title: Lakehouse DBA & Unity Catalog Specialist
+  mode: on_demand
+  purpose: Delta Lake optimization, Liquid Clustering, Unity Catalog RBAC, DBSQL Serverless,
+    Vector Search indexing, data retention & vacuuming.
+  manifest: agents/16-dba-databricks-engineer/skills/manifest.yaml
+- id: ai-engineer
+  path: agents/17-ai-engineer
+  title: Agentic AI & LangGraph Architect
+  mode: on_demand
+  purpose: LangGraph multi-agent workflows, ReAct/Reflexion loops, structured tool
+    calling, prompt engineering, prompt injection firewalls, token cost optimization.
+  manifest: agents/17-ai-engineer/skills/manifest.yaml
+- id: skill-curator
+  path: agents/18-skill-curator
+  title: Skill Ecosystem & Sandbox Curator
+  mode: on_demand
+  purpose: Skill vetting, sandbox checksum verification, license validation, prompt
+    injection quarantine, skill catalog optimization, intake management.
+  manifest: agents/18-skill-curator/skills/manifest.yaml
+- id: technical-writer
+  path: agents/19-technical-writer
+  title: Docs-as-Code & Diátaxis Architect
+  mode: on_demand
+  purpose: Diátaxis framework (Tutorials, How-To Guides, Reference, Explanation),
+    OpenAPI 3.1 specs, architecture documentation, delivery ledger maintenance.
+  manifest: agents/19-technical-writer/skills/manifest.yaml
+- id: ux-ui-designer
+  path: agents/20-ux-ui-designer
+  title: Atomic Design & Accessibility Pioneer
+  mode: on_demand
+  purpose: Atomic Design methodology, design tokens (Subatomic), WCAG 2.2 AAA compliance,
+    usability heuristics, user journey flows, design system governance.
+  manifest: agents/20-ux-ui-designer/skills/manifest.yaml
+- id: frontend-engineer
+  path: agents/21-frontend-engineer
+  title: Modern Web & Web Vitals Specialist
+  mode: on_demand
+  purpose: Core Web Vitals (LCP, FID, CLS, INP), React Server Components (RSC), accessible
+    semantic HTML, client state management, responsive UI styling.
+  manifest: agents/21-frontend-engineer/skills/manifest.yaml
+- id: backend-engineer
+  path: agents/22-backend-engineer
+  title: High-Throughput Distributed API Specialist
+  mode: on_demand
+  purpose: REST/gRPC API contracts, asynchronous non-blocking I/O, database transactions
+    & pooling, Redis caching, circuit breakers, distributed tracing.
+  manifest: agents/22-backend-engineer/skills/manifest.yaml
+- id: data-architect
+  path: agents/23-data-architect
+  title: Enterprise Data Modeling Architect
+  mode: on_demand
+  purpose: Dimensional modeling (Fact & Dimension tables), 3NF normalization, schema
+    migration strategies, data lineage, master data management.
+  manifest: agents/23-data-architect/skills/manifest.yaml
+- id: ml-engineer
+  path: agents/24-ml-engineer
+  title: Feature Store & Deep Learning Specialist
+  mode: on_demand
+  purpose: Feature engineering pipelines, cross-validation, data leakage prevention,
+    hyperparameter optimization, model quantization & ONNX export, inference speedup.
+  manifest: agents/24-ml-engineer/skills/manifest.yaml
+- id: agent-rag-engineer
+  path: agents/25-agent-rag-engineer
+  title: Advanced RAG & Vector Indexing Engineer
+  mode: on_demand
+  purpose: Hybrid search (Dense + BM25), contextual chunking, Cohere/BGE reranking,
+    GraphRAG, vector index tuning (HNSW), retrieval evaluation (Recall/Precision).
+  manifest: agents/25-agent-rag-engineer/skills/manifest.yaml
+- id: sre-observability-engineer
+  path: agents/26-sre-observability-engineer
+  title: Reliability & OpenTelemetry Engineer
+  mode: on_demand
+  purpose: SLI/SLO/SLA definition, Error Budgets, OpenTelemetry (Traces, Metrics,
+    Logs), Prometheus/Grafana, incident response playbooks, chaos engineering.
+  manifest: agents/26-sre-observability-engineer/skills/manifest.yaml
+- id: platform-engineer
+  path: agents/27-platform-engineer
+  title: Internal Developer Platform (IDP) Architect
+  mode: on_demand
+  purpose: Internal Developer Platforms (IDP), Kubernetes Operator patterns, reproducible
+    dev environments, developer self-service, cognitive load reduction.
+  manifest: agents/27-platform-engineer/skills/manifest.yaml
+- id: performance-engineer
+  path: agents/28-performance-engineer
+  title: Tail Latency & Load Testing Specialist
+  mode: on_demand
+  purpose: p95/p99 tail latency, high-concurrency load testing (k6/Gatling), CPU/memory
+    profiling, flame graphs, throughput limits, bottleneck isolation.
+  manifest: agents/28-performance-engineer/skills/manifest.yaml
+- id: integration-engineer
+  path: agents/29-integration-engineer
+  title: Enterprise Integration Patterns Specialist
+  mode: on_demand
+  purpose: Enterprise Integration Patterns (EIP), idempotent consumers, webhooks,
+    message queues (Kafka/RabbitMQ), correlation IDs, retry/dead-letter queues.
+  manifest: agents/29-integration-engineer/skills/manifest.yaml
+- id: brand-strategist
+  path: agents/30-brand-strategist
+  title: Brand Gap Pioneer & Radical Differentiation Strategist
+  mode: on_demand
+  purpose: The Brand Gap, Zag radical differentiation, The Onlyness Test, Brand Commitment
+    Matrix, Brand Tribes.
+  manifest: agents/30-brand-strategist/skills/manifest.yaml
+- id: direct-response-copywriter
+  path: agents/31-direct-response-copywriter
+  title: Direct Response & Conversion Copywriter
+  mode: on_demand
+  purpose: Five Stages of Customer Awareness, Headline Formulas, Hook-Story-Offer,
+    Core Value Propositions, Call-to-Action (CTA) optimization.
+  manifest: agents/31-direct-response-copywriter/skills/manifest.yaml
+- id: growth-marketing-strategist
+  path: agents/32-growth-marketing-strategist
+  title: Growth Engineering & Pirate Metrics Strategist
+  mode: on_demand
+  purpose: Pirate Metrics (AARRR), Growth Loops, Product-Led Growth (PLG), Onboarding
+    Activation Rate, Retention Cohorts, Viral Coefficients.
+  manifest: agents/32-growth-marketing-strategist/skills/manifest.yaml
+- id: storytelling-strategist
+  path: agents/33-storytelling-strategist
+  title: Narrative Architecture & StoryBrand Strategist
+  mode: on_demand
+  purpose: StoryBrand 7-Part Framework (SB7), Duarte Sparkline (What Is vs What Could
+    Be), Executive Pitch Decks, Product Vision Narratives.
+  manifest: agents/33-storytelling-strategist/skills/manifest.yaml
+- id: offensive-cyber-operator
+  path: agents/34-offensive-cyber-operator
+  title: Adversary Emulation & Penetration Testing Specialist
+  mode: on_demand
+  purpose: MITRE ATT&CK adversary emulation, penetration testing, automated exploit
+    validation, privilege escalation, fuzzing, red team reporting.
+  manifest: agents/34-offensive-cyber-operator/skills/manifest.yaml
+- id: swarm-consensus-coordinator
+  path: agents/35-swarm-consensus-coordinator
+  title: Byzantine Swarm & Distributed Consensus Coordinator
+  mode: on_demand
+  purpose: Byzantine Fault Tolerance (BFT), CRDT state synchronization, multi-agent
+    quorum, distributed key generation (DKG), neural pattern learning, swarm topology
+    optimization.
+  manifest: agents/35-swarm-consensus-coordinator/skills/manifest.yaml

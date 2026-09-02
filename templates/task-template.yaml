@@ -1,0 +1,22 @@
+id: example-governed-task
+version: 1
+state: proposed
+enabled: false
+title: Example governed task
+owner_persona: delivery-orchestrator
+squad_id: example-squad
+outcome: Produce one bounded and evidenced result for a work item.
+inputs: [approved-brief]
+outputs: [result-artifact]
+method:
+  - Read the canonical source in full.
+  - Produce the bounded artifact.
+boundaries:
+  - Do not perform external actions.
+evidence_requirements:
+  - Record the real validation output.
+failure_behavior: Report the obstacle and do not improvise.
+provenance:
+  kind: adapted
+  source_refs: [XSQ-0571108-TASK-0001]
+  disposition_refs: [DISP-XQ-TASK-0001]
