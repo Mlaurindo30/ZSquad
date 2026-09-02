@@ -1,22 +1,51 @@
-# CODEOWNERS — Agents Squad Azure DevOps Governance
-# Alinhado a AGENTS.md §9 e ao contrato OPERATING_CONTRACT.md
-# Revisão SoD: arthemis@ (code/security/qa/performance/governance) ≠ squads@
+# CODEOWNERS — Agent Squad (Arthemis)
+# PR approval rules by path
+# Security paths — required reviewer: security-reviewer (arthemis@)
+# see: agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"
 
-# Scripts Azure DevOps — code-reviewer obrigatório
-/scripts/azure_devops*.py    @arthemis/code-reviewer
+# Default: all files require code-reviewer (arthemis@)
+*   @arthemis/code-reviewer
 
-# GitHub Actions
-/.github/workflows/          @arthemis/code-reviewer
+# Security-sensitive paths require dual sign-off: security-reviewer (arthemis@) + offensive-cyber-operator (cyber_red@)
+auth/         @arthemis/security-reviewer @arthemis/offensive-cyber-operator
+crypto/       @arthemis/security-reviewer @arthemis/offensive-cyber-operator
+iac/          @arthemis/security-reviewer @arthemis/offensive-cyber-operator
+**/*.tf       @arthemis/security-reviewer
+**/Dockerfile @arthemis/security-reviewer
+**/*.env      @arthemis/security-reviewer
+**/*.key      @arthemis/security-reviewer
+**/secrets.* @arthemis/security-reviewer
 
-# Paths sensíveis — duplo sign-off cross-account
-# cyber_red@ (offensive-cyber-operator) + arthemis@ (security-reviewer)
-/auth/ /crypto/ /iac/       @arthemis/security-reviewer @cyber_red/offensive-cyber-operator
+# Infrastructure and cloud — cloud-architect + devops-release-engineer
+iac/terraform/ @arthemis/cloud-architect @arthemis/devops-release-engineer
+**/kubernetes/  @arthemis/cloud-architect @arthemis/devops-release-engineer
+**/aks/        @arthemis/cloud-architect @arthemis/devops-release-engineer
 
-# Contratos e configuração — governance-auditor
-/contracts/ /config/         @arthemis/governance-auditor
+# Test and acceptance — qa-engineer required
+tests/bdd/     @arthemis/qa-engineer
+tests/acceptance/ @arthemis/qa-engineer
+specs/         @arthemis/qa-engineer
 
-# Testes — qa-engineer
-/scripts/tests/ /tests/      @arthemis/qa-engineer
+# Performance-critical paths — performance-engineer required
+**/perf-*      @arthemis/performance-engineer
+**/hotpath/*   @arthemis/performance-engineer
+**/queries/*   @arthemis/performance-engineer
+**/indexes/*   @arthemis/performance-engineer
 
-# Padrão — development team
-*                            @squads/development-team
+# CI/CD pipelines — devops-release-engineer required
+.github/workflows/ @arthemis/devops-release-engineer
+**/azure-pipelines.yml @arthemis/devops-release-engineer
+**/Jenkinsfile     @arthemis/devops-release-engineer
+
+# Architecture decisions — solution-architect required
+**/adr/*     @arthemis/solution-architect
+docs/architecture/ @arthemis/solution-architect
+
+# Scripts and automation — delivery-orchestrator owner
+scripts/      @arthemis/delivery-orchestrator
+scripts/tests/ @arthemis/qa-engineer
+
+# Config, contracts, and schemas — governance-auditor
+config/      @arthemis/governance-auditor
+contracts/   @arthemis/governance-auditor
+**/*.schema.json @arthemis/governance-auditor
