@@ -27,6 +27,9 @@ banco/*.db-journal
 banco/*.db-shm
 banco/*.db-wal
 
+# DevOps config com credenciais — o template em templates/devops.yaml serve de referência
+.agents_squad/config/devops.yaml
+
 # work/ mistura dados de múltiplos projetos/clientes (SmartSub, Arthemis, Hive-Mind,
 # buzz-squad etc.) — nunca commitar isso junto num repo de cliente específico.
 work/
