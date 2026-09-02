@@ -36,6 +36,7 @@ logger = logging.getLogger("ProjectCreator")
 API_VERSION = "7.1"
 _VALID_STATES = {"creating", "waitingForAdmin", "validating", "wellFormed"}
 _VALID_PROCESS_TYPES = {"Scrum", "Agile", "CMMI"}
+_PROCESS_TYPE_MAP = {"agile": "Agile", "scrum": "Scrum", "cmmi": "CMMI"}
 
 
 class _RetryableHTTPError(Exception):
@@ -184,6 +185,11 @@ def create_project(
 
     if not project_name or not project_name.strip():
         return {"project_id": None, "project_url": None, "state": "error", "detail": {"error": "project_name não pode ser vazio"}}
+
+    # Normalize case-insensitive process type
+    normalized = _PROCESS_TYPE_MAP.get(process_type.lower(), process_type)
+    if normalized in _VALID_PROCESS_TYPES:
+        process_type = normalized
 
     if process_type not in _VALID_PROCESS_TYPES:
         return {

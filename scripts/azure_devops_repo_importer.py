@@ -66,7 +66,11 @@ class RepoImportClient:
         self.organization = organization
         self.project = project
         self.pat_token = pat_token
-        org_url = f"https://dev.azure.com/{organization}"
+        # Normalize: aceita nome curto ("cbvgas") ou URL completa (dev.azure.com/cbvgas, org.visualstudio.com)
+        if organization.startswith("http"):
+            org_url = organization.rstrip("/")
+        else:
+            org_url = f"https://dev.azure.com/{organization}"
         self._validate_org_url(org_url)
         self.base_url = f"{org_url.rstrip('/')}/{urllib.parse.quote(project)}/_apis"
 

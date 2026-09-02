@@ -219,17 +219,40 @@ class AzureDevOpsProjectSetup:
             self.record("queries", "error", "projeto não resolvido")
             return
         proj_id = proj["id"]
-        # Garante pasta raiz Shared/Agents Squad/
         folder_path = "Shared/Agents Squad"
-        folder = self.send(
-            "POST",
-            f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
-            {"name": "Agents Squad", "isFolder": True},
-        )
-        self.record("queries.folder", "ok" if folder else "skip", folder_path)
-        squad_tag_clause = " OR ".join(
-            f"[System.Tags] CONTAINS '{tag}'" for tag in (self.config.get("squad_tags") or {}).values()
-        )
+        parent_folder_path = "Shared"
+
+        all_queries_url = f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1"
+        existing_all = self.get(all_queries_url) or {}
+        existing_names = {q.get("name") for q in existing_all.get("value", [])}
+        existing_paths = {q.get("path", ""): q for q in existing_all.get("value", [])}
+
+        if parent_folder_path not in existing_paths:
+            parent_folder = self.send(
+                "POST",
+                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
+                {"name": parent_folder_path, "isFolder": True},
+            )
+            if parent_folder and parent_folder.get("id"):
+                existing_paths[parent_folder_path] = parent_folder
+                existing_names.add(parent_folder_path)
+
+        if folder_path not in existing_paths:
+            folder = self.send(
+                "POST",
+                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
+                {"name": "Agents Squad", "isFolder": True, "path": parent_folder_path},
+            )
+            if folder and folder.get("id"):
+                existing_paths[folder_path] = folder
+                existing_names.add(folder_path)
+                self.record("queries.folder", "ok", folder_path)
+            else:
+                self.record("queries.folder", "error", folder)
+                return
+        else:
+            self.record("queries.folder", "skip", folder_path)
+
         queries = [
             {
                 "name": "Active",
@@ -278,19 +301,18 @@ class AzureDevOpsProjectSetup:
                 ),
             },
         ]
-        existing_list = self.get(f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1") or {}
-        existing_names = {q.get("name") for q in existing_list.get("value", [])}
+        full_query_path = {q.get("path", ""): q for q in existing_all.get("value", [])}
         created = 0
         skipped = 0
         for q in queries:
-            if q["name"] in existing_names:
+            query_full_path = f"{folder_path}/{q['name']}"
+            if query_full_path in full_query_path:
                 skipped += 1
                 continue
-            payload = {"name": q["name"], "wiql": q["wiql"], "isFolder": False}
-            path = f"{folder_path}/{q['name']}"
+            payload = {"name": q["name"], "wiql": q["wiql"], "isFolder": False, "path": folder_path}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries/{quote(path, safe='/')}?api-version=7.1",
+                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -744,17 +766,26 @@ class AzureDevOpsProjectSetup:
             self.record("swimlanes", "error", "projeto não resolvido")
             return
         proj_id = proj["id"]
+        parent_folder = "Shared/Agents Squad"
         folder_path = "Shared/Agents Squad/SWIMLANES"
+
+        self.send(
+            "POST",
+            f"{self.org}/{proj_id}/_apis/wit/queries/{quote(parent_folder, safe='/')}?api-version=7.1",
+            {"name": "Agents Squad", "isFolder": True},
+        )
+
         folder = self.send(
             "POST",
             f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
             {"name": "SWIMLANES", "isFolder": True},
         )
         self.record("swimlanes.folder", "ok" if folder else "skip", folder_path)
-        existing_list = self.get(
+
+        existing_all = self.get(
             f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1"
         ) or {}
-        existing_full = {q.get("name"): q for q in existing_list.get("value", [])}
+
         for lane in swimlanes_cfg:
             name = lane.get("name")
             query = lane.get("query")
@@ -762,7 +793,12 @@ class AzureDevOpsProjectSetup:
                 self.record("swimlanes", "error", f"swimlane inválida (sem name/query): {lane}")
                 continue
             folder_query_path = f"{folder_path}/{name}"
-            if name in existing_full:
+            existing_query = next(
+                (q for q in existing_all.get("value", [])
+                 if (q.get("path") or "").startswith(folder_path + "/") and q.get("name") == name),
+                None,
+            )
+            if existing_query:
                 self.record(f"swimlanes.{name}", "skip", "query já existe")
                 continue
             wiql = (
@@ -773,7 +809,7 @@ class AzureDevOpsProjectSetup:
             payload = {"name": name, "wiql": wiql, "isFolder": False}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
+                f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_query_path, safe='/')}?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):

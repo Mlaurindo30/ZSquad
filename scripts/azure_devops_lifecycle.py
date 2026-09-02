@@ -315,6 +315,9 @@ class AzureDevOpsLifecycle:
         project_id: Optional[str] = None
 
         try:
+            # Build shared DevOps client
+            self._build_client()
+
             # Phase 1
             phase1_result = self._phase1_create_project()
             project_id = phase1_result.get("project_id") if phase1_result else None

@@ -385,14 +385,20 @@ def test_apply_queries():
         setup.apply_queries()
 
     posts = [c for c in captured if c[0] == "POST"]
-    # 1 POST para folder + 5 POSTs para queries
-    assert len(posts) == 6, f"esperado 6 POSTs (1 folder + 5 queries), got {len(posts)}"
+    # 2 POSTs para folders (Shared + Shared/Agents Squad) + 5 POSTs para queries
+    assert len(posts) == 7, f"esperado 7 POSTs (2 folders + 5 queries), got {len(posts)}"
     query_posts = [c for c in posts if "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is False]
     assert len(query_posts) == 5, f"esperado 5 query POSTs, got {len(query_posts)}"
 
     # Verifica folder path em todos
     for c in posts:
-        assert "Shared/Agents%20Squad" in c[1] or "Shared/Agents Squad" in c[1] or c[2] == {"name": "Agents Squad", "isFolder": True}
+        is_query = "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is False
+        is_folder = "isFolder" in (c[2] or {}) and (c[2] or {}).get("isFolder") is True
+        if is_folder:
+            assert c[2].get("name") in ("Shared", "Agents Squad"), f"folder name inesperado: {c[2].get('name')}"
+        elif is_query:
+            assert "path" in (c[2] or {}), f"query deve ter path: {c[2]}"
+            assert c[2].get("path") == "Shared/Agents Squad", f"query path inesperado: {c[2].get('path')}"
 
     # Verifica WIQL contém project name e os 5 nomes esperados
     query_names = {(c[2] or {}).get("name") for c in query_posts}
@@ -413,9 +419,11 @@ def test_apply_queries():
             return {"id": "proj-1"}
         if url.endswith("/_apis/wit/queries?api-version=7.1"):
             return {"value": [
-                {"name": "Active"}, {"name": "WIP by State"},
-                {"name": "Missing Iteration"}, {"name": "Critical Bugs"},
-                {"name": "G6 Governance — last sprint"},
+                {"name": "Active", "path": "Shared/Agents Squad/Active"},
+                {"name": "WIP by State", "path": "Shared/Agents Squad/WIP by State"},
+                {"name": "Missing Iteration", "path": "Shared/Agents Squad/Missing Iteration"},
+                {"name": "Critical Bugs", "path": "Shared/Agents Squad/Critical Bugs"},
+                {"name": "G6 Governance — last sprint", "path": "Shared/Agents Squad/G6 Governance — last sprint"},
             ]}
         return {}
 
@@ -776,7 +784,8 @@ def test_apply_swimlanes_not_found_then_wiql():
         setup.apply_swimlanes()
 
     posts = [c for c in captured if c[0] == "POST"]
-    assert len(posts) == 3, f"esperado 3 POSTs (1 folder + 2 queries), got {len(posts)}"
+    # 2 POSTs para folders (Shared/Agents Squad + SWIMLANES) + 2 POSTs para queries
+    assert len(posts) == 4, f"esperado 4 POSTs (2 folders + 2 queries), got {len(posts)}"
     query_posts = [c for c in posts if "wiql" in (c[2] or {})]
     assert len(query_posts) == 2
     names = {(c[2] or {}).get("name") for c in query_posts}
@@ -799,7 +808,7 @@ def test_apply_swimlanes_not_found_then_wiql():
         if "_apis/projects/" in url and "api-version" in url:
             return {"id": "proj-1"}
         if "/wit/queries?" in url:
-            return {"value": [{"name": "Squad Core"}]}
+            return {"value": [{"name": "Squad Core", "path": "Shared/Agents Squad/SWIMLANES/Squad Core"}]}
         return {}
 
     captured2: list[tuple[str, str, object]] = []
