@@ -53,7 +53,9 @@ class AzureDevOpsProjectSetup:
     def __init__(self, client: AzureDevOpsClient, config: dict[str, Any]):
         self.client = client
         self.config = config
-        self.org = client.base_url.rsplit("/", 2)[0]
+        # Extrai o org a partir do hostname da base_url — funciona com GUID e com project name
+        # base_url = https://org/[project]/_apis  →  org = https://org
+        self.org = "https://" + client.base_url.split("/")[2]
         self.project = client.project
         self.results: list[dict[str, Any]] = []
         self.project_id: Optional[str] = None
@@ -199,12 +201,17 @@ class AzureDevOpsProjectSetup:
         if not identifiers:
             self.record("team.iterations", "ok", "nada novo a vincular")
             return
-        # PATCH sobrescreve a lista — enviamos as existentes + novas
-        merged_payload = [
-            {"id": i["id"], "includeChildren": False} for i in identifiers
-        ]
-        result = self.send("PATCH", url, merged_payload)
-        self.record("team.iterations", "ok" if result else "error", {"count": len(merged_payload), "result": result})
+        # POST uma iteração de cada vez para adicioná-la ao team's iteration list
+        results = []
+        for ident in identifiers:
+            result = self.send(
+                "POST",
+                url,
+                {"id": ident["id"], "includeChildren": False},
+            )
+            results.append(result)
+        success = all(r is not None for r in results)
+        self.record("team.iterations", "ok" if success else "error", {"count": len(results), "result": results})
 
     def apply_queries(self) -> None:
         """US-2 (2026-09-02): cria 5 queries salvas em pasta Shared/Agents Squad/
@@ -222,7 +229,9 @@ class AzureDevOpsProjectSetup:
         folder_path = "Shared/Agents Squad"
         parent_folder_path = "Shared"
 
-        all_queries_url = f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1"
+        # Azure DevOps API usa project NAME no path, não GUID
+        proj_name = quote(self.project)
+        all_queries_url = f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1"
         existing_all = self.get(all_queries_url) or {}
         existing_names = {q.get("name") for q in existing_all.get("value", [])}
         existing_paths = {q.get("path", ""): q for q in existing_all.get("value", [])}
@@ -230,7 +239,7 @@ class AzureDevOpsProjectSetup:
         if parent_folder_path not in existing_paths:
             parent_folder = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
                 {"name": parent_folder_path, "isFolder": True},
             )
             if parent_folder and parent_folder.get("id"):
@@ -240,7 +249,7 @@ class AzureDevOpsProjectSetup:
         if folder_path not in existing_paths:
             folder = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
                 {"name": "Agents Squad", "isFolder": True, "path": parent_folder_path},
             )
             if folder and folder.get("id"):
@@ -312,7 +321,7 @@ class AzureDevOpsProjectSetup:
             payload = {"name": q["name"], "wiql": q["wiql"], "isFolder": False, "path": folder_path}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -765,25 +774,26 @@ class AzureDevOpsProjectSetup:
         if not proj.get("id"):
             self.record("swimlanes", "error", "projeto não resolvido")
             return
-        proj_id = proj["id"]
+        # Azure DevOps API usa project NAME no path, não GUID
+        proj_name = quote(self.project)
         parent_folder = "Shared/Agents Squad"
         folder_path = "Shared/Agents Squad/SWIMLANES"
 
         self.send(
             "POST",
-            f"{self.org}/{proj_id}/_apis/wit/queries/{quote(parent_folder, safe='/')}?api-version=7.1",
+            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(parent_folder, safe='/')}?api-version=7.1",
             {"name": "Agents Squad", "isFolder": True},
         )
 
         folder = self.send(
             "POST",
-            f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
+            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
             {"name": "SWIMLANES", "isFolder": True},
         )
         self.record("swimlanes.folder", "ok" if folder else "skip", folder_path)
 
         existing_all = self.get(
-            f"{self.org}/{proj_id}/_apis/wit/queries?api-version=7.1"
+            f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1"
         ) or {}
 
         for lane in swimlanes_cfg:
@@ -809,7 +819,7 @@ class AzureDevOpsProjectSetup:
             payload = {"name": name, "wiql": wiql, "isFolder": False}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_id}/_apis/wit/queries/{quote(folder_query_path, safe='/')}?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_query_path, safe='/')}?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -904,7 +914,7 @@ class AzureDevOpsProjectSetup:
             self.record("service_connections", "error", "projeto não descoberto")
             return
         existing = self.get(
-            f"{self.org}/_apis/projects/{self.project_id}/serviceConnections?api-version=7.1"
+            f"{self.org}/_apis/serviceConnections?api-version=7.1&projectId={self.project_id}"
         ) or {}
         existing_names = {sc.get("name") for sc in (existing.get("value") or [])}
         for spec in sc_cfg:
@@ -922,7 +932,7 @@ class AzureDevOpsProjectSetup:
                 continue
             result = self.send(
                 "POST",
-                f"{self.org}/_apis/projects/{self.project_id}/serviceConnections?api-version=7.1",
+                f"{self.org}/_apis/serviceConnections?api-version=7.1&projectId={self.project_id}",
                 endpoint,
             )
             if result and result.get("id"):

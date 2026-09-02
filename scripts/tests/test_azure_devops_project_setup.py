@@ -223,8 +223,7 @@ def test_apply_team_iterations():
     """B-8a (Sprint 1-C): apply_team_iterations vincula iteration nodes ao team.
 
     Verifica:
-    - POST/PATCH são chamados corretamente quando o team não tem as iterações.
-    - PATCH final agrega todas as novas identificações.
+    - POST é chamado uma vez por iteração quando o team não tem as iterações.
     - Idempotência: quando as iterações já estão vinculadas, registra skip.
     - Robustez: quando um nó de iteração não existe, registra erro e continua.
     """
@@ -242,8 +241,9 @@ def test_apply_team_iterations():
 
     def fake_send(method, url, body=None, content_type="application/json"):
         captured.append((method, url, body))
-        if "teamsettings/iterations" in url and method == "PATCH":
-            return {"ok": True, "value": body}
+        # POST uma iteração de cada vez ao teamsettings/iterations
+        if "teamsettings/iterations" in url and method == "POST":
+            return {"id": body.get("id") if isinstance(body, dict) else body}
         if url.endswith("/_apis/projects/Agents%20Squad") or "/_apis/projects/Agents%20Squad?" in url:
             return {"id": "proj-1"}
         return {"id": "ok"}
@@ -263,11 +263,11 @@ def test_apply_team_iterations():
 
     statuses = {r["step"]: r["status"] for r in setup.results}
     assert statuses["team.iterations"] == "ok", f"expected ok, got {statuses}"
-    pacts = [c for c in captured if c[0] == "PATCH"]
-    assert len(pacts) == 1, f"expected 1 PATCH (merge de identificadores), got {len(pacts)}"
-    payload = pacts[0][2]
-    assert isinstance(payload, list) and len(payload) == 2
-    assert {p["id"] for p in payload} == {"node-1", "node-2"}
+    # POST uma vez por iteração
+    posts = [c for c in captured if c[0] == "POST" and "teamsettings/iterations" in c[1]]
+    assert len(posts) == 2, f"expected 2 POSTs (one per iteration), got {len(posts)}"
+    posted_ids = {c[2].get("id") for c in posts if isinstance(c[2], dict)}
+    assert posted_ids == {"node-1", "node-2"}
 
     # --- caso idempotente: já vinculado → skip
     setup2 = _build_setup(cfg)
@@ -299,7 +299,7 @@ def test_apply_team_iterations():
     assert statuses2["team.iterations"] == "ok", f"idempotente deve retornar ok, got {statuses2}"
     assert statuses2["team.iterations.Sprint 1"] == "skip"
     assert statuses2["team.iterations.Sprint 2"] == "skip"
-    assert not [c for c in captured2 if c[0] == "PATCH"], "não deve PATCH quando já vinculado"
+    assert not [c for c in captured2 if c[0] == "POST" and "teamsettings/iterations" in c[1]], "não deve POST quando já vinculado"
 
     # --- caso de erro: nó de iteração ausente
     setup3 = _build_setup(cfg)
@@ -318,8 +318,8 @@ def test_apply_team_iterations():
     captured3: list[tuple[str, str, object]] = []
     def fake_send3(method, url, body=None, content_type="application/json"):
         captured3.append((method, url, body))
-        if method == "PATCH":
-            return {"ok": True}
+        if method == "POST" and "teamsettings/iterations" in url:
+            return {"id": body.get("id") if isinstance(body, dict) else body}
         return {"id": "ok"}
 
     with patch.object(setup3, "get", side_effect=fake_get3), \
