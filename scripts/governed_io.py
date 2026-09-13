@@ -28,7 +28,14 @@ def atomic_write_text(path: Path, content: str, *, encoding: str = "utf-8") -> N
             handle.write(content)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, path)
+        for attempt in range(5):
+            try:
+                os.replace(temporary, path)
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.05)
         _fsync_directory(path.parent)
     except BaseException:
         try:

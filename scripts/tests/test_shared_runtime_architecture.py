@@ -30,7 +30,7 @@ def test_provider_prompt_requires_shared_runtime_without_copy(prompt_name):
     assert "squad_runtime" in lowered
     assert "project_root" in lowered
     assert "project_id" in lowered
-    assert "work/<project_id>" in lowered
+    assert "work/<project_id>" in lowered or "work/<work-id>" in lowered
     assert "banco/squad.db" in lowered
     assert all(phrase not in lowered for phrase in FORBIDDEN)
 

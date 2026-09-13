@@ -154,38 +154,179 @@ def _build_work_item_context(packet: dict[str, Any], squad: AgentSquad) -> str |
     )
 
 
-def _build_hive_mind_section() -> str:
-    """Gera as diretrizes de governança de memória compartilhada do Hive-Mind."""
+def _build_azure_devops_section(packet: dict[str, Any], squad: Any) -> str:
+    """Injeta contexto operacional do Azure DevOps no prompt do subagente.
+
+    Carrega config ADO do projeto e monta seção instrucional completa com:
+    - Org, Projeto, Team, Area Path, Iteration ativa
+    - Conta ADO vinculada ao papel do agente (squads@ vs arthemis@)
+    - Guia de uso das MCP tools @azure-devops/mcp
+    - Regra ADO-first (proibição de artefatos locais de backlog)
+    """
+    # Tentar carregar devops.yaml do projeto
+    try:
+        from pathlib import Path
+        import yaml as _yaml
+
+        if hasattr(squad, "root"):
+            root = Path(squad.root)
+        elif isinstance(squad, dict):
+            root = Path(squad.get("root_path", squad.get("root", ".")))
+        else:
+            root = Path(".")
+
+        devops_cfg_path = root / "config" / "devops.yaml"
+        if not devops_cfg_path.exists():
+            devops_cfg_path = root / ".agents_squad" / "config" / "devops.yaml"
+        if not devops_cfg_path.exists():
+            devops_cfg_path = root / "templates" / "devops.yaml"
+
+        if not devops_cfg_path.exists():
+            return ""
+
+        cfg = _yaml.safe_load(devops_cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return ""
+
+    org = cfg.get("org", "cbvgas")
+    project = cfg.get("project", "Arthemis")
+    team = cfg.get("team", "agent-squad")
+    if team == "<product-name>":
+        team = "agent-squad"
+    area_path = cfg.get("area_path", f"Arthemis\\{team}")
+    if "<product-name>" in area_path:
+        area_path = f"Arthemis\\{team}"
+
+    # Determinar conta ADO baseada no papel do agente e modelo SoD (4 contas de automação + human_master)
+    agent_id = packet.get("agent_id") or packet.get("agent", "")
+    identities = cfg.get("identities", {})
+    service_accounts = cfg.get("service_accounts", {})
+    dev_team = identities.get("development_team", {})
+    reviewer = identities.get("pr_and_card_approver", {})
+    cyber_acc = service_accounts.get("cyber_red", {})
+    pii_acc = service_accounts.get("customer_data_pii", {})
+
+    dev_personas = dev_team.get("used_by", [])
+    review_personas = reviewer.get("used_by", [])
+    cyber_personas = cyber_acc.get("used_by", ["offensive-cyber-operator", "34-offensive-cyber-operator"])
+
+    dev_email = dev_team.get("email", "squads@michellaurindooutlook812.onmicrosoft.com")
+    review_email = reviewer.get("email", "arthemis@michellaurindooutlook812.onmicrosoft.com")
+    cyber_email = cyber_acc.get("email", "cyber-red@michellaurindooutlook812.onmicrosoft.com")
+    pii_email = pii_acc.get("email", "customer_data_pii@michellaurindooutlook812.onmicrosoft.com")
+
+    numeric_id = agent_id.split("-")[0] if "-" in agent_id else ""
+    clean_id = agent_id.split("-", 1)[1] if "-" in agent_id else agent_id
+
+    if any(p == agent_id or p == clean_id or (numeric_id and numeric_id in p) for p in cyber_personas):
+        assigned_account = cyber_email
+        account_role = "SEGURANÇA OFENSIVA / RED TEAM"
+    elif any(p == agent_id or p == clean_id or (numeric_id and numeric_id in p) for p in review_personas):
+        assigned_account = review_email
+        account_role = "APROVAÇÃO / REVISÃO (SoD)"
+    else:
+        assigned_account = dev_email
+        account_role = "EXECUÇÃO / DESENVOLVIMENTO"
+
+    lines = [
+        "## Azure DevOps — Contexto Operacional e Modelo de Contas (SoD)",
+        "",
+        "| Parâmetro | Valor |",
+        "|---|---|",
+        f"| Organização | `{org}` |",
+        f"| Projeto Container | `{project}` |",
+        f"| Team | `{team}` |",
+        f"| Area Path | `{area_path}` |",
+        f"| **Conta ADO Atribuída** | `{assigned_account}` ({account_role}) |",
+        "",
+        "### As 4 Contas de Automação Azure DevOps (Segregação de Funções - SoD)",
+        "",
+        f"- `squads@michellaurindooutlook812.onmicrosoft.com` — **Execução Técnica**: 38 personas construtoras/analistas.",
+        f"- `arthemis@michellaurindooutlook812.onmicrosoft.com` — **Revisão / Aprovação**: 5 personas revisoras (`code-reviewer`, `security-reviewer`, `qa-engineer`, `performance-engineer`, `governance-auditor`).",
+        f"- `cyber-red@michellaurindooutlook812.onmicrosoft.com` — **Segurança Ofensiva / Red Team**: dedicada do `34-offensive-cyber-operator` (duplo sign-off em auth/crypto/iac).",
+        f"- `customer_data_pii@michellaurindooutlook812.onmicrosoft.com` — **Dados Sensíveis / PII**: leitura de datasets/pipelines confidenciais (sem voto em PR).",
+        "- `human_master` (`michel.laurindo@outlook.com`) — **Supervisão Humana**: Gates humanos G1/G6, CAB, deploy.",
+        "",
+        "### Regra ADO-First (Inegociável)",
+        "",
+        "Se este projeto tem Azure DevOps configurado:",
+        "- **PROIBIDO** criar `product-goal.md`, `backlog.md`, `board.yaml`, `task_plan.md` locais",
+        "- **TODO backlog e planejamento** = Work Items no Azure Boards (Epic→Feature→Story→Task)",
+        "",
+        "### MCP Tools Disponíveis (`@azure-devops/mcp`)",
+        "",
+        "```",
+        "wit_work_item_write  → criar/atualizar card (Epic, Feature, User Story, Task)",
+        "wit_work_item        → ler card por ID",
+        "wit_query            → buscar cards com WIQL",
+        "repo_pull_request_write → criar PR com reviewers obrigatórios",
+        "```",
+        "",
+        "### Hierarquia obrigatória de Work Items",
+        "",
+        "```",
+        "🔶 Epic → 🟣 Feature → 🔷 User Story (≤8 pts Fibonacci) → 🟡 Task",
+        "```",
+        "",
+        "### 7 Colunas SDLC — quando mover o card",
+        "",
+        "| Fase | Coluna ADO | Estado | Conta |",
+        "|---|---|---|---|",
+        "| Blueprint | Blueprint | New | squads@ |",
+        "| Scaffolding | Scaffolding | Active | squads@ |",
+        "| Implementation | Implementation | Active | squads@ |",
+        "| Code Security Review | Code Security Review | Active | arthemis@ |",
+        "| Quality Validation | Quality Validation | Resolved | arthemis@ |",
+        "| Governance Release | Governance Release | Resolved | arthemis@ |",
+        "| Done | Done | Closed | arthemis@ |",
+    ]
+
+    return "\n".join(lines)
+
+
+def _build_cognitive_contract_section() -> str:
+    """Gera as diretrizes de Contrato Cognitivo, Anti-Alucinação e Protocolo de Execução do Agente."""
     return (
         "\n---\n"
-        "# SEGUNDO CÉREBRO — HIVE-MIND (D:\\Hive-Mind)\n\n"
-        "O agent_squad usa `D:\\Hive-Mind` como memória persistente compartilhada. "
-        "Ele NÃO é um banco paralelo: é a camada de memória universal onde todos os agentes "
-        "consolidam estado, decisões, aprendizados e trajetória entre sessões.\n\n"
+        "# CONTRATO COGNITIVO, ANTI-ALUCINAÇÃO & ENGENHARIA DE PROMPT\n\n"
+        "Todo agente do squad opera sob regras cognitivas estritas e inegociáveis:\n\n"
+        "### 1. Ordem Mandatória de Carga do Subagente (5 Passos Inegociáveis)\n"
+        "1. **Persona**: Ler e incorporar `agents/<id>/PROMPT.md` (identidade, axiomas, arquétipo, frameworks).\n"
+        "2. **Manifesto**: Ler `agents/<id>/skills/manifest.yaml` (delimitação formal de competências).\n"
+        "3. **Skills**: Ler os `SKILL.md` das skills atribuídas (`native` e `assigned`).\n"
+        "4. **Pesquisa Técnica Externa Obrigatória**: Pesquisar documentação oficial e referências técnicas atualizadas na web sobre os temas/APIs/libs antes de implementar, evitando inventar padrões ou usar convenções obsoletas.\n"
+        "5. **DevOps**: Identificar e usar prioritariamente MCP `@azure-devops/mcp` para operações de Boards/PRs.\n\n"
+        "### 2. Frameworks de Raciocínio (CoT, ToT e Self-Reflection)\n"
+        "- **Chain-of-Thought (CoT)**: Decomposição analítica passo a passo antes de propor arquiteturas, planos ou modificações de código.\n"
+        "- **Tree-of-Thoughts (ToT)**: Para decisões arquiteturais, de design ou bugfixes não triviais, explorar e ponderar explicitamente pelo menos 2 caminhos alternativos antes de convergir na solução ótima.\n"
+        "- **Self-Reflection (Autocrítica e Validação)**: Antes de considerar qualquer entrega concluída, rodar auto-verificação rigorosa contra testes, linters, types e critérios de aceitação, corrigindo desvios imediatamente.\n\n"
+        "### 3. Anti-Alucinação Estrito\n"
+        "- Proibição absoluta de inventar bibliotecas, APIs, parâmetros, arquivos inexistentes, comandos CLI ou IDs de agentes.\n"
+        "- Na ausência de dados, dados ambíguos ou impossibilidade de verificação direta, emita explicitamente: `UNVERIFIED` (não verificado), `NOT FOUND` (não localizado) ou `EMPTY` (vazio). Nunca adivinhe ou fabrique fatos.\n"
+    )
+
+
+def _build_hive_mind_section() -> str:
+    """Gera as diretrizes de cognição em duas camadas: Memória Primária do Projeto e Segundo Cérebro Global."""
+    return (
+        "\n---\n"
+        "# ARQUITETURA DE MEMÓRIA EM DUAS CAMADAS (PROJETO + HIVE-MIND)\n\n"
+        "O agente opera sob cognição estruturada em duas camadas complementares:\n\n"
+        "### Camada 1 — Memória Primária do Projeto (Local / Workspace)\n"
+        "- **Banco do Projeto (`banco/squad.db`)**: SQLite WAL local com tabelas de símbolos AST, traces, quóruns e métricas.\n"
+        "- **Grafo de Conhecimento / Graphify (`integrations/codebase_knowledge_graph.py`)**: AST, dependências de código e cálculo de Blast Radius.\n"
+        "- **Memória do Work Item (`work/<project_id>/memory/`)**: `shared/summary.md` (fatos consolidados), checkpoints privados por agente e deltas `MEM-*.yaml`.\n\n"
+        "### Camada 2 — Segundo Cérebro Global (Hive-Mind: `D:\\Hive-Mind`)\n"
+        "O Hive-Mind é a memória persistente universal cross-squad / cross-projeto. "
+        "Não substitui o banco do projeto, mas armazena decisões arquiteturais duradouras, padrões e aprendizados acumulados.\n\n"
         "**Acesso canônico:**\n"
         "- Vault humano/agente-legível: `D:\\Hive-Mind\\cerebro`\n"
         "- claude-mem (memória temporal/observações): `D:\\Hive-Mind\\claude-mem`\n"
         "- Servidor MCP sinapse: `D:\\Hive-Mind\\scripts\\services\\sinapse-mcp.py`\n"
-        "- Tools expostas via MCP: 16 tools (sinapse_query, sinapse_save_decision, "
-        "sinapse_save_learning, sinapse_health, sinapse_session_end, "
-        "sinapse_temporal_search, sinapse_temporal_timeline, "
-        "sinapse_temporal_get_observations, sinapse_temporal_save, "
-        "sinapse_zettelkasten_split, sinapse_capture_screen, "
-        "sinapse_plan_goal, sinapse_promote_knowledge, "
-        "sinapse_temporal_graph_search, sinapse_rag_query, search_memories)\n\n"
-        "**Regra obrigatória:**\n"
-         "1. **Antes de agir**: chamar `sinapse_health()` + `sinapse_query('<tópico>')` "
-        "para recuperar estado/histórico/decisões anteriores. Nunca afirmar estado do projeto "
-        "sem consultar primeiro.\n"
-        "2. **Durante o trabalho**: registrar decisões com `sinapse_save_decision` e aprendizados "
-        "com `sinapse_save_learning`. Capturar apenas eventos realmente relevantes com "
-        "`sinapse_temporal_save` (não em loop).\n"
-        "3. **Ao final da sessão/work-item**: chamar `sinapse_session_end(summary)` para atualizar "
-        "`Current State.md` e fechar a observação na UMC.\n"
-        "4. **Nunca chamar backends raw** (`nmem`, `claude-mem`, `graphify`, `falkordb`): "
-        "sempre via `sinapse_query` (Context Fusion com circuit breaker e timeout 8s).\n\n"
-        "**Nota:** O MCP config (`config/mcp_config.json`) expõe todas as 16 tools do "
-        "sinapse-hivemind.\n"
+        "- Tools MCP: `sinapse_query`, `sinapse_save_decision`, `sinapse_save_learning`, `sinapse_health`, `sinapse_session_end`\n\n"
+        "**Regra Obrigatória do Passo 0 (Memória)**:\n"
+        "1. **Antes de iniciar a tarefa**: Consultar primeiro a Memória do Projeto (`summary.md`, checkpoints, grafo AST) e, em seguida, consultar o Hive-Mind via `sinapse_query('<tema>')` para recuperar decisões corporativas prévias.\n"
+        "2. **Durante e ao concluir**: Gravar fatos e deltas no projeto (`memory/shared/summary.md`) e promover aprendizados e decisões arquiteturais duradouras ao Hive-Mind com `sinapse_save_decision`.\n"
     )
 
 
@@ -252,6 +393,16 @@ def render_agent_prompt(
 
     effective_project_name = _resolve_project_name(work_item, project_name)
     squad = AgentSquad(root=root_dir, project_name=effective_project_name)
+    if agent not in squad.agents:
+        for aid, entry in squad.agents.items():
+            entry_path = entry.get("path", "")
+            if aid == agent or entry_path.endswith(f"/{agent}") or entry_path.endswith(f"\\{agent}"):
+                agent = aid
+                break
+            if "-" in agent and agent.split("-", 1)[1] == aid:
+                agent = aid
+                break
+
     if agent not in squad.dispatchable_agent_ids and output_path is not None:
         raise SquadError(f"provider-primary host não pode ser despachado: {agent}")
 
@@ -323,11 +474,16 @@ def render_agent_prompt(
         sections.append(_build_environment_section(packet, squad))
 
     sections.append(_build_prompt_section(agent, packet, squad))
+    sections.append(_build_cognitive_contract_section())
     sections.append(_build_skills_section(packet, squad))
 
     work_item_ctx = _build_work_item_context(packet, squad)
     if work_item_ctx:
         sections.append(work_item_ctx)
+
+    ado_section = _build_azure_devops_section(packet, squad)
+    if ado_section:
+        sections.append(ado_section)
 
     sections.append(_build_hive_mind_section())
 

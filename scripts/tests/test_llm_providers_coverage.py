@@ -401,11 +401,28 @@ def test_cli_check_uses_default_providers_factory(monkeypatch, capsys):
 
 def test_module_entrypoint_guard(monkeypatch, capsys):
     import runpy
+    import socket
 
-    def offline_post(self, url, **kwargs):
+    def offline_socket(*args, **kwargs):
+        raise OSError("Hermetic test: network connections to local or remote ports are strictly forbidden")
+
+    def offline_http(*args, **kwargs):
         raise requests.RequestException("offline")
 
-    monkeypatch.setattr(requests.Session, "post", offline_post)
+    monkeypatch.setattr(socket, "create_connection", offline_socket)
+    monkeypatch.setattr(socket.socket, "connect", offline_socket)
+    monkeypatch.setattr(requests.Session, "post", offline_http)
+    monkeypatch.setattr(requests.Session, "request", offline_http)
+    monkeypatch.setattr(requests.Session, "send", offline_http)
+    monkeypatch.setattr(requests, "post", offline_http)
+    monkeypatch.setattr(requests, "get", offline_http)
+    try:
+        import httpx
+        monkeypatch.setattr(httpx.Client, "send", offline_http)
+        monkeypatch.setattr(httpx.Client, "request", offline_http)
+    except ImportError:
+        pass
+
     monkeypatch.setattr(sys, "argv", ["llm_providers.py", "check"])
     with pytest.raises(SystemExit) as exc:
         runpy.run_path(str(Path(llm_providers.__file__)), run_name="__main__")

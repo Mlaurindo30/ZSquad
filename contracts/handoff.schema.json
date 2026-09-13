@@ -19,7 +19,14 @@
     "open_questions": {"type": "array", "items": {"type": "string"}},
     "risks": {"type": "array", "items": {"type": "string"}},
     "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}},
-    "memory_delta": {"type": "string", "pattern": "^memory/deltas/MEM-[A-Z0-9-]+\\.yaml$"},
+    "memory_delta": {
+      "oneOf": [
+        {"type": "string", "pattern": "^memory/deltas/MEM-[A-Z0-9-]+\\.yaml$"},
+        {"type": "string", "pattern": "^MEM-[A-Z0-9-]+$"},
+        {"type": "integer"},
+        {"type": "null"}
+      ]
+    },
     "next_gate": {"type": ["string", "null"]},
     "sod_snapshot": {
       "type": "object",

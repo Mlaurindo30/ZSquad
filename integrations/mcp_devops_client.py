@@ -16,11 +16,14 @@ import threading
 import time
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 logger = logging.getLogger("McpDevOpsClient")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from integrations.devops_platform_connector import BaseDevOpsClient, DevOpsWorkItem
+from azure_devops_project_setup import AzureDevOpsProjectSetup
 
 
 class McpDevOpsClient(BaseDevOpsClient):
@@ -64,7 +67,7 @@ class McpDevOpsClient(BaseDevOpsClient):
     def _mcp_binary_available(self) -> bool:
         try:
             result = subprocess.run(
-                ["npx", "--yes", "@azure-devops/mcp@1.0.0", "--help"],
+                ["npx", "--yes", "@azure-devops/mcp@latest", "--help"],
                 capture_output=True,
                 timeout=15,
             )
@@ -73,16 +76,15 @@ class McpDevOpsClient(BaseDevOpsClient):
             return False
 
     def _start_mcp_server(self) -> None:
-        org_url = self.config.get("org_url") or f"https://dev.azure.com/{self.organization}"
+        # MCP Auth Fix (Lote 5.1): MCP v2.x exige PAT via ADO_MCP_AUTH_TOKEN com
+        # --authentication envvar; a organização é passada como NOME, não URL.
         env = {
             **os.environ,
-            "AZURE_DEVOPS_ORG": self.organization,
-            "AZURE_DEVOPS_PROJECT": self.project,
-            "AZURE_DEVOPS_PAT": self.pat_token,
+            "ADO_MCP_AUTH_TOKEN": self.pat_token,
         }
         try:
             self._process = subprocess.Popen(
-                ["npx", "--yes", "@azure-devops/mcp@1.0.0", org_url],
+                ["npx", "--yes", "@azure-devops/mcp@latest", self.organization, "--authentication", "envvar"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -145,8 +147,12 @@ class McpDevOpsClient(BaseDevOpsClient):
         return self.rest_client
 
     def pull_ready_items(self, squad_name: Optional[str] = None) -> list[DevOpsWorkItem]:
+        area_path = self.config.get("area_path")
+        area_clause = f" AND [System.AreaPath] UNDER '{area_path}'" if area_path else ""
+        wiql_query = f"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{self.project}' AND [System.State] IN ('New', 'Active'){area_clause}"
         result = self._call_mcp_tool("wit_query.wiql", {
-            "query": f"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{self.project}' AND [System.State] IN ('New', 'Active')"
+            "wiql": wiql_query,
+            "query": wiql_query,
         })
         if result is None:
             rc = self._ensure_rest_client()
@@ -219,18 +225,15 @@ class McpDevOpsClient(BaseDevOpsClient):
         rc = self._ensure_rest_client()
         if rc is None:
             return {"error": "No REST client available"}
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-        from azure_devops_project_setup import AzureDevOpsProjectSetup
-        setup = AzureDevOpsProjectSetup(rc)
-        return setup.apply_iterations(iterations)
+        setup = AzureDevOpsProjectSetup(rc, {**self.config, "iterations": iterations})
+        setup.apply_iterations()
+        return {"iterations": iterations, "results": setup.results}
 
     def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
         rc = self._ensure_rest_client()
         if rc is None:
             return False
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-        from azure_devops_project_setup import AzureDevOpsProjectSetup
-        setup = AzureDevOpsProjectSetup(rc)
+        setup = AzureDevOpsProjectSetup(rc, self.config)
         return setup.assign_iteration_to_team(team_id, iteration_id)
 
     def get_project_info(self) -> dict[str, Any]:
@@ -239,7 +242,8 @@ class McpDevOpsClient(BaseDevOpsClient):
             rc = self._ensure_rest_client()
             if rc is None:
                 return {"error": "No client available"}
-            return rc._request("GET", f"{rc.base_url}?api-version=7.1") or {}
+            org = "https://" + rc.base_url.split("/")[2]
+            return rc._request("GET", f"{org}/_apis/projects/{quote(self.project)}?api-version=7.1") or {}
         return result
 
     def create_project(self, name: str, process_type: str) -> dict[str, Any]:

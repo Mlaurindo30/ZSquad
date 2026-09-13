@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-squad.local/contracts/sdd-policy.schema.json",
+  "title": "Politica SDD por projeto",
+  "description": "Contrato da politica SDD por projeto (sdd.required, policy_version, legacy_mode). Em projeto ativado, policy invalida, ausente ou ilegivel falha fechada; desativacao exige alteracao de politica revisada.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["policy_version", "sdd"],
+  "properties": {
+    "policy_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sdd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required"],
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Quando true, o pacote SDD e obrigatorio para work items de desenvolvimento do projeto."
+        }
+      }
+    },
+    "legacy_mode": {
+      "type": "boolean",
+      "description": "Modo legado: campo ausente em projeto ainda nao migrado preserva compatibilidade, mas nao pode ser divulgado como cobertura SDD obrigatoria."
+    }
+  }
+}

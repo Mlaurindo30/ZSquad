@@ -15,6 +15,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 import sys
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import scripts.agent_squad as agent
@@ -349,7 +350,7 @@ def test_agent_helpers_hive_integration_and_cli_dispatch(tmp_path: Path, monkeyp
     with pytest.raises(agent.SquadError, match="catálogo aprovado"):
         squad.activation_packet("requirements-analyst", item=item, discovered=["unknown"])
     assert squad.discover("", 2) == []
-    monkeypatch.setattr(agent, "LocalAgentDB", Mock(side_effect=ValueError("db")))
+    monkeypatch.setattr(agent, "LocalAgentDB", Mock(side_effect=[ValueError("db"), Mock()]))
     assert squad.track_tokens(item, "requirements-analyst", "x", -1, 0, 0)["total_prompt_tokens"] == -1
 
     assert squad.run_integration_engine("fake_engine", work_item=item)["status"] == "error"
@@ -454,6 +455,7 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     sender, recipient = list(squad.agent_ids)[:2]
     (item / "e.txt").write_text("e", encoding="utf-8")
     delta_ref = "memory/deltas/MEM-TASK-REMAINING-000.yaml"
+    (item / delta_ref).parent.mkdir(parents=True, exist_ok=True)
     (item / delta_ref).write_text("kind: fact\nstatement: seed", encoding="utf-8")
     handoff = squad.create_handoff(item, sender, recipient, "summary", ["e.txt"], ["e.txt"], delta_ref)
     with pytest.raises(agent.SquadError, match="destinatário"):
@@ -477,11 +479,13 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     monkeypatch.setattr(gates, "validate_gate", original_validate)
 
     missing_summary = squad.init_work_item("TASK-NOSUMMARY", "low", base=tmp_path)
-    (missing_summary / "memory/shared/summary.md").unlink()
+    (missing_summary / "memory/shared/summary.md").unlink(missing_ok=True)
     with pytest.raises(agent.SquadError, match="summary.md ausente"): squad.compact_memory(missing_summary)
     (item / "memory/deltas/MEM-BAD.yaml").write_text("- bad", encoding="utf-8")
     for index, kind in enumerate(("fact", "decision", "risk")):
         (item / f"memory/deltas/MEM-{index}.yaml").write_text(yaml.safe_dump({"kind": kind, "statement": kind}))
+    (item / "memory/shared/summary.md").parent.mkdir(parents=True, exist_ok=True)
+    (item / "memory/shared/summary.md").write_text("# Summary\n- Seed line 1\n- Seed line 2\n", encoding="utf-8")
     compacted = squad.compact_memory(item)
     assert compacted["compacted_lines"] > 0
 
@@ -518,7 +522,7 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     packet = squad.activation_packet(chosen, item=item)
     assert packet["work_item"] == "TASK-REMAINING"
 
-    (item / "bad.bin").write_bytes(b"x\0")
+    (item / "bad.txt").write_bytes(b"x\0")
     (item / "handoffs" / f"{handoff['id']}.yaml").write_text(yaml.safe_dump(handoff), encoding="utf-8")
     (item / "gate-decisions/x.yaml").write_text("decision: pass", encoding="utf-8")
     monkeypatch.setattr(squad, "_validate", Mock())

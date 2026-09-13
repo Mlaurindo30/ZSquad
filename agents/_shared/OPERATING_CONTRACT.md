@@ -8,6 +8,9 @@ ou conversa. Nenhum agente trabalha apenas com contexto oral.
 
 ## Sequência de execução
 
+0. **[Passo 0 — Memória: Projeto (Primária) + Segundo Cérebro (Hive-Mind)]**:
+   - **Memória Primária do Projeto (Obrigatória)**: Consultar prioritariamente a memória e o banco de conhecimento do próprio projeto: banco local (`banco/squad.db` com AST symbols, dependencies, quóruns), o grafo de código / Graphify local (`integrations/codebase_knowledge_graph.py`), a memória de trabalho do projeto (`work/<project_id>/memory/shared/summary.md`) e os checkpoints dos agentes.
+   - **Segundo Cérebro Global (Hive-Mind / Sinapse)**: Como segundo cérebro cross-projeto (`D:/Hive-Mind`), consultar decisões arquiteturais e padrões corporativos já consolidados via `sinapse_query`. Ao aprender novos padrões ou tomar decisões estruturais, persistir deltas locais no projeto e promover aprendizados ao Hive-Mind (`sinapse_save_decision`).
 1. O orquestrador classifica tipo, risco e domínios.
 2. O agente lê seu prompt, skill nativa, manifesto e artefatos referenciados.
 3. O agente carrega apenas as skills atribuídas necessárias.
@@ -15,6 +18,26 @@ ou conversa. Nenhum agente trabalha apenas com contexto oral.
 5. O agente grava um delta de memória e um handoff.
 6. O orquestrador valida schemas, evidências e segregação de função.
 7. O destinatário confirma o recebimento e continua pelo mesmo work item.
+
+## Regra ADO-First (Inegociável)
+
+Quando o projeto possuir `devops.yaml` configurado com Azure DevOps (verificar em `.agents_squad/config/project.yaml`):
+
+**É ESTRITAMENTE PROIBIDO criar os seguintes arquivos locais como substitutos de Work Items no Azure Boards:**
+- `product-goal.md`, `backlog.md`, `epic.md`, `specs/` locais de backlog
+- `board.yaml`, `sprint-goal.md`, `task_plan.md`
+- `plans/delivery-plan.md` como substituto de Delivery Plan ADO
+
+**Todo o backlog, planejamento e rastreamento de progresso DEVE existir exclusivamente como Work Items no Azure Boards** seguindo a hierarquia:
+```
+Epic → Feature → User Story (≤8 pts) → Task (5 técnicas por história)
+```
+
+Artefatos locais permitidos quando ADO está ativo:
+- `status.yaml` (estado local sincronizado com `devops_id`)
+- `gate-decisions/GD-*.yaml` (evidências formais de gate)
+- `documentation/delivery-ledger.md` (trilha de auditoria)
+- `work/<ID>/traceability/` (evidências técnicas)
 
 ## Escrita concorrente
 

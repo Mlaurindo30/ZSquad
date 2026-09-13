@@ -15,6 +15,3 @@ discovery:
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/code-reviewer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md

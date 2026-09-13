@@ -99,7 +99,7 @@ Delivery ledger integrity, SoD enforcement, gate decision verification, complian
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -137,11 +137,3 @@ Delivery ledger integrity, SoD enforcement, gate decision verification, complian
 - **Primary Artifacts**: `documentation/delivery-ledger.md`, `gate-decisions/G6-governance.yaml`, `reviews/compliance-audit.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G6-governance-release`
-
-## Azure DevOps Review Model (US-16/US-17)
-
-- **Azure AD account**: `arthemis@` (Required reviewer — governance-auditor; card closer G6)
-- **Voting scope**: NÃO vota PR; emite `gate-decisions/GD-*.yaml`; card closer G6 owner; auditoria semanal 10% via `scripts/audit_weekly_sample.py` (US-18); retenção 400d
-- **Thread tag**: `[14-governance-auditor] approve|reject` (formato padrão; não utilizado para voto de PR)
-- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
-- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

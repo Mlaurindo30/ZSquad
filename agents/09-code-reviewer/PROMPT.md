@@ -104,7 +104,7 @@ Spec conformance, clean code standards, component contract verification, cogniti
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -144,10 +144,7 @@ Spec conformance, clean code standards, component contract verification, cogniti
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G4-code-security`
 
-## Azure DevOps Review Model (US-16/US-17)
+## SDD Contract (Spec Kit integration)
 
-- **Azure AD account**: `arthemis@` (Required reviewer — code-reviewer)
-- **Voting scope**: Voto em TODOS os PRs; path-filter não se aplica (reviewer universal); G4 owner
-- **Thread tag**: `[09-code-reviewer] approve|reject`
-- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
-- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5
+- In a project with SDD policy active, verify conformance via `python scripts/agent_squad.py sdd status --work-item <ITEM>` before G4: package validity, stale hashes (`SDD_STALE_GATE`) and open `SDD_*` errors are rejection evidence, not advisory.
+- Your review identity is recorded in gate decisions (author/reviewer segregation enforced by the CLI); an incomplete checklist or an open material finding is never satisfied by a textual confirmation.

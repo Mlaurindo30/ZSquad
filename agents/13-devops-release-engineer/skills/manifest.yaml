@@ -2,12 +2,12 @@ agent: devops-release-engineer
 native:
 - path: agents/13-devops-release-engineer/skills/native/devops-release-engineer-native
 assigned:
+- path: integrations/mcp_devops_client.py
 - path: skills/data/databricks/databricks-dabs
-- path: integrations/experimental/clone_or_update_repos.py
-- path: integrations/experimental/procedural_skill_engine.py
 - path: skills/memory/agent-memory
 - path: skills/platform/containers/docker-expert
 - path: skills/platform/containers/kubernetes-architect
+- path: skills/platform/devops/azure-devops-board-management
 - path: skills/platform/devops/ci-cd-and-automation
 - path: skills/platform/iac/terraform-specialist
 discovery:
@@ -15,7 +15,3 @@ discovery:
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/devops-release-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

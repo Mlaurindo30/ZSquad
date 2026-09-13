@@ -8,6 +8,7 @@
   "properties": {
     "id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
     "type": {"enum": ["epic", "story", "task", "bug", "release", "evolution", "study", "spike"]},
+    "cycle": {"type": "string", "minLength": 1},
     "state": {"enum": ["blueprint", "scaffolding", "implementation", "code-security-review", "quality-validation", "governance-release", "done", "intake", "discovery", "product-ready", "design", "design-ready", "ready-for-build", "review", "validation", "documentation", "ready-for-release", "triage", "mitigation", "postmortem"]},
     "risk": {"enum": ["low", "medium", "high", "critical"]},
     "story_points": {"enum": [1, 2, 3, 5, 8]},
@@ -44,6 +45,33 @@
     "baseline": {"type": "string"},
     "status_note": {"type": "string"},
     "devops_id": {"type": ["string", "integer", "null"]},
+
+    "sdd": {
+      "type": "object",
+      "description": "Referências e revisões SDD do work item (T4). Opcional: itens legados sem este campo permanecem válidos.",
+      "additionalProperties": false,
+      "properties": {
+        "policy_version": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Versão da política SDD vigente quando os gates do item foram avaliados."
+        },
+        "policy_file": {
+          "type": "string",
+          "description": "Caminho da política SDD do projeto (ex.: .agents_squad/config/sdd-policy.yaml)."
+        },
+        "gate_decisions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs (decision_id) das decisões de gate que vinculam este item, ex.: GD-<work-id>-G1-PRODUCT."
+        },
+        "document_revisions": {
+          "type": "object",
+          "description": "Mapa documento -> revisão/hash (sha256) vinculada na aprovação (spec, clarifications, plan, tasks, constitution).",
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
 
     "constraints": {"type": "array", "items": {"type": "string"}},
     "open_conditions": {"type": "array", "items": {"type": "string"}},

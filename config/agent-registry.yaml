@@ -4,20 +4,20 @@ registry:
   runtime_adapter: filesystem-portable
   discovery: curated-local-first
   handoff_transport: work-item-files
-  memory: private-and-shared
+  memory: project-db-and-ado
   maximum_active_agents_per_item: 10
 agents:
 - id: delivery-orchestrator
   path: agents/00-delivery-orchestrator
   title: Swarm & SDLC Delivery Orchestrator
   mode: host
+  purpose: SDLC orchestration, WIP control, gate verification, handoff schema enforcement,
+    blocker escalation, dependency tracking.
+  manifest: agents/00-delivery-orchestrator/skills/manifest.yaml
   host_role: provider-primary
   singleton: true
   provider_primary: true
   dispatchable: false
-  purpose: SDLC orchestration, WIP control, gate verification, handoff schema enforcement,
-    blocker escalation, dependency tracking.
-  manifest: agents/00-delivery-orchestrator/skills/manifest.yaml
 - id: requirements-analyst
   path: agents/01-requirements-analyst
   title: Requirements & Specification Engineer
@@ -153,10 +153,11 @@ agents:
   manifest: agents/19-technical-writer/skills/manifest.yaml
 - id: ux-researcher
   path: agents/20-ux-researcher
-  title: Usability & User Journey Pioneer
+  title: Principal UX Researcher & Cognitive Ergonomics Authority
   mode: on_demand
-  purpose: Usability heuristics, user journey flows, accessibility logic, wireframes,
-    human-computer interaction, cognitive load reduction.
+  purpose: Nielsen's 10 Usability Heuristics, User Journey Mapping, Cognitive Task
+    Analysis, Low-Fidelity Wireframes, Information Architecture, Usability Testing
+    (SUS/UMUX), Friction Point Diagnosis.
   manifest: agents/20-ux-researcher/skills/manifest.yaml
 - id: frontend-engineer
   path: agents/21-frontend-engineer
@@ -266,37 +267,39 @@ agents:
   manifest: agents/35-swarm-consensus-coordinator/skills/manifest.yaml
 - id: fullstack-engineer
   path: agents/37-fullstack-engineer
-  title: End-to-End TypeScript & Fullstack Specialist
+  title: Principal Fullstack & Next.js Systems Engineer
   mode: on_demand
-  purpose: Fullstack web development, TypeScript, Next.js, Node.js, React, API integration,
-    monorepos, end-to-end features, TDD.
+  purpose: Next.js App Router, React Server Components, Server Actions, tRPC/Zod type
+    contracts, Prisma/Drizzle ORMs, Fastify/Node.js backends, TDD/BDD automated testing.
   manifest: agents/37-fullstack-engineer/skills/manifest.yaml
 - id: mobile-engineer
   path: agents/38-mobile-engineer
-  title: Cross-Platform & Native Mobile Specialist
+  title: Principal Mobile & Cross-Platform Engineer
   mode: on_demand
-  purpose: Native and cross-platform mobile apps (iOS, Android, Flutter, React Native),
-    mobile UI/UX, offline-first architectures, mobile performance.
+  purpose: Flutter, React Native, iOS (Swift/SwiftUI), Android (Kotlin/Jetpack Compose),
+    Offline-First sync, SQLite/WatermelonDB, Push Notifications, Biometrics, Mobile
+    CI/CD.
   manifest: agents/38-mobile-engineer/skills/manifest.yaml
 - id: cloud-architect
   path: agents/39-cloud-architect
-  title: Cloud Foundation & Infrastructure as Code Specialist
+  title: Principal Multi-Cloud & Distributed Systems Architect
   mode: on_demand
-  purpose: Cloud topology design, AWS/Azure/GCP, Terraform IaC modules, IAM policies,
-    VPC networking, serverless architectures, FinOps.
+  purpose: AWS / Azure / GCP Well-Architected Frameworks, Terraform / OpenTofu IaC,
+    Kubernetes, Service Mesh, Zero-Trust Network Architecture, FinOps, Multi-Region
+    DR, Chaos Engineering.
   manifest: agents/39-cloud-architect/skills/manifest.yaml
 - id: agile-coach
   path: agents/40-agile-coach
-  title: Metrics, Sizing & Flow Delivery Manager
+  title: Enterprise Agile Coach & Flow Master
   mode: core
-  purpose: Story Points sizing (Fibonacci), cognitive load protection (max 8 points),
-    backlog refinement, CFD flow analysis, Cycle Time reduction, story splitting.
+  purpose: Fibonacci Story Points sizing, Max 8 Points Splitting Rule, T-Shirt epic
+    sizing, Little's Law, Cumulative Flow Diagrams (CFD), DORA metrics, Continuous
+    Refinement, Retrospectives.
   manifest: agents/40-agile-coach/skills/manifest.yaml
 - id: ui-designer
   path: agents/41-ui-designer
-  title: High-Fidelity UI & Design Tokens Specialist
+  title: Principal UI Designer & Design Systems Architect
   mode: on_demand
-  purpose: High-fidelity visual components, Design Tokens architecture, CSS/Tailwind,
-    Figma-to-Code specs, micro-interactions, responsive pixel perfection.
+  purpose: Atomic Design, W3C Design Tokens, fluid responsive typography, micro-interactions,
+    WCAG 2.2 AAA contrast, component variant matrices, CSS Architecture.
   manifest: agents/41-ui-designer/skills/manifest.yaml
-

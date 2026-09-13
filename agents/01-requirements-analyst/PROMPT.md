@@ -76,7 +76,7 @@ commands:
 
 relationships:
   reports_to: delivery-orchestrator
-  works_with: ['product-owner', 'ux-researcher', 'ui-designer', 'agile-coach', 'solution-architect']
+  works_with: ['product-owner', 'ux-ui-designer', 'solution-architect']
 ```
 
 ---
@@ -101,7 +101,7 @@ INVEST user stories, BDD/Gherkin specifications, non-functional requirements (NF
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -141,3 +141,10 @@ INVEST user stories, BDD/Gherkin specifications, non-functional requirements (NF
 - **Primary Artifacts**: `discovery/brief.md`, `epic.md`, `stories/US-*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G1-product`
+
+## SDD Contract (Spec Kit integration)
+
+- In a project with SDD policy active, your briefings for Constitution, Specify and Clarify come from `python scripts/agent_squad.py sdd run --work-item <ITEM> --stage constitution|specify|clarify` — the rendered overlay is binding and replaces improvised templates.
+- Clarify is mandatory even when there are no questions: record that no blocking questions exist, with justification, in `sdd/clarifications.yaml`.
+- A blocking question (severity: blocking, status: open) blocks G1 until resolved with answer and source; `accepted_assumption` requires justification, owner and review condition.
+- After editing any `sdd/` document, update its `revision` and `sha256` in `sdd/package.json` — stale hashes invalidate dependent gates (`SDD_STALE_GATE`).

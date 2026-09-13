@@ -83,5 +83,95 @@ class TestMcpDevOpsClientToolMapping(unittest.TestCase):
         self.assertIn("import_repository", McpDevOpsClient.REST_ONLY)
 
 
+class TestMcpDevOpsClientMethods(unittest.TestCase):
+    """Testa métodos específicos corrigidos na Frente 1."""
+
+    @patch("subprocess.run")
+    def test_pull_ready_items_area_clause(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1)
+        from integrations.mcp_devops_client import McpDevOpsClient
+
+        client = McpDevOpsClient(
+            organization="cbvgas",
+            project="Arthemis",
+            pat_token="fake-token",
+            config={"area_path": "Arthemis\\agent-squad"},
+        )
+        captured = {}
+
+        def fake_call(tool_name, arguments):
+            captured["tool"] = tool_name
+            captured["arguments"] = arguments
+            return {"workItems": []}
+
+        client._call_mcp_tool = fake_call
+        client.pull_ready_items()
+
+        self.assertIn("wit_query", captured["tool"])
+        self.assertIn("[System.AreaPath] UNDER 'Arthemis\\agent-squad'", captured["arguments"]["wiql"])
+
+    @patch("subprocess.run")
+    def test_apply_iterations_delegation(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1)
+        from integrations.mcp_devops_client import McpDevOpsClient
+
+        client = McpDevOpsClient(
+            organization="cbvgas",
+            project="Arthemis",
+            pat_token="fake-token",
+            config={"team": "agent-squad"},
+        )
+
+        with patch("integrations.mcp_devops_client.AzureDevOpsProjectSetup") as mock_setup_cls:
+            instance = mock_setup_cls.return_value
+            instance.apply_iterations.return_value = None
+            instance.results = [{"step": "iterations", "status": "ok"}]
+
+            res = client.apply_iterations([{"name": "Sprint 1"}])
+            mock_setup_cls.assert_called_once()
+            args, kwargs = mock_setup_cls.call_args
+            self.assertEqual(args[1]["iterations"], [{"name": "Sprint 1"}])
+            self.assertEqual(args[1]["team"], "agent-squad")
+            self.assertTrue(res)
+
+    @patch("subprocess.run")
+    def test_assign_iteration_to_team_delegation(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1)
+        from integrations.mcp_devops_client import McpDevOpsClient
+
+        client = McpDevOpsClient(
+            organization="cbvgas",
+            project="Arthemis",
+            pat_token="fake-token",
+        )
+
+        with patch("integrations.mcp_devops_client.AzureDevOpsProjectSetup") as mock_setup_cls:
+            instance = mock_setup_cls.return_value
+            instance.assign_iteration_to_team.return_value = True
+
+            res = client.assign_iteration_to_team("team-1", "iter-1")
+            instance.assign_iteration_to_team.assert_called_once_with("team-1", "iter-1")
+            self.assertTrue(res)
+
+    @patch("subprocess.run")
+    def test_get_project_info_url_quote(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1)
+        from integrations.mcp_devops_client import McpDevOpsClient
+
+        client = McpDevOpsClient(
+            organization="cbvgas",
+            project="Arthemis Project",
+            pat_token="fake-token",
+        )
+
+        client._ensure_rest_client()
+        with patch.object(client.rest_client, "_request", return_value={"id": "proj-id"}) as mock_req:
+            info = client.get_project_info()
+            mock_req.assert_called_once()
+            url = mock_req.call_args[0][1]
+            self.assertIn("Arthemis%20Project", url)
+            self.assertEqual(info["id"], "proj-id")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

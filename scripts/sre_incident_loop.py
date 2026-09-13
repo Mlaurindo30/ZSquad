@@ -69,7 +69,7 @@ class SREIncidentLoop:
 
         status_path = work_dir / "status.yaml"
         status = read_yaml(status_path)
-        status["next_action"] = f"Investigar causa raiz do alerta '{alert_id}' em '{service_name}' e validar GT-entry."
+        status["next_action"] = f"Investigar causa raiz do alerta '{alert_id}' em '{service_name}' e iniciar a implementação do bugfix."
         status["status_note"] = f"target_service={service_name}; alert_source={alert_id}"
         write_yaml(status_path, status)
 
@@ -133,4 +133,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

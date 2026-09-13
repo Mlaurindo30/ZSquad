@@ -96,7 +96,7 @@ MITRE ATT&CK adversary emulation, penetration testing, automated exploit validat
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -134,11 +134,3 @@ MITRE ATT&CK adversary emulation, penetration testing, automated exploit validat
 - **Primary Artifacts**: `reviews/red-team-report.md`, `findings/EXP-*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G4-code-security`
-
-## Azure DevOps Review Model (US-16/US-17)
-
-- **Azure AD account**: `cyber-red@michellaurindooutlook812.onmicrosoft.com` (service account — offensive-cyber-operator; NÃO `arthemis@`)
-- **Voting scope**: Voto em PRs quando path ∈ {`auth/`, `crypto/`, `iac/`}; duplo sign-off com `10-security-reviewer` (`arthemis@`) para paths críticos; compensating control `double_signoff_with: [security-reviewer]` em `templates/devops.yaml:service_accounts.cyber_red`
-- **Thread tag**: `[34-offensive-cyber-operator] approve|reject`
-- **Governance reference**: `agents/_shared/OPERATING_CONTRACT.md §"Quem aprova o quê"`
-- **Standards**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC CC6.1, CC8.1; NIST SP 800-53 CM-5

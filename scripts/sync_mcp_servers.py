@@ -36,11 +36,12 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
         "mcpServers": {
             "azure-devops": {
                 "command": "npx",
-                "args": ["-y", "@azure-devops/mcp"],
+                # MCP Auth Fix (Lote 5.1): MCP v2.x usa PAT via env var
+                # ADO_MCP_AUTH_TOKEN + --authentication envvar (headless/CI);
+                # a organização é passada como NOME (não URL) como argumento.
+                "args": ["-y", "@azure-devops/mcp@latest", "${AZURE_DEVOPS_ORG}", "--authentication", "envvar"],
                 "env": {
-                    "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}",
-                    "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
-                    "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+                    "ADO_MCP_AUTH_TOKEN": "${AZURE_DEVOPS_PAT}"
                 },
                 "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
             },

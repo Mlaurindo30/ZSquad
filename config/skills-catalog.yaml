@@ -1,8 +1,200 @@
 version: 2
 mode: local-curated
 generated_at: 2026-08-21T10:30:27.0000000-0300
-active_skill_count: 144
+active_skill_count: 148
 catalog:
+- name: codebase_knowledge_graph
+  path: integrations/codebase_knowledge_graph.py
+  domain: integration-engines
+  specialization: knowledge-graph
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  - data-ai-architect
+  - software-engineer
+  load: on-demand
+  folder_sha256: 0c4350680432625f2dc7329c3225776575e4855934ebafd90f10e1b546cc68c3
+  description: Popula grafo de entidades/apis/tests do projeto para navegacao e impacto.
+- name: devops_platform_connector
+  path: integrations/devops_platform_connector.py
+  domain: integration-engines
+  specialization: devops-platform
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  load: on-demand
+  folder_sha256: e0795ab19d9ba4eaf5e923610a5f87fb31610c6a17d5d928fdcaca8a320dd431
+  description: Conector de integração com plataforma Azure DevOps / Jira.
+- name: blast_radius_analyzer
+  path: integrations/experimental/blast_radius_analyzer.py
+  domain: integration-engines
+  specialization: blast-radius
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - fullstack-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: bc1f123e71b38bfa8a86de12f17441c14c26e98c45fe363c91f939c01db42f26
+  description: OBRIGATORIO antes de alterar producao/schema/credencial/dado sensivel.
+    Identifica afetados pelo change e calcula raio de explosao.
+- name: clone_or_update_repos
+  path: integrations/experimental/clone_or_update_repos.py
+  domain: integration-engines
+  specialization: repo-sync
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  load: on-demand
+  folder_sha256: 7437ac840a794596a9458d822b2122ab14cf0436526c6313226ceb36c49519de
+  description: Gerenciador de download, clonagem e atualizacao de repositorios externos
+    integrados ao Agents Squad.
+- name: code_health_analyzer
+  path: integrations/experimental/code_health_analyzer.py
+  domain: integration-engines
+  specialization: code-health
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - data-ai-architect
+  - fullstack-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 31335f9c3f8eb207712ac10ca05cf154522858fa0a30870d9e2e398b5d95a077
+  description: Auditoria periodica de divida, duplicacao, complexidade e hotspots
+    do codigo.
+- name: contextual_ast_chunker
+  path: integrations/experimental/contextual_ast_chunker.py
+  domain: integration-engines
+  specialization: ast-chunking
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 0a3c27cfabcf8c29068e1a5fa5a9c6e7b66099c65f73a01fcc0c871e5625c169
+  description: Fragmenta codigo em chunks contextuais usando AST para RAG e analise
+    semantica.
+- name: gitingest
+  path: integrations/experimental/gitingest.py
+  domain: integration-engines
+  specialization: repo-ingest
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  - delivery-orchestrator
+  - software-engineer
+  load: on-demand
+  folder_sha256: af0989101a0da6bb255451559374f8fe1bda38fdad7a6a86ebeb8de730a1b178
+- name: procedural_skill_engine
+  path: integrations/experimental/procedural_skill_engine.py
+  domain: integration-engines
+  specialization: procedural-skill
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - platform-engineer
+  load: on-demand
+  folder_sha256: bab501e48b901879cd77efa942622e9b5d6026d0a2d4f0dad302645755b9116e
+  description: Aplica skill procedural a um processo repetivel com entradas/saidas
+    validadas.
+- name: prompt_quality_optimizer
+  path: integrations/experimental/prompt_quality_optimizer.py
+  domain: integration-engines
+  specialization: prompt-quality
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  load: on-demand
+  folder_sha256: 623d6108e1dea404c3851da85c15afb21b064c9203a2b2650e80a47d87a624e4
+  description: Avalia e otimiza prompts de agentes antes do deploy usando metricas
+    de qualidade.
+- name: sdlc_role_mapper
+  path: integrations/experimental/sdlc_role_mapper.py
+  domain: integration-engines
+  specialization: sdlc-role-mapping
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  - solution-architect
+  load: on-demand
+  folder_sha256: 6b17c8292c590d82d670c4a2be538791b664a38cc0628adef4415f37c20796d8
+  description: Mapeia papeis SDLC para perfis de agente e valida cobertura do squad.
+- name: toon
+  path: integrations/experimental/toon.py
+  domain: integration-engines
+  specialization: compact-serialization
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  - delivery-orchestrator
+  - qa-engineer
+  - software-engineer
+  - test-engineer
+  load: on-demand
+  folder_sha256: 6455145e4c42ff2fd431866b7e0d9ea9e25774979dbb449892120172997960c0
+  description: Serializa/decoida metadados de skills/catalog/handoffs em formato TOON
+    compacto para economia de tokens em prompts e saídas de engines.
+- name: trajectory_refinement_engine
+  path: integrations/experimental/trajectory_refinement_engine.py
+  domain: integration-engines
+  specialization: trajectory-refinement
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - ai-engineer
+  - delivery-orchestrator
+  load: on-demand
+  folder_sha256: b77cc14c59469aad31aac7758e3b4a56c70ad66e1858a3e65a8de72c7ced4592
+  description: Refina trajetorias de agentes apos execucao real para reduzir retrabalho
+    e custo.
+- name: zcode-subagents
+  path: integrations/experimental/zcode_subagents.py
+  domain: integration-engines
+  specialization: zcode-native-subagents
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  - platform-engineer
+  load: on-demand
+  description: Renderiza, instala, verifica e remove perfis Markdown nativos do ZCode
+    a partir das personas canônicas, com proveniência e conflitos fail-closed.
+- name: mcp_devops_client
+  path: integrations/mcp_devops_client.py
+  domain: integration-engines
+  specialization: mcp-devops-transport
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  - devops-release-engineer
+  load: on-demand
+  folder_sha256: e0795ab19d9ba4eaf5e923610a5f87fb31610c6a17d5d928fdcaca8a320dd431
+  description: Wrapper MCP stdio JSON-RPC para servidor @azure-devops/mcp com REST
+    fallback.
 - name: ai-agent-development
   path: skills/ai/agent-development/ai-agent-development
   domain: ai
@@ -1725,6 +1917,23 @@ catalog:
   folder_sha256: 241c1c4ec0a89efa76485b719f50963188db9a7b8cb57f57934a350769de4b65
   description: Expert Kubernetes architect specializing in cloud-native infrastructure,
     advanced GitOps workflows (ArgoCD/Flux), and enterprise container orchestration.
+- name: azure-devops-board-management
+  path: skills/platform/devops/azure-devops-board-management
+  domain: platform
+  specialization: devops
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  - devops-release-engineer
+  - product-owner
+  - scrum-master
+  load: on-demand
+  folder_sha256: 705a4fa0fa4e7c57e3f22aa372f5412c29b65fcb4dad8ade149c9d75d9c46eef
+  description: Protocolo operacional completo para interacao com o Azure DevOps Boards,
+    criacao de Work Items, movimentacao pelas 7 colunas SDLC, vinculacao pai-filho
+    e regras SoD.
 - name: ci-cd-and-automation
   path: skills/platform/devops/ci-cd-and-automation
   domain: platform
@@ -2008,6 +2217,22 @@ catalog:
     and risk assessment. Masters STRIDE, PASTA, attack trees, and security requirement
     extraction. Use PROACTIVELY for security architecture reviews, threat identification,
     or building secure-by-design systems.
+- name: behavior-driven-development
+  path: skills/testing/bdd/behavior-driven-development
+  domain: testing
+  specialization: bdd
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - product-owner
+  - qa-engineer
+  - test-engineer
+  load: on-demand
+  folder_sha256: 48175fc74157cd027d6b11ec147be85e39f0b7dd8debe8181335b0d41f370068
+  description: BDD com Gherkin. Use when the user asks for BDD, Given/When/Then, acceptance
+    criteria, Gherkin scenarios, feature files, behavior specifications, or wants
+    to bridge business requirements and executable tests.
 - name: browser-automation
   path: skills/testing/browser-automation
   domain: testing
@@ -2050,207 +2275,8 @@ catalog:
   folder_sha256: e53a64d55491ecc813eff10d8b0ce726b99ce1cd5c9f3198d0f1741198abd916
   description: Systematically identify and fix all failing tests using smart grouping
     strategies. Use when explicitly asks to fix tests (
-- name: blast_radius_analyzer
-  path: integrations/experimental/blast_radius_analyzer.py
-  domain: integration-engines
-  specialization: blast-radius
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - fullstack-engineer
-  - software-engineer
-  load: on-demand
-  folder_sha256: bc1f123e71b38bfa8a86de12f17441c14c26e98c45fe363c91f939c01db42f26
-  description: OBRIGATORIO antes de alterar producao/schema/credencial/dado sensivel.
-    Identifica afetados pelo change e calcula raio de explosao.
-- name: code_health_analyzer
-  path: integrations/experimental/code_health_analyzer.py
-  domain: integration-engines
-  specialization: code-health
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - data-ai-architect
-  - fullstack-engineer
-  - software-engineer
-  load: on-demand
-  folder_sha256: 31335f9c3f8eb207712ac10ca05cf154522858fa0a30870d9e2e398b5d95a077
-  description: Auditoria periodica de divida, duplicacao, complexidade e hotspots
-    do codigo.
-- name: codebase_knowledge_graph
-  path: integrations/experimental/codebase_knowledge_graph.py
-  domain: integration-engines
-  specialization: knowledge-graph
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  - data-ai-architect
-  - software-engineer
-  load: on-demand
-  folder_sha256: 0c4350680432625f2dc7329c3225776575e4855934ebafd90f10e1b546cc68c3
-  description: Popula grafo de entidades/apis/tests do projeto para navegacao e impacto.
-- name: procedural_skill_engine
-  path: integrations/experimental/procedural_skill_engine.py
-  domain: integration-engines
-  specialization: procedural-skill
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - devops-release-engineer
-  - platform-engineer
-  load: on-demand
-  folder_sha256: bab501e48b901879cd77efa942622e9b5d6026d0a2d4f0dad302645755b9116e
-  description: Aplica skill procedural a um processo repetivel com entradas/saidas
-    validadas.
-- name: prompt_quality_optimizer
-  path: integrations/experimental/prompt_quality_optimizer.py
-  domain: integration-engines
-  specialization: prompt-quality
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  load: on-demand
-  folder_sha256: 623d6108e1dea404c3851da85c15afb21b064c9203a2b2650e80a47d87a624e4
-  description: Avalia e otimiza prompts de agentes antes do deploy usando metricas
-    de qualidade.
-- name: trajectory_refinement_engine
-  path: integrations/experimental/trajectory_refinement_engine.py
-  domain: integration-engines
-  specialization: trajectory-refinement
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  - delivery-orchestrator
-  load: on-demand
-  folder_sha256: b77cc14c59469aad31aac7758e3b4a56c70ad66e1858a3e65a8de72c7ced4592
-  description: Refina trajetorias de agentes apos execucao real para reduzir retrabalho
-    e custo.
-- name: sdlc_role_mapper
-  path: integrations/experimental/sdlc_role_mapper.py
-  domain: integration-engines
-  specialization: sdlc-role-mapping
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - delivery-orchestrator
-  - solution-architect
-  load: on-demand
-  folder_sha256: 6b17c8292c590d82d670c4a2be538791b664a38cc0628adef4415f37c20796d8
-  description: Mapeia papeis SDLC para perfis de agente e valida cobertura do squad.
-- name: contextual_ast_chunker
-  path: integrations/experimental/contextual_ast_chunker.py
-  domain: integration-engines
-  specialization: ast-chunking
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  - software-engineer
-  load: on-demand
-  folder_sha256: 0a3c27cfabcf8c29068e1a5fa5a9c6e7b66099c65f73a01fcc0c871e5625c169
-  description: Fragmenta codigo em chunks contextuais usando AST para RAG e analise
-    semantica.
-- name: clone_or_update_repos
-  path: integrations/experimental/clone_or_update_repos.py
-  domain: integration-engines
-  specialization: repo-sync
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - delivery-orchestrator
-  - devops-release-engineer
-  load: on-demand
-  folder_sha256: 7437ac840a794596a9458d822b2122ab14cf0436526c6313226ceb36c49519de
-  description: Gerenciador de download, clonagem e atualizacao de repositorios externos
-    integrados ao Agents Squad.
-- name: behavior-driven-development
-  path: skills/testing/bdd/behavior-driven-development
-  domain: testing
-  specialization: bdd
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - product-owner
-  - qa-engineer
-  - test-engineer
-  load: on-demand
-  folder_sha256: 48175fc74157cd027d6b11ec147be85e39f0b7dd8debe8181335b0d41f370068
-  description: BDD com Gherkin. Use when the user asks for BDD, Given/When/Then, acceptance
-    criteria, Gherkin scenarios, feature files, behavior specifications, or wants
-    to bridge business requirements and executable tests.
-- name: gitingest
-  path: integrations/experimental/gitingest.py
-  domain: integration-engines
-  specialization: repo-ingest
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  - delivery-orchestrator
-  - software-engineer
-  load: on-demand
-  folder_sha256: af0989101a0da6bb255451559374f8fe1bda38fdad7a6a86ebeb8de730a1b178
-- name: devops_platform_connector
-  path: integrations/devops_platform_connector.py
-  domain: integration-engines
-  specialization: devops-platform
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - delivery-orchestrator
-  load: on-demand
-  folder_sha256: e0795ab19d9ba4eaf5e923610a5f87fb31610c6a17d5d928fdcaca8a320dd431
-  description: Compacta repositorios/diretorios em texto estruturado para contexto
-    de LLM, reduzindo tokens em blast_radius_analyzer, codebase_knowledge_graph e
-    code_health_analyzer.
-- name: toon
-  path: integrations/experimental/toon.py
-  domain: integration-engines
-  specialization: compact-serialization
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - ai-engineer
-  - delivery-orchestrator
-  - qa-engineer
-  - software-engineer
-  - test-engineer
-  load: on-demand
-  folder_sha256: 6455145e4c42ff2fd431866b7e0d9ea9e25774979dbb449892120172997960c0
-  description: Serializa/decoida metadados de skills/catalog/handoffs em formato TOON
-    compacto para economia de tokens em prompts e saídas de engines.
-- name: zcode-subagents
-  path: integrations/experimental/zcode_subagents.py
-  domain: integration-engines
-  specialization: zcode-native-subagents
-  source: squad-internal
-  provenance: internal-original
-  license_status: proprietary
-  assigned_to:
-  - delivery-orchestrator
-  - platform-engineer
-  load: on-demand
-  description: Renderiza, instala, verifica e remove perfis Markdown nativos do ZCode
-    a partir das personas canônicas, com proveniência e conflitos fail-closed.
 policy:
   sources: skills/SOURCES.md
   quarantine_is_not_loadable: true
   every_active_skill_requires_assigned_agent: true
 discovery: config/discovery-policy.yaml
-

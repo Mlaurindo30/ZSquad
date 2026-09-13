@@ -4,16 +4,15 @@
       "command": "npx",
       "args": [
         "-y",
-        "@azure-devops/mcp"
+        "@azure-devops/mcp@latest",
+        "${AZURE_DEVOPS_ORG}",
+        "--authentication",
+        "envvar"
       ],
       "env": {
-        "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}",
-        "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
-        "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+        "ADO_MCP_AUTH_TOKEN": "${AZURE_DEVOPS_PAT}"
       },
-      "transport": "stdio",
-      "version": "@azure-devops/mcp@latest",
-      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests via transport stdio JSON-RPC."
+      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
     },
     "codebase-memory": {
       "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",

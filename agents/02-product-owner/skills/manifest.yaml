@@ -4,6 +4,7 @@ native:
 assigned:
 - path: skills/delivery/scrum-kanban/operate-scrum-kanban
 - path: skills/memory/agent-memory
+- path: skills/platform/devops/azure-devops-board-management
 - path: skills/product/business-analyst
 - path: skills/product/product-manager-toolkit
 - path: skills/requirements/refine-requirements-stories
@@ -13,6 +14,3 @@ discovery:
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/product-owner.md
-  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -118,6 +118,21 @@ CREATE TABLE IF NOT EXISTS ops_recovery (
     recorded_at REAL NOT NULL
 );
 
+-- 8. Tabela de Fatos de Memória (Memory Facts / Cognição L1/L2)
+CREATE TABLE IF NOT EXISTS memory_facts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id TEXT NOT NULL,
+    work_item_id TEXT NOT NULL,
+    author TEXT NOT NULL,
+    kind TEXT NOT NULL, -- 'fact', 'decision', 'dependency', 'risk', 'pending'
+    statement TEXT NOT NULL,
+    source TEXT NOT NULL,
+    confidence REAL DEFAULT 1.0,
+    sensitivity TEXT NOT NULL DEFAULT 'internal',
+    invalidates_when TEXT,
+    recorded_at REAL NOT NULL
+);
+
 -- Índices de Alta Performance
 CREATE INDEX IF NOT EXISTS idx_symbols_file ON symbols(project_id, file_path);
 CREATE INDEX IF NOT EXISTS idx_symbols_name ON symbols(project_id, name);
@@ -128,4 +143,6 @@ CREATE INDEX IF NOT EXISTS idx_trajectory_benchmark ON trajectory_logs(project_i
 CREATE INDEX IF NOT EXISTS idx_quorum_work_gate ON quorum_votes(project_id, work_item_id, gate_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_work_item ON workflow_metrics(work_item_id);
 CREATE INDEX IF NOT EXISTS idx_workflow_phase ON workflow_metrics(phase);
+CREATE INDEX IF NOT EXISTS idx_memory_facts_work ON memory_facts(project_id, work_item_id, kind);
+
 

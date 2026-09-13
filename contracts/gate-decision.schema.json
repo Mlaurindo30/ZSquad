@@ -26,6 +26,18 @@
       }
     },
     "evidence": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "author": {"type": "string", "description": "Autor da entrega (MINOR-1 auditoria T4: viabiliza verificação de segregação no authorize SDD)."},
+    "reviewer": {"type": "string", "description": "Revisor independente; não pode ser igual a decider/author."},
+    "input_hashes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "string"},
+      "description": "Mapa documento -> sha256 capturado no momento da decisão (T5: vínculo de frescor verificado no advance/dispatch)."
+    },
+    "policy_version": {
+      "type": ["integer", "string"],
+      "description": "Versão da política SDD vigente na decisão; divergência da política atual exige reavaliação (SDD_STALE_GATE)."
+    },
     "human_approval": {
       "type": "object",
       "additionalProperties": false,

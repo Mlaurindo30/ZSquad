@@ -9,6 +9,7 @@ Este diretório contém os motores funcionais e adaptadores autônomos que opera
 ```text
 integrations/
 ├── devops_platform_connector.py   # Conector Azure DevOps/Jira (ativo)
+├── spec-kit/                      # Integração SDD governada (snapshot upstream + adapter) — ver abaixo
 ├── experimental/                  # Motores órfãos (sem caller ativo — audit 2026-09-02)
 │   ├── procedural_skill_engine.py
 │   ├── trajectory_refinement_engine.py
@@ -29,6 +30,29 @@ integrations/
 > **Nota:** Os motores em `experimental/` foram movidos durante o audit de 2026-09-02
 > (seção 4.1, issue B-4) — não possuem callers ativos. Veja
 > `integrations/experimental/README.md` para detalhes e instruções de restauração.
+
+---
+
+## Integração spec-kit (SDD — Especificação como Pré-condição Governada)
+
+| Propriedade | Valor |
+|---|---|
+| **Diretório** | `integrations/spec-kit/` |
+| **Tipo** | Snapshot upstream versionado + adapter Squad (vendor governado, sem repositório Git aninhado) |
+| **Origem** | [github/spec-kit](https://github.com/github/spec-kit), commit `c173bf19a6654e3b05386ec3599349a55282b897` (567 arquivos, licença MIT) |
+| **adapter_version** | 0.1.0 (`integrations/spec-kit/PROVENANCE.yaml`) |
+| **Entrada canônica** | CLI do Squad (`python scripts/agent_squad.py`) — não há segundo orquestrador |
+| **Componentes ativos** | `adapter/` (contratos, validação, política, rendering, backlog), `overlays/commands/` (7 comandos governados), enforcement no CLI (`decide-gate`, `advance-state`, `run-engine`) |
+| **Integridade** | `UPSTREAM_FILES.sha256` (567 entradas) verificado por `verify_snapshot.py` |
+| **Operação** | `documentation/spec-kit-operations.md` (atualização, rollback, diagnóstico, adoção legada) |
+| **Política por projeto** | `<project_root>/.agents_squad/config/sdd-policy.yaml` (schema: `contracts/sdd-policy.schema.json`) |
+| **Proveniência** | `integrations/spec-kit/PROVENANCE.yaml`; patches em `integrations/spec-kit/PATCHES.md` |
+
+**Notas de catálogo:** o `agent_squad.py audit` reporta ~255 apontamentos "skill
+ativa fora do catálogo" sob `integrations/spec-kit/` (upstream + adapter/tests) —
+classe conhecida, baseline documentada na seção 6.1 de
+`documentation/spec-kit-operations.md` (tratamento: exclusão de catálogo ou aceite
+de governança; não é silenciosamente ignorado).
 
 ---
 

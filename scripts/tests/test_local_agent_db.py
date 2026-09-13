@@ -152,6 +152,102 @@ def login_user(username: str) -> bool:
         self.assertIn("project_id", columns)
         self.assertEqual(projects, [("legacy",)])
 
+    def test_record_and_get_memory_facts(self):
+        """Valida registro, recuperação e sumário de fatos de memória."""
+        fact_id_1 = self.db.record_memory_fact(
+            project_id="project-a",
+            work_item_id="TASK-MEM-01",
+            author="07-data-engineer",
+            kind="fact",
+            statement="Tabela memory_facts implementada com sucesso no SQLite.",
+            source="test_runner",
+            confidence=0.95,
+            sensitivity="internal",
+            invalidates_when=None,
+        )
+        self.assertGreater(fact_id_1, 0)
+
+        fact_id_2 = self.db.record_memory_fact(
+            project_id="project-a",
+            work_item_id="TASK-MEM-01",
+            author="04-solution-architect",
+            kind="decision",
+            statement="Utilizar índices por work_item_id e kind para performance.",
+            source="ADR-042",
+            confidence=1.0,
+            sensitivity="internal",
+        )
+        self.assertGreater(fact_id_2, 0)
+
+        # Consulta todos os fatos do item
+        facts = self.db.get_memory_facts("project-a", "TASK-MEM-01")
+        self.assertEqual(len(facts), 2)
+        self.assertEqual(facts[0]["author"], "07-data-engineer")
+        self.assertEqual(facts[0]["kind"], "fact")
+        self.assertEqual(facts[1]["author"], "04-solution-architect")
+        self.assertEqual(facts[1]["kind"], "decision")
+
+        # Filtro por tipo
+        decisions = self.db.get_memory_facts("project-a", "TASK-MEM-01", kind="decision")
+        self.assertEqual(len(decisions), 1)
+        self.assertEqual(decisions[0]["statement"], "Utilizar índices por work_item_id e kind para performance.")
+
+        # Sumário
+        summary = self.db.get_memory_summary("project-a", "TASK-MEM-01")
+        self.assertEqual(summary["total_facts"], 2)
+        self.assertEqual(summary["by_kind"], {"fact": 1, "decision": 1})
+        self.assertEqual(len(summary["facts"]), 2)
+
+        # Rejeição de mismatch de project_id
+        with self.assertRaises(ValueError):
+            self.db.record_memory_fact("project-b", "TASK-MEM-01", "author", "fact", "stmt", "src")
+        with self.assertRaises(ValueError):
+            self.db.get_memory_facts("project-b", "TASK-MEM-01")
+        with self.assertRaises(ValueError):
+            self.db.get_memory_summary("project-b", "TASK-MEM-01")
+
+    def test_codebase_knowledge_graph_and_symbols(self):
+        """Valida get_project_symbols, get_project_dependencies e CodebaseKnowledgeGraph CLI."""
+        sys.path.insert(0, str(ROOT / "integrations"))
+        from codebase_knowledge_graph import CodebaseKnowledgeGraph, main as ckg_main
+
+        sample_code = """
+import os
+import sys
+
+class DataPipeline:
+    def execute(self):
+        pass
+
+def run():
+    pass
+"""
+        py_file = Path(self.temp_dir.name) / "pipeline.py"
+        py_file.write_text(sample_code, encoding="utf-8")
+        self.db.index_python_file(py_file)
+
+        symbols = self.db.get_project_symbols(str(py_file))
+        self.assertTrue(any(s["name"] == "DataPipeline" for s in symbols))
+        self.assertTrue(any(s["name"] == "run" for s in symbols))
+
+        deps = self.db.get_project_dependencies(str(py_file))
+        self.assertTrue(any(d["target_module"] == "os" for d in deps))
+
+        ckg = CodebaseKnowledgeGraph()
+        rep = ckg.build_graph_representation(symbols, deps)
+        self.assertGreaterEqual(rep["nodes_count"], 2)
+        self.assertGreaterEqual(rep["edges_count"], 2)
+
+        out_json_path = Path(self.temp_dir.name) / "graph_output.json"
+        exit_code = ckg_main([
+            "--project-id", "project-a",
+            "--db-path", str(self.db_path),
+            "--output", str(out_json_path),
+        ])
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(out_json_path.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,22 +1,32 @@
-# Marcador por projeto: qual organização/projeto Azure DevOps este PROJECT_ROOT usa.
+# ESTABLISHED DECISION (2026-09-02, atualizado 2026-09-03):
+# Org: cbvgas.visualstudio.com
+# Project: Arthemis (container único — todos os repos/produtos dentro deste projeto)
+# Repo: <product-name> (um repo por produto, ex: "agent-squad")
+# Team: <product-name> (Team dedicado por produto; "Arthemis Team" permanece neutro/intocado)
+# Area Path: Arthemis\<product-name> (Area Path isolada por produto)
+# Ex: produto "agent-squad" → repo "agent-squad", team "agent-squad", area "Arthemis\agent-squad"
+#     produto "Calculadora" → repo "Calculadora", team "Calculadora", area "Arthemis\Calculadora"
+#
 # Copie para <project_root>/.agents_squad/config/devops.yaml e ajuste os valores —
 # nenhum destes valores fica hardcoded em código compartilhado do squad.
-#
-# Exemplo de referência usado durante o desenho deste template: org "cbvgas",
-# projeto "Arthemis" (https://cbvgas.visualstudio.com/Arthemis). Troque livremente.
 provider: azure-devops
 org_url: https://cbvgas.visualstudio.com   # ou https://dev.azure.com/<org>
 project: Arthemis
-repo: Arthemis                              # nome do repositório Azure Repos alvo das PRs
+repo: <product-name>                   # um repo por produto (não o nome do projeto)
+team: <product-name>                   # Team dedicado do produto (NUNCA usar o Arthemis Team default)
 process_template: Agile                     # Agile | Scrum | CMMI | Basic — confirme em Project Settings > Process
 
 # Tradução dos tipos internos do squad para os tipos de work item do processo escolhido.
+# HIERARQUIA CANÔNICA DE 4 NÍVEIS (Azure DevOps Processo Agile):
+#   Epic (Laranja) -> Feature (Roxo) -> User Story (Azul) -> Task (Amarelo)
+# Decomposição mandatória: Epic -> Features -> User Stories (<= 8 pts) -> Tasks técnicas.
 # Os nomes abaixo são os do template "Agile"; ajuste se o projeto usar Scrum/CMMI/Basic:
 #   Scrum: story -> "Product Backlog Item"
-#   CMMI:  story -> Requirement, epic -> Epic, task -> Task, bug -> Bug
+#   CMMI:  story -> Requirement, epic -> Epic, feature -> Feature, task -> Task, bug -> Bug
 #   Basic: epic -> Epic, story -> Issue, task -> Task
 work_item_type_map:
   epic: Epic
+  feature: Feature
   story: "User Story"
   task: Task
   bug: Bug
@@ -69,7 +79,7 @@ squad_tags:
   infra-cloud: squad-infra-cloud
   quality: squad-quality
 
-area_path: Arthemis
+area_path: "Arthemis\\<product-name>"
 iteration_path: Arthemis
 
 # Contas Azure DevOps (não são personas). Os 41 agentes compartilham estas 3 contas.
@@ -176,6 +186,7 @@ approvals:
 pr_policy:
   minimum_reviewers: 1
   require_linked_work_item: true
+  require_comment_resolution: true
   target_branch: main
   creator_vote_counts: false
   reset_on_source_push: true
@@ -213,7 +224,21 @@ colors:
 
 board:
   enable_epic_backlog: true
-  bugs_behavior: asTasks
+  # Comportamento de exibição e rastreamento de Bugs no Azure Boards:
+  # - asRequirements (PADRÃO RECOMENDADO para agent_squad):
+  #     Bugs nascem e são gerenciados no Stories Board (Kanban SDLC) no mesmo nível de User Story.
+  #     Garante visibilidade de primeira classe e passagem pelas 7 colunas do SDLC:
+  #     Blueprint (New) -> Scaffolding (Active) -> Implementation (Active) ->
+  #     Code Security Review (Active) -> Quality Validation (Resolved) ->
+  #     Governance Release (Resolved) -> Done (Closed).
+  #     No Sprint Taskboard, Bugs com tarefas filhas (Task) agrupam suas tarefas.
+  # - asTasks:
+  #     Bugs nascem e são rastreados como tarefas técnicas no Taskboard da Sprint
+  #     (colunas To Do -> In Progress -> Done) junto com itens do tipo Task.
+  #     Não aparecem como cards no Kanban Stories.
+  # - off:
+  #     Bugs não aparecem em nenhum board Kanban/Taskboard, ficando restritos a queries de work item.
+  bugs_behavior: asRequirements
   include_area_children: true
   apply_custom_card_rules: false
   # WIP por coluna do board Agile padrão. Se o projeto usar colunas customizadas,
@@ -222,29 +247,19 @@ board:
   # compartilhando o estado Active do Azure Boards — para separação visual total,
   # crie colunas customizadas no board ou use swimlanes por tag.
   wip:
-    New: 2
-    Active: 6
-    Resolved: 2
-    Closed: 10
-  # Swimlanes por squad temática (aplicadas via query-based no board).
-  # Cada squad aparece como uma faixa separada no Stories board.
+    Blueprint: 2
+    Scaffolding: 3
+    Implementation: 5
+    Code Security Review: 3
+    Quality Validation: 3
+    Governance Release: 2
+    Done: 10
+  # Swimlanes por classes de serviço reais (Expedite e Standard).
   swimlanes:
-    - name: "Squad Core"
-      query: "System.Tags CONTAINS 'squad-core'"
-    - name: "Squad Web"
-      query: "System.Tags CONTAINS 'squad-web'"
-    - name: "Squad Mobile"
-      query: "System.Tags CONTAINS 'squad-mobile'"
-    - name: "Squad Data"
-      query: "System.Tags CONTAINS 'squad-data'"
-    - name: "Squad AI"
-      query: "System.Tags CONTAINS 'squad-ai'"
-    - name: "Squad Infra-Cloud"
-      query: "System.Tags CONTAINS 'squad-infra-cloud'"
-    - name: "Squad Quality"
-      query: "System.Tags CONTAINS 'squad-quality'"
-    - name: "Without Squad"
-      query: "NOT (System.Tags CONTAINS 'squad-')"
+    - name: "Expedite"
+      query: "System.Tags CONTAINS 'risk-critical' OR System.Tags CONTAINS 'blocked'"
+    - name: "Standard"
+      query: "NOT (System.Tags CONTAINS 'risk-critical' OR System.Tags CONTAINS 'blocked')"
 
 # US-2 (2026-09-02): queries salvas em pasta Shared/Agents Squad/.
 # Idempotente — reaplicar não duplica. Setar enabled: false para desabilitar.

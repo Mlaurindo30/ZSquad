@@ -285,3 +285,262 @@ Durante validação发现有 práticas de cycles sem gate criteria correspondent
 **Revisor**: self-verified (pelo delivery-orchestrator), 0 blockers
 
 ---
+
+## Lote 5.1 — MCP Auth Fix (2026-09-02)
+
+**Work item**: TASK-LOTE5
+**Status**: ✅ Corrigido
+**Data**: 2026-09-02
+
+### Problema
+
+O `kilo.json` em `~/.config/kilo/kilo.json` estava configurado COM autenticação quebrada:
+
+```json
+// ❌ ANTES (quebrou)
+{
+  "command": ["npx", "-y", "@azure-devops/mcp@1.0.0", "--hash", "sha1:...", "https://cbvgas.visualstudio.com/Arthemis"]
+  // sem --authentication, sem env var PAT
+}
+```
+
+O servidor MCP `@azure-devops/mcp` versão 2.x mudou a API de autenticação. O PAT não é passado como env var genérica — usa `ADO_MCP_AUTH_TOKEN` com `--authentication envvar`.
+
+### Solução
+
+```json
+// ✅ DEPOIS (funcionando)
+{
+  "command": ["npx", "-y", "@azure-devops/mcp@latest"],
+  "args": ["cbvgas", "--authentication", "envvar"],
+  "env": {
+    "ADO_MCP_AUTH_TOKEN": "<PAT from .env>"
+  }
+}
+```
+
+**Key changes:**
+| Campo | Antes | Depois |
+|---|---|---|
+| `--authentication` | Ausente | `envvar` |
+| Env var | Nenhuma | `ADO_MCP_AUTH_TOKEN` |
+| Org name | URL completa | `cbvgas` (extraído) |
+| Versão | `@1.0.0` + hash | `@latest` |
+
+### Como autenticar no Azure DevOps MCP
+
+O `@azure-devops/mcp` versão 2.x suporta 3 modos:
+
+| Modo | Comando | Uso |
+|---|---|---|
+| `interactive` (default) | `npx @azure-devops/mcp org` | Browser para OAuth — funciona só com desktop |
+| `azcli` | `npx @azure-devops/mcp org --authentication azcli` | Requer `az login` — usa Azure CLI |
+| `envvar` | `npx @azure-devops/mcp org --authentication envvar` | `ADO_MCP_AUTH_TOKEN=<PAT>` — **para CI/headless** |
+
+Para Kilo/CI/headless: **sempre usar `envvar`**.
+
+### Referência
+
+- [Azure DevOps MCP Troubleshooting](https://github.com/microsoft/azure-devops-mcp/blob/main/docs/TROUBLESHOOTING.md)
+- Seção: "Token Authentication via Environment Variables"
+
+### Aplicação ao lado Python/config (2026-09-02 — execução desta sessão)
+
+A correção documentada acima foi aplicada ao client Python do squad e ao gerador
+de configuração MCP (o `kilo.json` já estava corrigido):
+
+| Arquivo | Mudança |
+|---|---|
+| `integrations/mcp_devops_client.py` | `_mcp_binary_available` e `_start_mcp_server`: `@1.0.0` → `@latest`; args = `[org, "--authentication", "envvar"]` (org como NOME, não URL); env `ADO_MCP_AUTH_TOKEN` substitui `AZURE_DEVOPS_PAT` no subprocesso |
+| `integrations/devops_platform_connector.py` | `_mcp_binary_available`: `@1.0.0` → `@latest` |
+| `scripts/sync_mcp_servers.py` | Entrada `azure-devops`: args `["@azure-devops/mcp@latest", "${AZURE_DEVOPS_ORG}", "--authentication", "envvar"]`, env `ADO_MCP_AUTH_TOKEN=${AZURE_DEVOPS_PAT}` |
+| `config/mcp_config.json` | Regenerado via `python scripts/sync_mcp_servers.py` (MCP_SYNC_SUCCESS) |
+
+**Verificação**: `pytest scripts/tests/test_mcp_devops_client.py scripts/tests/test_sync_mcp_servers.py -q` → 7 passed; `pytest scripts/tests/test_lote5_scripts.py -q` → 39 passed.
+**Não executado**: chamada MCP ao vivo contra `cbvgas` (ação externa — requer autorização).
+**Pendência sinalizada**: duplicata não rastreada `integrations/experimental/mcp_devops_client.py`
+(cópia idêntica em conteúdo, difere só por line-ending) quebra `validate_structure.py`
+("active skill not catalogued") — pré-existente, aguarda decisão de remoção.
+
+---
+
+## Lote 5.2 — Verificação Completa do Azure DevOps (2026-09-02)
+
+**Método**: REST API via `Basic base64(':PAT')`, URL `dev.azure.com/cbvgas`
+**Relatório**: `documentation/ado-verification-report-2026-09-02.md`
+
+### Score: 29/40 checks (72%)
+
+### O QUE ESTÁ CERTO ✅
+
+| Área | Status | Detalhes |
+|---|---|---|
+| Project | ✅ | Arthemis (wellFormed) |
+| Repo agent-squad | ✅ | c9e2c146, master, CODEOWNERS ✅ |
+| Board Columns (7) | ✅ | Blueprint→Done, WIPs corretos |
+| Areas | ✅ | Root "Arthemis" existe — 6 work items com Area=Arthemis |
+| Iterations | ✅ | Iteration 1 existe como defaultIteration do Arthemis Team |
+| Work Items | ✅ | 6 items (Calculator App Epic + 5 related) |
+| Branch Policies (5) | ✅ | Todas existem (File size, Min reviewers, Work item, Merge, Copilot) |
+| CODEOWNERS | ✅ | Master com todos os paths corretos |
+| Backlog Config | ✅ | Epics/Features/Requirements category OK |
+| Team Settings | ✅ | Arthemis Team: backlog visibility, working days |
+
+### O QUE ESTÁ ERRADO ❌
+
+| Área | Status | Detalhes |
+|---|---|---|
+| **3 Teams extras criados** | ❌ | Squad Core, Squad Web, Squad AI — board é por PROJETO, não por team. Não têm items nem boards. |
+| **Minimum reviewers policy** | ❌ | Policy existe mas `minimumReviewerCount=NOT SET`, `requiredReviewerIds=[]` — não funciona |
+| **CODEOWNERS auto-reviewers** | ❌ | Arquivo existe mas Azure DevOps não adiciona reviewers automaticamente — feature não habilitada |
+| **Swimlanes** | ❌ | API não suporta — não configuradas |
+| **Iterations nos 3 teams extras** | ❌ | Squad Core/Web/AI retornam HTTP -1 |
+| **Service Connections** | ❌ | HTTP -1 em todos os endpoints — placeholder credentials no devops.yaml |
+| **MCP Kilo tools** | ❌ | Sessão não recarregou config |
+
+### Ações manuais no portal
+
+```
+1. Project Settings → Repos → Policies → Editar "Minimum number of reviewers"
+   → minimumReviewerCount: 1
+   → Adicionar required reviewer: arthemis@michellaurindooutlook812.onmicrosoft.com
+
+2. agent_squad repo → Settings → Pull Requests
+   → "Automatically add code reviewers from CODEOWNERS": ON
+
+3. Board Stories → Column Options → Swimlanes → Add (8 swimlanes)
+```
+
+### Testes a corrigir/criar
+
+| Teste | Status |
+|---|---|
+| `test_codeowners_on_master_has_all_paths` | ✅ Arquivo existe |
+| `test_minimum_reviewers_policy_count_and_reviewer` | ❌ Policy misconfigured |
+| `test_code_reviewers_automatic_enabled` | ❌ Não habilitada |
+| `test_iterations_configured_for_teams` | ❌ 3 teams sem iterations |
+| `test_areas_configured` | ✅ Areas existem |
+
+---
+
+## Consolidação das Frentes 1, 2 e 3 — Nova Arquitetura de Persistência, Governança SoD e Suíte de Testes (2026-09-04)
+
+**Status**: ✅ Aprovado e Homologado pelo Revisor SoD (`14-governance-auditor` & `00-delivery-orchestrator`)  
+**Data**: 2026-09-04  
+**Evidência de Testes**: **866 passed, 4 skipped, 0 failed** em 79.72s (100% da suíte ativa aprovada)  
+**Validação Estrutural**: VALID (`python scripts/validate_structure.py` aprovado — 41 personas, 146 skills, 13 schemas)
+
+---
+
+### Frente 1: Governança do Azure DevOps, Segregação de Funções (SoD) e Ciclo de Vida
+
+Implementação e homologação completa da governança multi-projeto no Azure DevOps (`cbvgas/Arthemis`), garantindo conformidade com ISO/IEC 27001 (A.5.3, A.8.28, A.8.32), SOC 2 (CC6.1, CC8.1) e NIST SP 800-53 (CM-5).
+
+1. **Topologia Multi-Projeto**:
+   - Organização: `cbvgas` | Projeto Container Único: `Arthemis`.
+   - Repositório Git dedicado (`agent-squad`) e Team dedicado (`agent-squad Team`), preservando o `Arthemis Team` neutro e isolado.
+   - Area Path isolada por produto: `Arthemis\agent-squad`.
+2. **Modelo SoD de 4 Contas de Automação AAD + human_master**:
+   - `human_master` (`michel.laurindo@outlook.com`): Admin, notificações OFF, aprovações soberanas humanas.
+   - `development_team` (`squads@michellaurindooutlook812.onmicrosoft.com`): 38 personas (Contributors), desenvolvimento, PR creation, comentários nos cards. Sem voto em PRs.
+   - `pr_and_card_approver` (`arthemis@michellaurindooutlook812.onmicrosoft.com`): 5 personas revisoras (`code-reviewer`, `security-reviewer`, `qa-engineer`, `performance-engineer`, `governance-auditor`), Required Reviewers em branch policies e fechamento de cards no G6. Sem push de código.
+   - `cyber_red` (`cyber-red@michellaurindooutlook812.onmicrosoft.com`): Persona `34-offensive-cyber-operator` com exigência de duplo sign-off cross-account com `10-security-reviewer` (`arthemis@`) em paths sensíveis (`auth/`, `crypto/`, `iac/`, `Dockerfile`).
+   - `customer_data_pii` (`customer_data_pii@michellaurindooutlook812.onmicrosoft.com`): Acesso restrito a pipelines e datasets de PII, sem permissão de voto em PRs nem push em produção.
+3. **Board SDLC de 7 Colunas e 8 Swimlanes**:
+   - Colunas: `blueprint` (New, WIP 2), `scaffolding` (Active, WIP 6), `implementation` (Active, WIP 6), `code-security-review` (Active, WIP 6), `quality-validation` (Resolved, WIP 2), `governance-release` (Resolved, WIP 2), `done` (Closed, WIP 10).
+   - Tags de fase obrigatórias (`phase-blueprint` até `phase-done`).
+   - 8 swimlanes temáticas por squad (`squad-core`, `squad-web`, `squad-mobile`, `squad-data`, `squad-ai`, `squad-infra-cloud`, `squad-quality`, `without-squad`).
+4. **Lifecycle & Dual Transport MCP / REST**:
+   - Abstração MCP `@azure-devops/mcp@latest` com autenticação headless via env var `ADO_MCP_AUTH_TOKEN` (`--authentication envvar`) e fallback automático para REST API.
+
+---
+
+### Frente 2: Arquitetura de Persistência e Memória do Projeto (Topologia de 3 Pilares)
+
+Transição estrutural definitiva da cognição do squad para uma arquitetura resiliente, ACID e em tempo real.
+
+1. **Topologia Oficial de 3 Pilares**:
+   - **Pilar 1 — Memória Primária do Projeto (Local / Obrigatória / L1-L2)**:
+     * Banco de dados embedded SQLite WAL (`banco/squad.db`) isolado por `project_id`.
+     * Tabela `memory_facts`: Armazenamento relacional e tipado de fatos (`fact`), decisões (`decision`), dependências (`dependency`), riscos (`risk`) e pendências (`pending`).
+     * Indexação AST completa: Tabelas `symbols` e `dependencies` rastreando funções, classes, complexidade ciclomática e contratos de componentes.
+     * Tabela `workflow_metrics`: Rastreamento de Lead Time, Cycle Time, Blocked Time e Sizing.
+     * Grafo de Código / Graphify (`integrations/codebase_knowledge_graph.py`): Cálculo determinístico de Blast Radius e acoplamento arquitetural em sub-milissegundos.
+   - **Pilar 2 — Colaboração e Rastreabilidade do Projeto (Azure DevOps / L3 Colaborativo)**:
+     * Gestão de backlog hierárquico em 4 níveis (Epic → Feature → Story → Task).
+     * Discussões e comentários em cards de work item para refinamento vivo.
+     * Pull Request threads e revisões com pareceres SoD formais.
+     * Project Wiki para documentação técnica perene de produto.
+   - **Pilar 3 — Segundo Cérebro Global Corporativo (Hive-Mind / L3 Transversal)**:
+     * Sinapse Global Vault em `D:/Hive-Mind` para padrões de engenharia e decisões arquiteturais cross-projeto.
+     * MCP Server `sinapse-hivemind` (`sinapse_query`, `sinapse_save_decision`).
+     * Governança estrita: Apenas o orquestrador (`00-delivery-orchestrator`) opera ciclo de vida de sessão; especialistas consultam e propõem decisões duradouras.
+2. **Extinção Definitiva de `work/<project_id>/memory/`**:
+   - Extintos os arquivos físicos soltos em disco (`shared/summary.md`, `agents/<persona>.md`, `deltas/MEM-*.yaml`).
+   - Eliminação de race conditions e contenções de I/O em execuções paralelas de subagentes.
+
+---
+
+### Frente 3: Alinhamento dos 41 Agentes Especialistas e Suíte de Testes
+
+1. **Alinhamento dos 41 Especialistas**:
+   - Padronização de 100% dos `PROMPT.md`, `manifest.yaml` e skills nativas em `agents/` para aderência integral ao `MEMORY_CONTRACT.md`, `OPERATING_CONTRACT.md` e regras de sizing Fibonacci.
+   - Renomeação padronizada dos prompts dos agentes `37` a `41` para maiúsculas (`PROMPT.md`).
+2. **Governança de Sizing Fibonacci**:
+   - Regra de proteção cognitiva de no máximo 8 Story Points por User Story enforced via CLI (`check-sizing`), mandando decomposição pelo `40-agile-coach` para itens > 8 pts.
+3. **Resultados da Suíte de Testes (Evidência Real)**:
+
+```
+============================== test session starts ===============================
+collected 870 items
+
+........................................................................ [  8%]
+........................................................................ [ 16%]
+..............................s.................s....................... [ 24%]
+........................................................................ [ 33%]
+........................................................................ [ 41%]
+........................................................................ [ 49%]
+........................................................................ [ 57%]
+........................................................................ [ 66%]
+........................................................................ [ 74%]
+........................................................................ [ 82%]
+.......................................s................................ [ 91%]
+..................................................................s..... [ 99%]
+......                                                                   [100%]
+
+================== 866 passed, 4 skipped, 10 warnings in 79.72s ===================
+```
+
+---
+# STUDY-SPECKIT-DEEP-20260911 — estudo técnico profundo do Spec Kit
+
+- Estado: `blueprint`; risco `medium`; nenhuma alteração de runtime foi aplicada.
+- Evidência: checkout oficial `.temp/spec-kit` em `c173bf19a6654e3b05386ec3599349a55282b897`, coincidente com a referência remota consultada; 567 arquivos percorridos como bytes, sem alegação de análise semântica integral, e `python -m compileall -q src` aprovado.
+- Decisão proposta: adaptador SDD interno e pequeno, com templates curados e commit fixado; Agent Squad continua fonte de verdade para gates, SoD, ledger e estado.
+- Revisão independente final: APPROVE para o conteúdo corrigido do relatório; nenhum gate aprovado e ACK do product-owner pendente.
+
+---
+
+## EPIC-SPECKIT-20260911 — Integração Spec Kit e Governança SDD
+
+- **Status do Épico**: `governance-release` | **Gate G6**: ❌ **BLOQUEADO (`NO-GO`)**
+- **Aprovação Humana**: Pendente de nova decisão explícita do usuário `miche` para liberação do pacote corrigido.
+- **Auditoria e Parecer de Segurança (2026-09-12)**:
+  * **Tarefas T1 a T8**: 100% concluídas com gates G1 a G6 aprovados sob Segregação de Funções estrita (SoD: autor != revisor). `status.yaml` de T5 e T8 reconciliados e sincronizados em `done`.
+  * **TASK-SPECKIT-AUDIT-20260911**: Auditoria pós-entrega inicial apontou `CHANGES_REQUESTED` e reabriu o épico.
+  * **TASK-SPECKIT-CORRECTION-20260911**: Decisão G6 anterior `GD-TASK-SPECKIT-CORRECTION-20260911-G6-GOVERNANCE-RELEASE.yaml` **REVOGADA e INVALIDADA** (`rejected`) por `14-governance-auditor` devido ao uso indevido de aprovação humana alheia (`HUMAN-APPROVAL-20260911.md`).
+  * **Parecer de Segurança Independente**: Emitido formalmente por `10-security-reviewer` em `reviews/review-security-correction.md`. Aprovado o confinamento estrito de paths (CORR-3) e integridade de briefing (CORR-2). Apontado defeito de invocação em tempo de execução no dispatcher (`TypeError: FileSDDDispatcher.verify() missing 1 required keyword-only argument: 'expected'`).
+  * **Reabertura**: Tarefa de correção reaberta no estado `implementation` para correção do defeito de despacho e recomposição da suíte de testes 100% verde antes de nova submissão aos gates.
+
+---
+# BUG-NPR-BDD-RUNNER-PATH-20260913 — correção documental G2
+
+- **Estado:** `blueprint`; nenhuma implementação, teste ou decisão de gate foi executada neste ciclo.
+- **Autor:** `solution-architect`; **parecer independente:** `CHANGES_REQUESTED` em `reviews/G2-design-review.md`.
+- **Correções de desenho:** seam pura com `ProjectContext`/raízes controláveis e adaptador CLI fino; precedência explícita de ID, layouts relativos, UNC/drive e absoluto; semântica Windows; prova final de boundary antes de `evaluation/bdd.json`; `WorkItemResolutionError` e conversão CLI estável; observabilidade sanitizada.
+- **Escopo:** resolução, contenção, seam e adaptador CLI permanecem nos 3 pontos. A incompatibilidade do payload com `contracts/verification-evidence.schema.json` é dependência fora deste bugfix; o schema não foi editado e nenhuma evidência canônica deve ser alegada.
+- **DevOps/MCP:** `UNVERIFIED`; nenhuma ação externa.
+- **Próximo dono:** `software-engineer` para scaffolding, RED e implementação após handoff válido; G4/G5 devem revisar a janela residual TOCTOU.
+- **Validação documental final:** `validate_G2_design` `approved=true` (7 critérios PASS, `next_state=scaffolding`); BDD estrutural `approved=true`, 6 cenários; `validate-work-item` `WORK_ITEM_OK`; `validate_structure` `VALID structure agents=41 active_skills=148 schemas=17`; `audit` `AUDIT_OK`.
+- **Limite da evidência:** nenhum desses checks executa runner, RED/GREEN, segurança live ou conformidade do payload com `contracts/verification-evidence.schema.json`; esta última permanece dependência fora de escopo.
+- **Correção pré-G3:** a seam documental foi nomeada integralmente como `resolve_work_item_reference(raw: str, context: ProjectContext, *, legacy_root: Path | None = None) -> Path`, com validação da raiz legada. Como houve mudança de artefato após a decisão formal, o G2 existente requer revalidação; nenhuma nova decisão foi tomada.

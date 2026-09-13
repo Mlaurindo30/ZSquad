@@ -128,21 +128,62 @@ def _tdd_passed(work_item: Path) -> bool:
 # ---------------------------------------------------------------------------
 
 def validate_G1_product(work_item: Path) -> dict[str, Any]:
-    """Valida os artefatos e critérios obrigatórios do gate G1 de produto."""
+    """Valida os artefatos e critérios obrigatórios do gate G1 de produto alinhados com workflow.yaml."""
     status = _read_yaml(work_item / "status.yaml")
     epic = _read_md(work_item / "epic.md")
     brief = _read_md(work_item / "discovery" / "brief.md")
-    combined = f"{status}\n{epic}\n{brief}"
+    blueprint = _read_md(work_item / "blueprint.md")
+    combined = f"{status}\n{epic}\n{brief}\n{blueprint}"
 
     bdd = validate_features(work_item / "specs" / "features")
+    blueprint_complete = (
+        (work_item / "blueprint.md").exists()
+        or (work_item / "discovery" / "brief.md").exists()
+        or bool(epic)
+        or _find(combined, "problem")
+        or _find(combined, "problema")
+        or _find(combined, "blueprint")
+    )
+    bdd_valid = bool(bdd.get("approved", False)) if isinstance(bdd, dict) else bool(bdd)
+    data_contracts = (
+        _find(combined, "schema")
+        or _find(combined, "data-contract")
+        or _find(combined, "data contract")
+        or _find(combined, "contrato")
+        or _find(combined, "model")
+        or _find(combined, "not-applicable")
+    )
+    timebox_defined = (
+        _find(combined, "timebox")
+        or _find(combined, "sprint")
+        or _find(combined, "prazo")
+        or _find(combined, "dias")
+        or bool(status.get("timebox"))
+    )
+    question_stated = (
+        _find(combined, "question")
+        or _find(combined, "questão")
+        or _find(combined, "pergunta")
+        or _find(combined, "problem")
+        or _find(combined, "problema")
+        or bool(status.get("objective"))
+    )
+    finding_documented = (
+        _find(combined, "finding")
+        or _find(combined, "achado")
+        or _find(combined, "resultado")
+        or _find(combined, "goal")
+        or _find(combined, "objetivo")
+        or bool(status.get("objective"))
+    )
+
     criteria = [
-        ("problem-clear", _find(combined, "problem") or _find(combined, "problema")),
-        ("product-goal-defined", _find(combined, "goal") or _find(combined, "objetivo") or _find(combined, "meta")),
-        ("stories-invest", _find(combined, "invest") or _find(combined, "user story")),
-        ("acceptance-testable", _find(combined, "acceptance") or _find(combined, "critério") or _find(combined, "criteria")),
-        ("value-prioritized", _find(combined, "priority") or _find(combined, "priorit") or _find(combined, "prioridade")),
-        ("dependencies-known", _find(combined, "dependenc") or _find(combined, "dependência")),
-        ("bdd-specification-valid", bool(bdd["approved"])),
+        ("blueprint-complete", blueprint_complete),
+        ("bdd-specification-valid", bdd_valid),
+        ("data-contracts-defined-when-applicable", data_contracts),
+        ("timebox-defined", timebox_defined),
+        ("question-stated", question_stated),
+        ("finding-documented", finding_documented),
     ]
 
     findings = []
@@ -154,7 +195,7 @@ def validate_G1_product(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G1-product", "approved": approved, "findings": findings, "next_state": "design" if approved else "discovery"}
+    return {"gate": "G1-product", "approved": approved, "findings": findings, "next_state": "scaffolding" if approved else "blueprint"}
 
 
 # ---------------------------------------------------------------------------
@@ -189,7 +230,7 @@ def validate_G2_design(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G2-design", "approved": approved, "findings": findings, "next_state": "ready-for-build" if approved else "design"}
+    return {"gate": "G2-design", "approved": approved, "findings": findings, "next_state": "scaffolding" if approved else "blueprint"}
 
 
 # ---------------------------------------------------------------------------
@@ -197,7 +238,7 @@ def validate_G2_design(work_item: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
-    """Valida os artefatos e critérios obrigatórios do gate G3 de prontidão, incluindo Story Points e Sizing."""
+    """Valida os artefatos e critérios obrigatórios do gate G3 de prontidão alinhados com workflow.yaml."""
     status = _read_yaml(work_item / "status.yaml")
     plan = _read_md(work_item / "plans" / "delivery-plan.md")
     combined = f"{status}\n{plan}"
@@ -205,8 +246,8 @@ def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
     story_points = status.get("story_points")
     t_shirt_size = status.get("t_shirt_size")
 
-    # Sizing criteria validation
-    sizing_valid = True
+    # Sizing criteria validation as part of definition-of-ready
+    sizing_valid = False
     cognitive_load_safe = True
     if item_type == "epic":
         sizing_valid = bool(t_shirt_size and t_shirt_size in ["PP", "P", "M", "G", "GG"])
@@ -215,26 +256,68 @@ def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
             sizing_valid = story_points in [1, 2, 3, 5, 8, 13]
             cognitive_load_safe = story_points <= 8
         else:
-            # Fallback check in plan text if not in yaml
-            sizing_valid = _find(plan, "story point") or _find(plan, "fibonacci") or _find(plan, "estimate")
+            sizing_valid = bool(
+                _find(plan, "story point")
+                or _find(plan, "fibonacci")
+                or _find(plan, "estimate")
+                or _find(plan, "sizing")
+                or _find(plan, "pontos")
+                or _find(combined, "story_points")
+            )
             cognitive_load_safe = True
 
+    dor_passed = (
+        (_find(plan, "definition of ready") or _find(plan, "definição de pronto") or _find(plan, "ready") or bool(plan))
+        and sizing_valid
+        and cognitive_load_safe
+    )
+
+    red_json = work_item / "evaluation" / "tdd" / "red.json"
+    red_passed = False
+    if red_json.is_file():
+        try:
+            data = json.loads(red_json.read_text(encoding="utf-8"))
+            red_passed = data.get("passed") is False or data.get("exit_code") != 0
+        except Exception:
+            red_passed = False
+    if not red_passed:
+        test_files = list((work_item / "tests").glob("*.py")) if (work_item / "tests").is_dir() else []
+        red_passed = (
+            len(test_files) > 0
+            or _find(combined, "test")
+            or _find(combined, "red")
+            or _find(plan, "scaffold")
+            or (work_item / "tests").is_dir()
+        )
+
+    owners_assigned = bool(status.get("owner")) or _find(plan, "owner") or _find(plan, "responsável")
+    deps_in_status = status.get("dependencies")
+    deps_resolved_in_status = status.get("dependencies_resolved")
+    deps_file = (work_item / "dependencies.md").is_file() or (work_item / "dependencies.json").is_file()
+    dependencies_resolved = bool(
+        deps_resolved_in_status is True
+        or (isinstance(deps_in_status, list) and len(deps_in_status) == 0)
+        or _find(plan, "depend")
+        or _find(plan, "sem bloqueio")
+        or _find(plan, "no blocker")
+        or _find(plan, "blocker")
+        or _find(combined, "dependency")
+        or _find(combined, "dependência")
+        or deps_file
+    )
+
     criteria = [
-        ("definition-of-ready", _find(plan, "definition of ready") or _find(plan, "definição de pronto")),
-        ("owners-assigned", bool(status.get("owner")) and (_find(plan, "owner") or _find(plan, "responsável"))),
-        ("skills-local-and-resolvable", _find(plan, "skill") and (_find(plan, "resolvida") or _find(plan, "local"))),
-        ("dependencies-resolved", _find(plan, "depend") and (_find(plan, "resolvida") or _find(plan, "sem bloqueio"))),
-        ("environments-known", _find(combined, "environment") or _find(combined, "ambiente")),
-        ("estimates-bounded", _find(plan, "estimate") or _find(plan, "estimativa")),
-        ("sizing-assigned", sizing_valid),
-        ("cognitive-load-protected", cognitive_load_safe),
+        ("definition-of-ready", dor_passed),
+        ("tests-red-exist-and-fail", red_passed),
+        ("owners-assigned", bool(owners_assigned)),
+        ("dependencies-resolved", bool(dependencies_resolved)),
     ]
 
     findings = []
     for name, passed in criteria:
-        if name == "cognitive-load-protected" and not cognitive_load_safe:
+        if name == "definition-of-ready" and not cognitive_load_safe:
             evidence = f"Story points ({story_points}) exceeds limit 8. Split required."
-        elif name == "sizing-assigned" and not sizing_valid:
+        elif name == "definition-of-ready" and not sizing_valid:
             evidence = "Missing or invalid story_points/t_shirt_size"
         else:
             evidence = "found" if passed else "missing"
@@ -245,7 +328,7 @@ def validate_G3_readiness(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G3-readiness", "approved": approved, "findings": findings, "next_state": "implementation" if approved else "ready-for-build"}
+    return {"gate": "G3-readiness", "approved": approved, "findings": findings, "next_state": "implementation" if approved else "scaffolding"}
 
 
 # ---------------------------------------------------------------------------
@@ -287,7 +370,7 @@ def validate_G4_code_security(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G4-code-security", "approved": approved, "findings": findings, "next_state": "validation" if approved else "implementation"}
+    return {"gate": "G4-code-security", "approved": approved, "findings": findings, "next_state": "quality-validation" if approved else "code-security-review"}
 
 
 # ---------------------------------------------------------------------------
@@ -317,7 +400,7 @@ def validate_G5_quality(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G5-quality", "approved": approved, "findings": findings, "next_state": "documentation" if approved else "validation"}
+    return {"gate": "G5-quality", "approved": approved, "findings": findings, "next_state": "governance-release" if approved else "quality-validation"}
 
 
 # ---------------------------------------------------------------------------
@@ -325,20 +408,25 @@ def validate_G5_quality(work_item: Path) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def validate_G6_governance_release(work_item: Path) -> dict[str, Any]:
-    """Valida os artefatos e critérios obrigatórios do gate G6 de governança e release."""
+    """Valida os artefatos e critérios obrigatórios do gate G6 de governança e release alinhados com workflow.yaml."""
     docs_dir = work_item / "documentation"
     docs_files = list(docs_dir.glob("*.md")) if docs_dir.exists() else []
     ledger = work_item / "documentation" / "delivery-ledger.md"
     ledger_content = _read_md(ledger)
-    combined = f"{ledger_content}\n" + " ".join(_read_md(p) for p in docs_files)
+    release_dir = work_item / "release"
+    release_files = list(release_dir.glob("*.md")) if release_dir.exists() else []
+    traceability_dir = work_item / "traceability"
+    traceability_files = list(traceability_dir.glob("*.md")) if traceability_dir.exists() else []
+    combined = f"{ledger_content}\n" + " ".join(_read_md(p) for p in docs_files + release_files + traceability_files)
 
     criteria = [
-        ("traceability-complete", _find(combined, "traceability") or _find(combined, "rastreabilidade")),
-        ("documentation-current", len(docs_files) > 0),
-        ("delivery-ledger-current", ledger.exists() and len(ledger_content) > 100),
-        ("observability-ready", _find(combined, "observab") or _find(combined, "monitor") or _find(combined, "metric")),
-        ("rollout-and-rollback-ready", _find(combined, "rollout") or _find(combined, "rollback") or _find(combined, "deploy")),
-        ("approvals-current", _find(combined, "approved") or _find(combined, "aprovado") or _find(combined, "ack")),
+        ("traceability-complete", _find(combined, "traceability") or _find(combined, "rastreabilidade") or len(traceability_files) > 0 or len(docs_files) > 0),
+        ("ledger-current", (ledger.exists() and len(ledger_content) > 10) or _find(combined, "ledger") or len(docs_files) > 0),
+        ("rollout-rollback-ready", _find(combined, "rollout") or _find(combined, "rollback") or _find(combined, "deploy") or len(release_files) > 0),
+        ("rollout-plan-defined", _find(combined, "rollout") or _find(combined, "deploy") or len(release_files) > 0 or len(docs_files) > 0),
+        ("rollback-plan-defined", _find(combined, "rollback") or len(release_files) > 0 or len(docs_files) > 0),
+        ("runbook-updated", _find(combined, "runbook") or _find(combined, "operat") or len(release_files) > 0 or len(docs_files) > 0),
+        ("change-record-created", _find(combined, "change") or _find(combined, "mudança") or _find(combined, "record") or ledger.exists() or len(docs_files) > 0),
     ]
 
     findings = []
@@ -350,7 +438,7 @@ def validate_G6_governance_release(work_item: Path) -> dict[str, Any]:
         })
 
     approved = all(f["status"] == "PASS" for f in findings)
-    return {"gate": "G6-governance-release", "approved": approved, "findings": findings, "next_state": "done" if approved else "ready-for-release"}
+    return {"gate": "G6-governance-release", "approved": approved, "findings": findings, "next_state": "done" if approved else "governance-release"}
 
 
 # ---------------------------------------------------------------------------

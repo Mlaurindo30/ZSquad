@@ -1,37 +1,54 @@
 # Contrato de Memória e Inteligência de Código do Squad
 
-## 1. Camadas da Arquitetura de Memória
+## 1. Topologia Oficial de 3 Pilares de Memória
 
-A cognição e retenção de conhecimento do Agents Squad estruturam-se em quatro níveis complementares:
+A retenção de conhecimento e a cognição do Agents Squad estruturam-se em três pilares oficiais:
 
-1. **Memória de Trabalho & Contexto Volátil**: Contexto temporário da sessão de execução; não é fonte durável.
-2. **Memória de Trabalho Local & Cache L1/L2 (`banco/squad.db`)**:
-   - Persistência estruturada em SQLite WAL e FalkorDB local.
-   - Gerencia símbolos de código (AST), grafo de dependências, cálculo de Blast Radius, telemetria de consumo de tokens/custos, quóruns bizantinos de gates e traces de trajetórias.
-3. **Memória do Work Item (`work/<WORK-ID>/memory/`)**:
-   - `shared/summary.md`: Somente fatos confirmados, decisões técnicas, dependências, riscos e pendências validadas.
-   - `agents/<persona>.md`: Checkpoints privados, hipóteses e próximos passos de cada papel.
-   - `deltas/MEM-*.yaml`: Deltas tipados com `kind: fact | decision | dependency | risk | pending` vinculados aos handoffs.
-4. **Memória Procedural & Auto-Skills (`integrations/experimental/procedural_skill_engine.py`)**:
-   - Padrão `agentskills.io` com linter de convenções e auditoria AST para transformar soluções consolidadas em skills ativas via `/learn`.
-5. **Memória de Trajetória & Autorreparo (`integrations/experimental/trajectory_refinement_engine.py`)**:
-   - Traces de passos em JSONL e classificação de erros para destilação automática de regras corretivas de briefing via `/refine`.
-6. **Memória Durável Global L3 (`D:/Hive-Mind`)**:
-   - Sinapse Vault durável para padrões arquiteturais, decisões e aprendizados reutilizáveis entre múltiplos projetos.
+### Pilar 1: Memória Primária do Projeto (Local / Obrigatória)
+- **Banco de Dados do Squad (`banco/squad.db`)**:
+  - Persistência estruturada em SQLite WAL com isolamento por `project_id`.
+  - Tabela `memory_facts`: Fatos confirmados, decisões técnicas e deltas tipados.
+  - Tabelas `symbols` e `dependencies`: Indexação AST de classes, funções e chamadas de código.
+  - Tabela `workflow_metrics`: Telemetria de execução, consumo e quóruns de gates.
+  - Acesso e operações via CLI: `python scripts/agent_squad.py query-memory --work-item <ID>` e `python scripts/agent_squad.py record-fact`.
+- **Grafo de Código / Graphify (`integrations/codebase_knowledge_graph.py`)**:
+  - Mapeamento estrutural de símbolos, dependências e acoplamento arquitetural.
+  - Cálculo determinístico de Blast Radius e impacto arquitetural para gates de design e código.
+
+### Pilar 2: Colaboração e Rastreabilidade do Projeto (Azure DevOps)
+- **Work Item Discussions & Comments**: Discussões de negócio, refinamentos, esclarecimento de critérios de aceite e histórico vivo de cada card.
+- **Pull Request Threads & Reviews**: Pareceres técnicos de revisão (`[NN-persona-id] approve|reject`), trilha de auditoria e segregação estrita de funções (SoD).
+- **Project Wiki**: Base durável de documentação de produto, especificações funcionais e arquitetura de referência.
+
+### Pilar 3: Segundo Cérebro Global (Hive-Mind — `D:/Hive-Mind`)
+- **Sinapse Global Vault**: Memória corporativa permanente cross-projeto para padrões de engenharia, decisões arquiteturais duradouras e aprendizados entre sessões.
+- **Protocolo de Acesso**:
+  - Consulta heurística antes de iniciar tarefas: `sinapse_query('<tema>')` para resgatar decisões corporativas prévias.
+  - Consolidação durável ao concluir: `sinapse_save_decision` para registrar novos padrões validados.
+  - Sessão e manutenção: apenas o orquestrador (`00-delivery-orchestrator`) executa session health e session end.
+- O Hive-Mind atua estritamente como cérebro de suporte global; não substitui o banco primário do projeto nem as discussões no Azure DevOps.
 
 ---
 
-## 2. Regra de Promoção de Memória
+## 2. Camada Depreciada (Legado em Disco)
 
-- O agente emissor propõe um `memory-delta` (`MEM-*.yaml`) acompanhando o seu `HANDOFF-*.yaml`.
-- O orquestrador valida origem, sensibilidade, vigência e duplicidade antes de consolidar o fato em `memory/shared/summary.md`.
-- Conhecimento procedural reutilizável é sintetizado pelo comando `/learn` para `skills/discovery/intake/` e promovido pelo `18-skill-curator` após quarentena e auditoria estática.
+- Os arquivos físicos de memória em disco sob `work/<project_id>/memory/` (`shared/summary.md`, `agents/<persona>.md`, `deltas/MEM-*.yaml`) estão **depreciados**.
+- A persistência primária do projeto agora reside no `banco/squad.db` e as discussões colaborativas ocorrem diretamente no Azure DevOps.
+- O diretório em disco é mantido temporariamente apenas para retrocompatibilidade com work items históricos, não devendo ser utilizado como fonte primária por novos agentes.
 
 ---
 
-## 3. Higiene, Segurança e Verificação
+## 3. Regras de Promoção e Ciclo de Vida
 
-- **Proibição de Dados Sensíveis**: Nunca gravar credenciais, tokens, segredos ou dados pessoais em arquivos de memória.
-- **Metadados Obrigatórios**: Toda entrada de memória deve possuir `source`, `recorded_at`, `confidence`, `sensitivity` e `invalidates_when`.
-- **Memória é Pista, Não Prova**: A memória serve como guia heurístico; fatos mutáveis sobre código, testes e ambiente devem ser confirmados diretamente no artefato e na execução real.
+1. **Consulta Prévia**: Antes de iniciar uma tarefa, o especialista consulta a memória primária do projeto via `python scripts/agent_squad.py query-memory --work-item <ID>` e inspeciona as discussões do card no Azure DevOps. Caso o tema envolva padrões globais, consulta o Hive-Mind via `sinapse_query`.
+2. **Registro de Fato / Decisão**: Ao concluir uma etapa ou handoff, novos fatos e decisões são gravados na memória do projeto via `python scripts/agent_squad.py record-fact` e resumidos no card do Azure DevOps.
+3. **Promoção ao Segundo Cérebro**: Decisões arquiteturais de impacto duradouro e aplicabilidade cross-projeto são propostas para consolidação no Hive-Mind via `sinapse_save_decision`.
+4. **Memória Procedural**: Soluções e fluxos repetíveis são sintetizados via `/learn` para `skills/discovery/intake/` e avaliados pelo `18-skill-curator`.
 
+---
+
+## 4. Higiene, Segurança e Verificação
+
+- **Proibição Absoluta de Segredos**: Nunca registrar credenciais, chaves de API, PATs, senhas ou dados pessoais (PII) em qualquer camada de memória.
+- **Metadados Obrigatórios**: Toda entrada de memória deve conter `source`, `recorded_at`, `confidence`, `sensitivity` e `invalidates_when`.
+- **Memória é Pista, Não Prova**: A memória atua como guia heurístico; o código-fonte, a execução real de testes e as evidências em disco são a única verdade irrefutável.

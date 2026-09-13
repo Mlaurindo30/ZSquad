@@ -554,6 +554,7 @@ def fake_squad(root: Path, packet: dict | None = None, *, activation_errors: lis
             self.project_name = project_name
             self.skills_catalog = {"catalog": []}
             self.agents = {"agent": {"manifest": "agent.yaml"}}
+            self.dispatchable_agent_ids = ["agent", "software-engineer", "code-reviewer"]
             self.calls = 0
         def _work_base(self):
             return self.root / "work"
@@ -679,7 +680,7 @@ def test_sync_mcp_build_save_and_validation(tmp_path: Path):
     manager = sync_mcp.MCPSyncManager(tmp_path)
     config = sync_mcp.build_default_mcp_config(Path(r"C:\squad"))
     # squad-local-db foi removido: local_agent_db.py é biblioteca, não servidor MCP.
-    assert set(config["mcpServers"]) == {"codebase-memory", "sinapse-hivemind"}
+    assert set(config["mcpServers"]) == {"azure-devops", "codebase-memory", "sinapse-hivemind"}
     assert config["mcpServers"]["sinapse-hivemind"]["args"] == [
         "D:/Hive-Mind/scripts/services/sinapse-mcp.py"
     ]

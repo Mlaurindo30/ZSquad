@@ -1771,6 +1771,22 @@
     },
     "key": "1785642489220794400:10408"
   },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\azure-devops-board-management\\SKILL.md": {
+    "name": "azure-devops-board-management",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\azure-devops-board-management\\SKILL.md",
+    "source": "local",
+    "description": "Protocolo operacional completo para interação dos agentes com o Azure DevOps Boards: criação de Work Items, movimentação de cards pelas 7 colunas SDLC, atualização de estados, aplicação de tags obrigatórias, vinculação pai-filho (Epic→Feature→Story→Task) e uso correto de contas ADO (squads@ vs arthemis@).\n",
+    "metadata": {
+      "version": "1.0",
+      "applies_to": [
+        "00-delivery-orchestrator",
+        "02-product-owner",
+        "03-scrum-master",
+        "13-devops-release-engineer"
+      ]
+    },
+    "key": "1788484558498478000:11655"
+  },
   "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\ci-cd-and-automation\\SKILL.md": {
     "name": "ci-cd-and-automation",
     "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\platform\\devops\\ci-cd-and-automation\\SKILL.md",

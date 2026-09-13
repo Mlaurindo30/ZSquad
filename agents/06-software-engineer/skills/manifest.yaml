@@ -4,6 +4,12 @@ native:
 - path: skills/engineering/clean-code/test-driven-development
 - path: skills/engineering/clean-code/verification-before-completion
 assigned:
+- path: integrations/codebase_knowledge_graph.py
+- path: integrations/experimental/blast_radius_analyzer.py
+- path: integrations/experimental/code_health_analyzer.py
+- path: integrations/experimental/contextual_ast_chunker.py
+- path: integrations/experimental/gitingest.py
+- path: integrations/experimental/toon.py
 - path: skills/delivery/superpowers/executing-plans
 - path: skills/engineering/clean-code/clean-code
 - path: skills/engineering/clean-code/clean-code-guard
@@ -12,19 +18,9 @@ assigned:
 - path: skills/engineering/code-documentation/clean-code-contract
 - path: skills/engineering/code-documentation/code-documentation-code-explain
 - path: skills/engineering/mobile/mobile-developer
-- path: integrations/experimental/blast_radius_analyzer.py
-- path: integrations/experimental/code_health_analyzer.py
-- path: integrations/experimental/codebase_knowledge_graph.py
-- path: integrations/experimental/contextual_ast_chunker.py
-- path: integrations/experimental/gitingest.py
-- path: integrations/experimental/toon.py
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/software-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

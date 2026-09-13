@@ -2,6 +2,14 @@ agent: delivery-orchestrator
 native:
 - path: agents/00-delivery-orchestrator/skills/native/delivery-orchestrator-native
 assigned:
+- path: integrations/devops_platform_connector.py
+- path: integrations/experimental/clone_or_update_repos.py
+- path: integrations/experimental/gitingest.py
+- path: integrations/experimental/sdlc_role_mapper.py
+- path: integrations/experimental/toon.py
+- path: integrations/experimental/trajectory_refinement_engine.py
+- path: integrations/experimental/zcode_subagents.py
+- path: integrations/mcp_devops_client.py
 - path: skills/delivery/orchestration/closed-loop-delivery
 - path: skills/delivery/orchestration/govern-agent-handoffs
 - path: skills/delivery/orchestration/orchestrate-sdlc-gates
@@ -10,21 +18,11 @@ assigned:
 - path: skills/delivery/superpowers/using-superpowers
 - path: skills/delivery/superpowers/writing-plans
 - path: skills/delivery/token-efficiency/caveman
-- path: integrations/experimental/clone_or_update_repos.py
-- path: integrations/experimental/sdlc_role_mapper.py
-- path: integrations/experimental/trajectory_refinement_engine.py
-- path: integrations/experimental/gitingest.py
-- path: integrations/experimental/toon.py
-- path: integrations/experimental/zcode_subagents.py
-- path: integrations/devops_platform_connector.py
 - path: skills/memory/agent-memory
 - path: skills/memory/conversation-memory
+- path: skills/platform/devops/azure-devops-board-management
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/delivery-orchestrator.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

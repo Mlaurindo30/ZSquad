@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("DevOpsPlatformConnector")
 
 DEFAULT_WORK_ITEM_TYPE_MAP = {
-    "epic": "Epic", "story": "User Story", "task": "Task", "bug": "Bug",
+    "epic": "Epic", "feature": "Feature", "story": "User Story", "task": "Task", "bug": "Bug",
     "spike": "Task", "release": "Task", "evolution": "Epic", "study": "Task",
 }
 DEFAULT_STATE_MAP = {
@@ -124,6 +124,10 @@ class BaseDevOpsClient(ABC):
         """Cria uma Pull Request no provider. Default: não suportado (ex: Jira não hospeda repositório)."""
         raise NotImplementedError(f"{type(self).__name__} não suporta criação de Pull Request")
 
+    def add_work_item_comment(self, item_id: int | str, comment: str) -> Any:
+        """Adiciona um comentário ao card do Work Item."""
+        pass
+
     @abstractmethod
     def apply_iterations(self, iterations: list[dict]) -> dict[str, Any]:
         """Aplica nós de iteração ao projeto (POST /wit/classificationNodes/iterations)."""
@@ -179,7 +183,10 @@ class AzureDevOpsClient(BaseDevOpsClient):
         self.project = project
         self.pat_token = pat_token
         config = config or {}
-        self.repo = config.get("repo", project)
+        self.repo = config.get("repo")
+        if self.repo == project:
+            import warnings
+            warnings.warn(f"repo '{project}' matches project name — repo should be the product/repository name, not the project name.", UserWarning)
         self.area_path = config.get("area_path")
         self.iteration_path = config.get("iteration_path")
         self.type_map: dict[str, str] = {**DEFAULT_WORK_ITEM_TYPE_MAP, **config.get("work_item_type_map", {})}
@@ -200,6 +207,7 @@ class AzureDevOpsClient(BaseDevOpsClient):
         if not org_url.startswith("http"):
             org_url = f"https://dev.azure.com/{org_url}"
         self._validate_org_url(org_url)
+        self.org = org_url.rstrip('/')
         self.base_url = f"{org_url.rstrip('/')}/{urllib.parse.quote(project)}/_apis"
 
     def _validate_org_url(self, org_url: str) -> None:
@@ -259,6 +267,10 @@ class AzureDevOpsClient(BaseDevOpsClient):
         except _RetryableHTTPError:
             return None
 
+    def send(self, method: str, url: str, body: Any = None, content_type: str = "application/json") -> Optional[dict[str, Any]]:
+        """Envia requisição REST direta (compatível com AzureDevOpsProjectSetup.send)."""
+        return self._request(method, url, body, content_type=content_type)
+
     def _resolve_type(self, item_type: str) -> str:
         return self.type_map.get(item_type, item_type)
 
@@ -266,10 +278,11 @@ class AzureDevOpsClient(BaseDevOpsClient):
         logger.info(f"[AzureDevOps] Consultando Work Items no projeto {self.project} (Org: {self.organization})...")
         ready_states = {self.state_map.get("blueprint", "New"), self.state_map.get("scaffolding", "Active")}
         states_clause = " OR ".join(f"[System.State] = '{state}'" for state in ready_states)
+        area_clause = f" AND [System.AreaPath] UNDER '{self.area_path}'" if self.area_path else ""
         wiql = {
             "query": (
                 "SELECT [System.Id] FROM WorkItems "
-                f"WHERE [System.TeamProject] = '{self.project}' AND ({states_clause})"
+                f"WHERE [System.TeamProject] = '{self.project}' AND ({states_clause}){area_clause}"
             )
         }
         result = self._request("POST", f"{self.base_url}/wit/wiql?api-version={self.API_VERSION}", wiql)
@@ -323,6 +336,12 @@ class AzureDevOpsClient(BaseDevOpsClient):
         url = f"{self.base_url}/wit/workitems/{item_id}?api-version={self.API_VERSION}"
         return self._request("PATCH", url, patch, content_type="application/json-patch+json") is not None
 
+    def add_work_item_comment(self, item_id: int | str, comment: str) -> Optional[dict[str, Any]]:
+        """Adiciona um comentário ao Work Item via API REST do Azure DevOps."""
+        url = f"{self.base_url}/wit/workitems/{item_id}?api-version={self.API_VERSION}"
+        patch = [{"op": "add", "path": "/fields/System.History", "value": comment}]
+        return self._request("PATCH", url, patch, content_type="application/json-patch+json")
+
     def update_sizing(self, item_id: str, story_points: Optional[int] = None, t_shirt_size: Optional[str] = None) -> bool:
         logger.info(f"[AzureDevOps] Registrando Story Points={story_points} no Work Item {item_id}...")
         patch = []
@@ -342,7 +361,8 @@ class AzureDevOpsClient(BaseDevOpsClient):
         return self._request("PATCH", url, patch, content_type="application/json-patch+json") is not None
 
     def create_work_item(self, item_type: str, title: str, description: str = "",
-                         parent_id: Optional[str] = None, story_points: Optional[int] = None) -> Optional[DevOpsWorkItem]:
+                         parent_id: Optional[str] = None, story_points: Optional[int] = None,
+                         **kwargs: Any) -> Optional[DevOpsWorkItem]:
         """Cria um work item novo (Epic/User Story/Task/Bug conforme work_item_type_map)."""
         wi_type = self._resolve_type(item_type)
         patch = [
@@ -350,8 +370,9 @@ class AzureDevOpsClient(BaseDevOpsClient):
         ]
         if description:
             patch.append({"op": "add", "path": "/fields/System.Description", "value": description})
-        if self.area_path:
-            patch.append({"op": "add", "path": "/fields/System.AreaPath", "value": self.area_path})
+        area = kwargs.get("area_path") or self.area_path
+        if area:
+            patch.append({"op": "add", "path": "/fields/System.AreaPath", "value": area})
         if self.iteration_path:
             patch.append({"op": "add", "path": "/fields/System.IterationPath", "value": self.iteration_path})
         if story_points is not None:
@@ -439,6 +460,10 @@ class JiraClient(BaseDevOpsClient):
         logger.info(f"[Jira] Transicionando issue {item_id} para '{new_state}'...")
         return True
 
+    def add_work_item_comment(self, item_id: int | str, comment: str) -> bool:
+        logger.info(f"[Jira] Comentando em issue {item_id}: {comment[:50]}...")
+        return True
+
     def update_sizing(self, item_id: str, story_points: Optional[int] = None, t_shirt_size: Optional[str] = None) -> bool:
         logger.info(f"[Jira] Atualizando customfield_story_points={story_points} em {item_id}...")
         return True
@@ -505,6 +530,9 @@ class LocalFilesystemFallbackClient(BaseDevOpsClient):
             except Exception as e:
                 logger.error(f"Erro ao atualizar status local de {item_id}: {e}")
         return False
+
+    def add_work_item_comment(self, item_id: int | str, comment: str) -> bool:
+        return self.update_item_state(str(item_id), "Active", comment=comment)
 
     def update_sizing(self, item_id: str, story_points: Optional[int] = None, t_shirt_size: Optional[str] = None) -> bool:
         logger.info(f"[FallbackLocal] Registrando sizing para {item_id}: points={story_points}, t_shirt={t_shirt_size}")
@@ -605,7 +633,7 @@ class DevOpsPlatformConnector:
             return False
         try:
             result = subprocess.run(
-                ["npx", "--yes", "@azure-devops/mcp@1.0.0", "--help"],
+                ["npx", "--yes", "@azure-devops/mcp@latest", "--help"],
                 capture_output=True,
                 timeout=15,
             )
@@ -619,6 +647,19 @@ class DevOpsPlatformConnector:
     def update_item_state(self, item_id: str, new_state: str, comment: Optional[str] = None) -> bool:
         return self.client.update_item_state(item_id, new_state, comment)
 
+    def add_work_item_comment(self, item_id: int | str, comment: str) -> Any:
+        """Adiciona um comentário ao card do Work Item."""
+        if hasattr(self.client, "add_work_item_comment"):
+            return self.client.add_work_item_comment(item_id, comment)
+        if hasattr(self.client, "send") and hasattr(self.client, "org") and hasattr(self.client, "project"):
+            return self.client.send(
+                "PATCH",
+                f"{self.client.org}/{self.client.project}/_apis/wit/workitems/{item_id}?api-version=7.1",
+                [{"op": "add", "path": "/fields/System.History", "value": comment}],
+                content_type="application/json-patch+json",
+            )
+        return self.client.update_item_state(str(item_id), "Active", comment=comment)
+
     def update_sizing(self, item_id: str, story_points: Optional[int] = None, t_shirt_size: Optional[str] = None) -> bool:
         return self.client.update_sizing(item_id, story_points, t_shirt_size)
 
@@ -626,10 +667,13 @@ class DevOpsPlatformConnector:
                              description: str = "", work_item_ids: Optional[list[str]] = None) -> Optional[dict[str, Any]]:
         return self.client.create_pull_request(source_branch, target_branch, title, description, work_item_ids)
 
-    def create_work_item(self, item_type: str, title: str, description: str = "",
-                          parent_id: Optional[str] = None, story_points: Optional[int] = None) -> Optional[DevOpsWorkItem]:
-        if isinstance(self.client, AzureDevOpsClient):
-            return self.client.create_work_item(item_type, title, description, parent_id, story_points)
+    def create_work_item(self, item_type: str = "User Story", title: str = "", description: str = "",
+                          parent_id: Optional[str] = None, story_points: Optional[int] = None,
+                          **kwargs: Any) -> Optional[DevOpsWorkItem]:
+        actual_type = kwargs.get("wit_type", item_type)
+        actual_title = title or kwargs.get("title", "")
+        if isinstance(self.client, AzureDevOpsClient) or hasattr(self.client, "create_work_item"):
+            return self.client.create_work_item(actual_type, actual_title, description, parent_id, story_points, **kwargs)
         raise NotImplementedError(f"{type(self.client).__name__} não suporta create_work_item genérico")
 
     def split_story_if_exceeded(self, item_id: str, story_points: int, suggested_splits: list[dict[str, Any]]) -> Optional[list[DevOpsWorkItem]]:

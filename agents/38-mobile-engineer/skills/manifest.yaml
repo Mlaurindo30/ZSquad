@@ -4,16 +4,13 @@ native:
 assigned:
 - path: skills/delivery/superpowers/executing-plans
 - path: skills/engineering/clean-code/clean-code
-- path: skills/engineering/mobile/mobile-developer
-- path: skills/engineering/mobile/mobile-design
-- path: skills/engineering/frontend/react-best-practices
 - path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/engineering/frontend/react-best-practices
+- path: skills/engineering/mobile/mobile-design
+- path: skills/engineering/mobile/mobile-developer
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/mobile-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md

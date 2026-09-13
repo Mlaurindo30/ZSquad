@@ -620,10 +620,16 @@ class TestCliMain:
         """
 
         import runpy
+        import scripts.llm_providers as provider_module
 
         source = _write_incident(tmp_path)
         monkeypatch.setattr(trigger, "DEFAULT_PROVIDERS", lambda: [FakeRouter()])
         monkeypatch.setattr(trigger, "LLMRouter", lambda providers: providers[0])
+        # runpy executa o arquivo em um namespace __main__ novo; patchar também
+        # o módulo de origem impede que os imports desse namespace criem os
+        # providers localhost reais.
+        monkeypatch.setattr(provider_module, "DEFAULT_PROVIDERS", lambda: [FakeRouter()])
+        monkeypatch.setattr(provider_module, "LLMRouter", lambda providers: providers[0])
         monkeypatch.setattr(
             sys,
             "argv",
