@@ -1,11 +1,10 @@
 import pytest
 import json
-import asyncio
 from unittest.mock import AsyncMock, patch
 from integrations.mcp_client import MCPClient
 
 @pytest.mark.asyncio
-async def test_mcp_client_handshake():
+async def test_mcp_client_handshake() -> None:
     mock_process = AsyncMock()
     mock_stdout = AsyncMock()
     mock_stdin = AsyncMock()
@@ -38,7 +37,7 @@ async def test_mcp_client_handshake():
         assert result["serverInfo"]["name"] == "test-server"
 
 @pytest.mark.asyncio
-async def test_eager_discovery():
+async def test_eager_discovery() -> None:
     mock_process = AsyncMock()
     mock_stdout = AsyncMock()
     mock_stdin = AsyncMock()
