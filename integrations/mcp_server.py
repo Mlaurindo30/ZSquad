@@ -50,6 +50,14 @@ except ModuleNotFoundError:
     from resolvers import ResolverContext
 
 
+"""
+Component Contract:
+- Definition: AgentSquadMCPServer provides MCP integration.
+- Responsibility: Handles JSON-RPC 2.0 requests over stdio/HTTP.
+- Purpose: Enables squad agents to interface with MCP standard tools.
+- Failure Behavior: Returns standard JSON-RPC error objects.
+- Connections: DBClient, SessionStore, Resolvers.
+"""
 class AgentSquadMCPServer:
     def __init__(self) -> None:
         self.session_store = SessionStore()
@@ -298,8 +306,7 @@ class AgentSquadMCPServer:
 
     def _format_error(self, req_id: Any, code: int, message: str) -> Dict[str, Any]:
         res = {"jsonrpc": "2.0", "error": {"code": code, "message": message}}
-        if req_id is not None:
-            res["id"] = req_id
+        res["id"] = req_id
         return res
 
     def handle_request(self, request: Dict[str, Any]) -> Any:

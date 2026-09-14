@@ -640,3 +640,17 @@ collected 870 items
   - gate-decisions/GD-CODEX-ADAPTER-G6-GOVERNANCE.yaml
 - **SoD**: Autor (software-engineer) != G4 (09-code-reviewer) != G5 (qa-engineer) != G6 (14-governance-auditor).
 - **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. Data integrity fully preserved. Card officially closed via @azure-devops/mcp.
+
+---
+# TASK-NPR-MCP-FULL-CONTRACT — MCP Full Contract
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-MCP-FULL-CONTRACT-G6-GOVERNANCE.yaml
+  - gate-decisions/GD-G2-DESIGN.yaml
+  - gate-decisions/GD-MCP-FULL-CONTRACT-G4.yaml
+  - gate-decisions/GD-MCP-FULL-CONTRACT-G5.yaml
+- **SoD**: Autor (06-software-engineer) != G2 (04-solution-architect) != G4 (09-code-reviewer) != G5 (12-qa-engineer) != G6 (14-governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Traceability custody chain is fully compliant with ISO 27001 A.8.32, SOC 2 CC8.1, and NIST CM-5. Automated tests passed (14/14 in 0.69s). Card officially closed.

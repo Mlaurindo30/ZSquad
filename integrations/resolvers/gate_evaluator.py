@@ -1,16 +1,19 @@
 import os
-import yaml
-
-
-def _load_yaml(path: str) -> dict:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
-    except Exception:
-        return {}
+try:
+    from integrations.resolvers import load_yaml
+except ModuleNotFoundError:
+    from resolvers import load_yaml
 
 
 def evaluate_gate(args, ctx, session_store, db):
+    """
+    Component Contract:
+    - Definition: evaluate_gate resolver function.
+    - Responsibility: Checks if criteria for a specific gate are met based on evidence.
+    - Purpose: Ensure governance processes are respected before transitions.
+    - Failure Behavior: Returns blocked status on unknown gate or lacking evidence.
+    - Connections: SessionStore, DBClient, config file (workflow.yaml).
+    """
     gate_name = args.get("gate", "")
     session_id = args.get("session", "")
     evidence_refs = args.get("evidence_refs", [])
@@ -24,7 +27,7 @@ def evaluate_gate(args, ctx, session_store, db):
 
     # Load workflow.yaml gates
     workflow_path = os.path.join(ctx.config_dir, "workflow.yaml")
-    workflow = _load_yaml(workflow_path)
+    workflow = load_yaml(workflow_path)
     gates = workflow.get("gates", {})
 
     gate_info = gates.get(gate_name)

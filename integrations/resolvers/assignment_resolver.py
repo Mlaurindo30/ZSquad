@@ -1,20 +1,23 @@
 import os
 import hashlib
-import yaml
-
-
-def _load_yaml(path: str) -> dict:
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
-    except Exception:
-        return {}
+try:
+    from integrations.resolvers import load_yaml
+except ModuleNotFoundError:
+    from resolvers import load_yaml
 
 
 def get_assignment(args, ctx, session_store):
+    """
+    Component Contract:
+    - Definition: get_assignment resolver function.
+    - Responsibility: Matches an objective digest to the best agent persona.
+    - Purpose: Dispatch the right agent for a task.
+    - Failure Behavior: Fallback to software-engineer if no match found.
+    - Connections: Agent registry, filesystem, SessionStore.
+    """
     config_dir = ctx.config_dir
     registry_path = os.path.join(config_dir, "agent-registry.yaml")
-    registry = _load_yaml(registry_path)
+    registry = load_yaml(registry_path)
 
     agents = registry.get("agents", [])
     objective = (args.get("objective_digest") or "").lower()
@@ -60,7 +63,7 @@ def get_assignment(args, ctx, session_store):
     if manifest_rel:
         root_dir = os.path.abspath(os.path.join(config_dir, ".."))
         manifest_path = os.path.join(root_dir, manifest_rel)
-        manifest = _load_yaml(manifest_path)
+        manifest = load_yaml(manifest_path)
         for s in manifest.get("assigned", []) + manifest.get("native", []):
             if isinstance(s, dict) and "path" in s:
                 skills.append(s["path"])
@@ -77,6 +80,14 @@ def get_assignment(args, ctx, session_store):
 
 
 def prepare_delegation(args, ctx, session_store):
+    """
+    Component Contract:
+    - Definition: prepare_delegation resolver function.
+    - Responsibility: Prepares the canonical briefing for a target role.
+    - Purpose: Standardize task briefings for agents.
+    - Failure Behavior: Uses default boundaries if session is missing.
+    - Connections: SessionStore.
+    """
     target_role = args.get("target_role", "software-engineer")
     scope = args.get("scope", "General SDLC execution")
     action = args.get("action", "Implementation")
@@ -101,6 +112,14 @@ def prepare_delegation(args, ctx, session_store):
 
 
 def create_handoff(args, ctx, session_store, db):
+    """
+    Component Contract:
+    - Definition: create_handoff resolver function.
+    - Responsibility: Records a handoff creation fact.
+    - Purpose: Track transitions and evidence hashes.
+    - Failure Behavior: Records against test session if not found.
+    - Connections: SessionStore, DBClient.
+    """
     session = session_store.get_session(args["session"])
     if not session:
         session = {"project_root": "test_root", "work_item": "test_item"}
