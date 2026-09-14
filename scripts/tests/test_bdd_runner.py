@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
-import pytest
-from scripts.bdd_runner import run_bdd_evaluation, main
+
+from scripts.bdd_runner import run_bdd_evaluation
 
 ROOT = Path(__file__).resolve().parents[2]
 

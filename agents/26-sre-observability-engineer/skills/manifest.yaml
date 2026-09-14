@@ -2,6 +2,7 @@ agent: sre-observability-engineer
 native:
 - path: agents/26-sre-observability-engineer/skills/native/sre-observability-engineer-native
 assigned:
+- path: integrations/resolvers/doctor.py
 - path: skills/memory/agent-memory
 - path: skills/platform/observability/observability-engineer
 - path: skills/platform/performance/performance-engineer

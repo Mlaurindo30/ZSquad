@@ -2,7 +2,17 @@ agent: devops-release-engineer
 native:
 - path: agents/13-devops-release-engineer/skills/native/devops-release-engineer-native
 assigned:
+- path: integrations/claude_adapter.py
+- path: integrations/codex_adapter.py
+- path: integrations/copilot_adapter.py
+- path: integrations/hermes_adapter.py
+- path: integrations/kilo_adapter.py
+- path: integrations/mcp_client.py
+- path: integrations/mcp_runner.py
+- path: integrations/mcp_server.py
 - path: integrations/mcp_devops_client.py
+- path: integrations/openclaw_adapter.py
+- path: integrations/zcode_adapter.py
 - path: skills/data/databricks/databricks-dabs
 - path: skills/memory/agent-memory
 - path: skills/platform/containers/docker-expert

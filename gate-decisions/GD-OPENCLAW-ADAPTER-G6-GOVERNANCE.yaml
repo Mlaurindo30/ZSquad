@@ -1,0 +1,10 @@
+gate: G6-Governance-Release
+task: TASK-NPR-OPENCLAW-ADAPTER
+decision: RELEASE
+auditor: "14-governance-auditor"
+date: "2026-09-14T15:17:10-03:00"
+evidence:
+  - "reviews/compliance-audit.md"
+  - "documentation/delivery-ledger.md"
+  - "work/TASK-NPR-OPENCLAW-ADAPTER/findings/BUG-OPENCLAW-ADAPTER-1.md"
+remarks: "Chain of custody is fully verified. ISO 27001 and SOC 2 compliance achieved for third-party integration and defect resolution. SoD strictly maintained. The data destruction bug is confirmed mitigated. DevOps MCP sync failed (module not found) so fallback documentation applied. Card is officially closed."

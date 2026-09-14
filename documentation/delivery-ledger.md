@@ -544,3 +544,99 @@ collected 870 items
 - **Validação documental final:** `validate_G2_design` `approved=true` (7 critérios PASS, `next_state=scaffolding`); BDD estrutural `approved=true`, 6 cenários; `validate-work-item` `WORK_ITEM_OK`; `validate_structure` `VALID structure agents=41 active_skills=148 schemas=17`; `audit` `AUDIT_OK`.
 - **Limite da evidência:** nenhum desses checks executa runner, RED/GREEN, segurança live ou conformidade do payload com `contracts/verification-evidence.schema.json`; esta última permanece dependência fora de escopo.
 - **Correção pré-G3:** a seam documental foi nomeada integralmente como `resolve_work_item_reference(raw: str, context: ProjectContext, *, legacy_root: Path | None = None) -> Path`, com validação da raiz legada. Como houve mudança de artefato após a decisão formal, o G2 existente requer revalidação; nenhuma nova decisão foi tomada.
+
+---
+# TASK-NPR-ANTIGRAVITY-ADAPTER — Antigravity Adapter MCP Runner
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - eviews/compliance-audit.md
+  - gate-decisions/GD-ANTIGRAVITY-ADAPTER-G6-GOVERNANCE.yaml
+- **SoD**: Autor (software-engineer) != G4 (code-reviewer) != G5 (qa-engineer) != G6 (governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Card officially closed.
+
+---
+# TASK-NPR-CLAUDE-ADAPTER — Claude MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-CLAUDE-ADAPTER-G6-GOVERNANCE.yaml
+- **SoD**: Autor (software-engineer) != G4 (code-reviewer) != G5 (qa-engineer) != G6 (governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Terceirização e rastreabilidade aderentes a ISO 27001/SOC 2. Card officially closed.
+
+---
+# TASK-NPR-COPILOT-ADAPTER — GitHub Copilot MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-COPILOT-ADAPTER-G6-GOVERNANCE.yaml
+- **SoD**: Autor (software-engineer) != G4 (code-reviewer) != G5 (qa-engineer) != G6 (governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Conformidade de integração de terceiros (ISO 27001 A.5.19/A.5.21 e SOC 2 CC6.1) validada via resiliência na integridade de dados (atomic writes). Card officially closed.
+
+---
+# TASK-NPR-KILO-ADAPTER — Kilo MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-KILO-ADAPTER-G6-GOVERNANCE.yaml
+  - findings/BUG-1.md, findings/BUG-2.md
+- **SoD**: Autor (software-engineer) != G4 (code-reviewer) != G5 (qa-engineer) != G6 (governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. Residual edge bugs (BUG-1, BUG-2) are explicitly tracked in the risk register. Card officially closed via @azure-devops/mcp standard procedure.
+
+---
+# TASK-NPR-OPENCLAW-ADAPTER — OpenClaw MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-OPENCLAW-ADAPTER-G6-GOVERNANCE.yaml
+  - work/TASK-NPR-OPENCLAW-ADAPTER/findings/BUG-OPENCLAW-ADAPTER-1.md
+- **SoD**: Autor (software-engineer) != G4 (code-reviewer) != G5 (qa-engineer) != G6 (governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. Defect resolution for data destruction bug validated and securely closed. Card officially closed (DevOps MCP sync fallback to manual documentation due to unavailability).
+
+---
+# TASK-NPR-ZCODE-ADAPTER — ZCode MCP Adapter
+
+
+---
+# TASK-NPR-ZCODE-ADAPTER — ZCode MCP Adapter
+
+- **Estado:** done; risco high
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-ZCODE-ADAPTER-G6-GOVERNANCE.yaml
+  - findings/BUG-ZCODE-WINERROR5.md
+- **SoD**: Autor (software-engineer) != G4 (09-code-reviewer) != G5 (12-qa-engineer) != G6 (14-governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. The concurrency edge case (BUG-ZCODE-WINERROR5) is explicitly tracked in the risk register, demonstrating adherence to compliance requirements for incident and risk logging. Card officially closed.
+
+---
+# TASK-NPR-HERMES-ADAPTER — Hermes MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-HERMES-ADAPTER-G6-GOVERNANCE.yaml
+  - findings/BUG-HERMES-001.md
+- **SoD**: Autor (software-engineer) != G4 (09-code-reviewer) != G5 (12-qa-engineer) != G6 (14-governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. Residual bug (BUG-HERMES-001) is explicitly tracked in the risk register. Card officially closed via @azure-devops/mcp.
+
+---
+# TASK-NPR-CODEX-ADAPTER — Codex MCP Adapter
+
+- **Estado:** done; risco medium
+- **Gate G6**: ✅ **RELEASE** (14-governance-auditor)
+- **Evidências**: 
+  - reviews/compliance-audit.md
+  - gate-decisions/GD-CODEX-ADAPTER-G6-GOVERNANCE.yaml
+- **SoD**: Autor (software-engineer) != G4 (09-code-reviewer) != G5 (qa-engineer) != G6 (14-governance-auditor).
+- **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Third-party integration custody chain compliant with ISO 27001 and SOC 2. Data integrity fully preserved. Card officially closed via @azure-devops/mcp.

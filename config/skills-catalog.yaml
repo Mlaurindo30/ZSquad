@@ -2275,6 +2275,260 @@ catalog:
   folder_sha256: e53a64d55491ecc813eff10d8b0ce726b99ce1cd5c9f3198d0f1741198abd916
   description: Systematically identify and fix all failing tests using smart grouping
     strategies. Use when explicitly asks to fix tests (
+- name: claude_adapter
+  path: integrations/claude_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 1947a85fc0e836cc2fad75be657989e052378516992a7b19b0177ae380036fd7
+  description: Adaptador MCP para Claude Desktop/Code — instala agent-squad como servidor MCP.
+- name: codex_adapter
+  path: integrations/codex_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 6f84e3dda0152aad7f03eb4b7330affd52c2adfd6d95c7a236f312f65c37d844
+  description: Adaptador MCP para OpenAI Codex — injeta agent-squad no loop do agente via TOML.
+- name: copilot_adapter
+  path: integrations/copilot_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: b58d759ce8d3f1b4c69c446aa8c5cc7d2c41a0daf42847bdca4c7e2a812bac5a
+  description: Adaptador MCP para GitHub Copilot CLI/Workspace — registra agent-squad no .vscode/mcp.json.
+- name: hermes_adapter
+  path: integrations/hermes_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 59b2cad73be0dacec1817a80dd7e40d0a0b633037a9c6091e9d5dbc5945f01b8
+  description: Adaptador MCP para Hermes Agent — instala agent-squad na configuração do host.
+- name: kilo_adapter
+  path: integrations/kilo_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: e8ddb992beb82ed1703104ceb18cd2241f9d28a83e9b0ee6d921f2d2f4e572bd
+  description: Adaptador MCP para Kilo Code — gera .kilo/config.json com bloco mcpServers.
+- name: mcp_client
+  path: integrations/mcp_client.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - devops-release-engineer
+  load: on-demand
+  folder_sha256: 9abcfb2dce0d0e71db0ab35ea458138dcde5c3371dceacee805d0dc92fa76eb1
+  description: Cliente MCP para comunicação com o servidor agent-squad via stdio JSON-RPC 2.0.
+- name: mcp_db_client
+  path: integrations/mcp_db_client.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: 7f44eea52deaf710c347899541f8646967dcb0d26341e104bf9336c450932635
+  description: Wrapper SQLite para acesso ao banco squad.db — leituras de memória, votos e evidências.
+- name: mcp_runner
+  path: integrations/mcp_runner.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - devops-release-engineer
+  load: on-demand
+  folder_sha256: 154bedefb10dc480860c8c5ef8a6a9512145d68af94ad5a784db4ccc1754bfca
+  description: Entry point do MCP server em modo stdio — recebe JSON-RPC 2.0 e despacha para AgentSquadMCPServer.
+- name: mcp_server
+  path: integrations/mcp_server.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - devops-release-engineer
+  - delivery-orchestrator
+  load: on-demand
+  folder_sha256: 7ba528c102d436a28b2cd76648d47a931664da3aa2d685f4201bb8c448a16b09
+  description: Servidor MCP v1 com contrato completo de 18 tools — router JSON-RPC 2.0 com resolvers modulares.
+- name: mcp_session_store
+  path: integrations/mcp_session_store.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: ca633362794852a6ba3b6e95031a986f79089d13bed48cedf40b4ba30aaa6b8d
+  description: Gerenciador de estado de sessão em memória com TTL, idempotência por SHA-256 e máquina de estados.
+- name: openclaw_adapter
+  path: integrations/openclaw_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 43b9b75e0f04dd166b863cb9d9714d9a821697fd5a48071391fc070b5b19569f
+  description: Adaptador MCP para OpenClaw — configura agent-squad em openclaw.json via escrita atômica.
+- name: mcp_resolver_assignment
+  path: integrations/resolvers/assignment_resolver.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: ce081807b8c2f18d4537dc8b84d42c4b22a2a59431f3f85512a8f964739c0fd5
+  description: Resolver MCP de atribuição — get_assignment, prepare_delegation, create_handoff via agent-registry.yaml.
+- name: mcp_resolver_context
+  path: integrations/resolvers/context_engine.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: fcd446bd6b329040c09476d38bb275b73e78e660cb74360b5886bbd94a712082
+  description: Resolver MCP de contexto e memória — get_context, memory_query, memory_propose_delta via squad.db.
+- name: mcp_resolver_doctor
+  path: integrations/resolvers/doctor.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - sre-observability-engineer
+  load: on-demand
+  folder_sha256: c17dc2a6237073ea04f98c8ed94220fc6ac61f9e923355dd036707c9efc66c36
+  description: Resolver MCP de diagnóstico — verifica saúde do runtime, configurações e banco de dados.
+- name: mcp_resolver_execution
+  path: integrations/resolvers/execution_recorder.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: 58e004aab03b3161e819d3943fb3a698fcce8192ca913227cad61a1243ab2576
+  description: Resolver MCP de execução — record_execution, record_evidence, report_failure, replay_receipt.
+- name: mcp_resolver_gate
+  path: integrations/resolvers/gate_evaluator.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - governance-auditor
+  load: on-demand
+  folder_sha256: 2f0b881d8875bac46b86d5f2b49e62e2c5fc8a8f94e1d5db228a2c8934889baf
+  description: Resolver MCP de portões — evaluate_gate com critérios de workflow.yaml e quorum_votes do squad.db.
+- name: mcp_resolver_impact
+  path: integrations/resolvers/impact_analyzer.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: b803d9f32c34a4b7a538ab97ec7be4c5763e1e8ffad91e938df6891086a745c3
+  description: Resolver MCP de impacto — preflight e impact_analysis via symbols e dependencies do squad.db.
+- name: mcp_resolver_session
+  path: integrations/resolvers/session_manager.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  load: on-demand
+  folder_sha256: 546661ee31e20ea0fdd5eb0b209df5c2da02001f7bb56bec9b818afe2572f130
+  description: Resolver MCP de sessão — start_session e resume_session com TTL e máquina de estados.
+- name: mcp_resolver_skill
+  path: integrations/resolvers/skill_manager.py
+  domain: integration-engines
+  specialization: mcp-runtime
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - software-engineer
+  - skill-curator
+  load: on-demand
+  folder_sha256: 121a049fc59e916f12ff0c3777faa2b4ac1549983537f6a972d7a424a0289800
+  description: Resolver MCP de skills — discover_skill e curate_skill via skills-catalog.yaml e squad.db.
+- name: zcode_adapter
+  path: integrations/zcode_adapter.py
+  domain: integration-engines
+  specialization: host-adapter
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - devops-release-engineer
+  - software-engineer
+  load: on-demand
+  folder_sha256: 12cade2d73bcfdff5a3cfb8c00f70bb1c6ad7d6183206bd7073a39c86d6845c2
+  description: Adaptador MCP para ZCode — configura agent-squad em .zcode/config.json via escrita atômica.
 policy:
   sources: skills/SOURCES.md
   quarantine_is_not_loadable: true

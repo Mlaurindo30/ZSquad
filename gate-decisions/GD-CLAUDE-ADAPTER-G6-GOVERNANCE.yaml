@@ -1,0 +1,10 @@
+gate: G6-Governance-Release
+work_item: TASK-NPR-CLAUDE-ADAPTER
+decision: RELEASE
+decider: 14-governance-auditor
+date: '2026-09-14T14:48:00-03:00'
+evidence:
+  - 'reviews/compliance-audit.md'
+  - 'gate-decisions/GD-CLAUDE-ADAPTER-G4.yaml'
+  - 'gate-decisions/G5-quality.yaml'
+notes: "Chain of custody and segregation of duties verified. Third-party integration (Claude Desktop) complies with SOC 2 / ISO 27001 requirements."

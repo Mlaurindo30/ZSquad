@@ -1,0 +1,17 @@
+# Gate Decision: G4-Code-Security
+# Component: Codex Adapter (TASK-NPR-CODEX-ADAPTER)
+
+decision: "APPROVE"
+gate: "G4-code-security"
+reviewer_id: "09-code-reviewer"
+timestamp: "2026-09-14T15:48:22-03:00"
+criteria_met:
+  - clean_code_standards: true
+  - component_contract_present: true
+  - atomic_write_verified: true
+  - toml_manipulation_verified: true
+  - tests_passed: true
+  - code_smells_absent: true
+
+justification: |
+  A inspeção estática confirmou o uso adequado de `tomlkit` para preservação de formatação e `tomllib` para validação fail-fast. A gravação é realizada atomicamente com `tempfile` e `os.replace`. O esquema MCP está correto. Testes cobrem o cenário de ponta a ponta. Contratos de Componente estão presentes. Nenhuma falha de segurança ou design encontrada.

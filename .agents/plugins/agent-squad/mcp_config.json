@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "agent-squad-core": {
+      "command": "python",
+      "args": [
+        "C:/Users/miche/OneDrive/Documentos/agent_squad/integrations/mcp_runner.py"
+      ],
+      "env": {
+        "SQUAD_RUNTIME": "C:/Users/miche/OneDrive/Documentos/agent_squad",
+        "AZURE_DEVOPS_MCP_TRANSPORT": "azure-devops",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

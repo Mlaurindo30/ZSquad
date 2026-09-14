@@ -1,0 +1,21 @@
+# Gate Decision: G6-Governance-Release
+work_item: TASK-NPR-HERMES-ADAPTER
+gate: G6-Governance-Release
+status: APPROVE
+decider: governance-auditor
+timestamp: 2026-09-14T15:35:11-03:00
+evidence:
+  - file: "gate-decisions/GD-HERMES-ADAPTER-G4.yaml"
+    type: "G4 Code Security Approval"
+  - file: "gate-decisions/G5-quality.yaml"
+    type: "G5 Quality Approval"
+  - file: "findings/BUG-HERMES-001.md"
+    type: "Tracked finding for risk backlog"
+  - file: "documentation/delivery-ledger.md"
+    type: "Ledger traceability record"
+  - file: "reviews/compliance-audit.md"
+    type: "Formal compliance audit"
+remarks: |
+  Traceability chain verified. Segregation of Duties (SoD) intact (Author != code-reviewer != qa-engineer != governance-auditor).
+  Third-party integration risk mapped: BUG-HERMES-001 documented and accepted for backlog resolution per ISO 27001 / SOC 2 requirements.
+  Work item authorized for completion.

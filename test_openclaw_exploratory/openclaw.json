@@ -1,0 +1,17 @@
+{
+  mcp: {
+    servers: {
+      "agent-squad": {
+        command: "python",
+        args: [
+          "-m",
+          "integrations.mcp_runner",
+        ],
+        env: {
+          PYTHONPATH: "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad",
+          SQUAD_RUNTIME: "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad",
+        },
+      },
+    },
+  },
+}

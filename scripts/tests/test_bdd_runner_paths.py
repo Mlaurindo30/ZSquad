@@ -113,6 +113,14 @@ def test_absolute_authorized_reference_is_accepted(tmp_path: Path) -> None:
     assert resolved == expected.resolve()
 
 
+def test_absolute_reference_in_another_project_namespace_is_rejected(tmp_path: Path) -> None:
+    context, _, legacy_root, _ = _context(tmp_path)
+    foreign = _item(legacy_root / "other-project", "ITEM-005-FOREIGN")
+
+    with pytest.raises(_resolution_error_type()):
+        _resolve(str(foreign), context, legacy_root=legacy_root)
+
+
 def test_explicit_legacy_reference_is_accepted_only_when_legacy_item_exists(tmp_path: Path) -> None:
     context, _, legacy_root, _ = _context(tmp_path)
     expected = _item(legacy_root, "ITEM-006")
@@ -231,3 +239,17 @@ def test_cli_absolute_authorized_reference_writes_only_inside_item(
     assert rc == 0
     assert (item / "evaluation" / "bdd.json").is_file()
     assert not (runtime / "evaluation" / "bdd.json").exists()
+
+
+def test_cli_returns_sanitized_error_when_evidence_write_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    runtime = tmp_path / "runtime"
+    _item(runtime / "work" / "agent_squad", "ITEM-014")
+    monkeypatch.setattr(bdd_runner, "ROOT", runtime)
+    monkeypatch.setattr(bdd_runner, "run_bdd_evaluation", lambda *args, **kwargs: (_ for _ in ()).throw(OSError("disk unavailable")))
+
+    rc = bdd_runner.main(["--work-item", "ITEM-014"])
+
+    assert rc == 1
+    assert "Erro: work item inválido" in capsys.readouterr().err

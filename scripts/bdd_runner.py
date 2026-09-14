@@ -24,7 +24,81 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(ROOT / "scripts"))
 
-from bdd_validator import validate_features
+from bdd_validator import validate_features  # noqa: E402
+from project_context import ProjectContext  # noqa: E402
+
+
+class WorkItemResolutionError(ValueError):
+    """Indica uma referência de work item inválida ou fora do runtime."""
+
+
+def _is_within(path: Path, root: Path) -> bool:
+    """Retorna se ``path`` está contido em ``root`` depois de resolver links."""
+    try:
+        path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _validated_item(candidate: Path, allowed_root: Path) -> Path:
+    """Confere contenção, diretório e marcador antes de aceitar um candidato."""
+    resolved = candidate.resolve()
+    if not _is_within(resolved, allowed_root):
+        raise WorkItemResolutionError("referência fora da raiz de work autorizada")
+    if not resolved.is_dir() or not (resolved / "status.yaml").is_file():
+        raise WorkItemResolutionError("work item ausente ou sem status.yaml")
+    return resolved
+
+
+def resolve_work_item_reference(
+    raw: str, context: ProjectContext, *, legacy_root: Path | None = None
+) -> Path:
+    """Resolve uma referência de work item sem permitir traversal ou escapes.
+
+    IDs simples priorizam o namespace do projeto. A forma explícita ``work/<id>``
+    é reservada para itens legados existentes sob ``runtime/work``.
+    """
+    value = raw.strip()
+    if not value:
+        raise WorkItemResolutionError("referência vazia")
+
+    normalized = value.replace("\\", "/")
+    parts = normalized.split("/")
+    if any(part in {"", ".", ".."} for part in parts):
+        raise WorkItemResolutionError("referência relativa inválida")
+
+    windows_drive_relative = len(value) >= 2 and value[1] == ":" and not Path(value).is_absolute()
+    rooted_without_drive = value.startswith(("/", "\\"))
+    if windows_drive_relative or rooted_without_drive and not Path(value).is_absolute():
+        raise WorkItemResolutionError("referência de drive ou raiz inválida")
+
+    runtime_work = (context.runtime_root / "work").resolve()
+    namespaced_root = context.work_dir.resolve()
+    selected_legacy = (legacy_root or runtime_work).resolve()
+    if not _is_within(selected_legacy, runtime_work):
+        raise WorkItemResolutionError("raiz legada fora de runtime/work")
+
+    raw_path = Path(value)
+    if raw_path.is_absolute():
+        return _validated_item(raw_path, namespaced_root)
+
+    if parts[0] == "work":
+        if len(parts) == 3 and parts[1] == context.project_id:
+            return _validated_item(runtime_work.joinpath(*parts[1:]), namespaced_root)
+        if len(parts) == 2:
+            return _validated_item(selected_legacy / parts[1], selected_legacy)
+        raise WorkItemResolutionError("referência work inválida")
+
+    if len(parts) == 2 and parts[0] == context.project_id:
+        return _validated_item(namespaced_root / parts[1], namespaced_root)
+    if len(parts) != 1:
+        raise WorkItemResolutionError("referência relativa inválida")
+
+    try:
+        return _validated_item(namespaced_root / parts[0], namespaced_root)
+    except WorkItemResolutionError:
+        return _validated_item(selected_legacy / parts[0], selected_legacy)
 
 
 def now_iso() -> str:
@@ -44,8 +118,11 @@ def generate_file_hashes(work_item: Path, feature_files: list[Path]) -> dict[str
     return hashes
 
 
-def run_bdd_evaluation(work_item: Path) -> dict[str, Any]:
+def run_bdd_evaluation(work_item: Path, *, allowed_root: Path | None = None) -> dict[str, Any]:
     """Executa a validação das especificações BDD e grava a evidência oficial em evaluation/bdd.json."""
+    work_item = work_item.resolve()
+    if allowed_root is not None:
+        _validated_item(work_item, allowed_root)
     specs_dir = work_item / "specs"
     if not specs_dir.exists():
         specs_dir = work_item / "discovery"
@@ -79,6 +156,8 @@ def run_bdd_evaluation(work_item: Path) -> dict[str, Any]:
 
     eval_dir = work_item / "evaluation"
     eval_dir.mkdir(parents=True, exist_ok=True)
+    if allowed_root is not None and not _is_within(eval_dir, allowed_root):
+        raise WorkItemResolutionError("diretório de evidência fora da raiz autorizada")
     evidence_path = eval_dir / "bdd.json"
     evidence_path.write_text(json.dumps(evidence, indent=2, ensure_ascii=False), encoding="utf-8")
 
@@ -90,15 +169,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--work-item", required=True, help="Caminho ou ID do work item")
     args = parser.parse_args(argv)
 
-    work_item = Path(args.work_item)
-    if not work_item.is_absolute():
-        work_item = (ROOT / "work" / args.work_item).resolve()
-
-    if not work_item.is_dir():
-        print(f"Erro: Work item directory not found: {work_item}", file=sys.stderr)
+    context = ProjectContext(ROOT.resolve(), ROOT.resolve(), "agent_squad")
+    try:
+        work_item = resolve_work_item_reference(args.work_item, context)
+        evidence = run_bdd_evaluation(work_item, allowed_root=context.work_dir)
+    except (WorkItemResolutionError, OSError, RuntimeError, ValueError) as exc:
+        print(f"Erro: work item inválido: {exc}", file=sys.stderr)
         return 1
 
-    evidence = run_bdd_evaluation(work_item)
     print(f"Evidência BDD gerada em: {work_item}/evaluation/bdd.json (passed={evidence['passed']})")
     return evidence["exit_code"]
 
