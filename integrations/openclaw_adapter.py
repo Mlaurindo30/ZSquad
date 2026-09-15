@@ -20,7 +20,7 @@ def configure_openclaw(openclaw_config_path=None, squad_runtime_path=None):
         openclaw_config_path = os.path.expanduser("~/.openclaw/openclaw.json")
         
     if squad_runtime_path is None:
-        # Defaults to the workspace root C:\Users\miche\OneDrive\Documentos\agent_squad
+        # Defaults to the workspace root Path(__file__).parent.parent
         squad_runtime_path = str(pathlib.Path(__file__).parent.parent.absolute())
         
     config_file = pathlib.Path(openclaw_config_path)

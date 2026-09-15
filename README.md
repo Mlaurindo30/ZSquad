@@ -48,7 +48,7 @@ The squad consists of authentic domain expert personas spanning coordination, pr
 ## Zero-to-Hero Installation & AI Providers
 
 > [!IMPORTANT]
-> Para o guia completo, exaustivo e passo a passo de instalação, consulte [docs/INSTALLATION.md](file:///C:/Users/miche/OneDrive/Documentos/agent_squad/docs/INSTALLATION.md).
+> Para o guia completo, exaustivo e passo a passo de instalação, consulte [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 O Agent Squad suporta instalação automatizada em um único comando e integração nativa com os principais runtimes e clientes de IA do mercado:
 
