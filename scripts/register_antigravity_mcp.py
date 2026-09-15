@@ -1,8 +1,9 @@
 import json
 import os
 import tempfile
+from pathlib import Path
 
-CONFIG_PATH = r"C:\Users\miche\.gemini\config\mcp_config.json"
+CONFIG_PATH = os.path.expanduser("~/.gemini/config/mcp_config.json")
 
 def main():
     # Ensure directory exists
@@ -20,12 +21,13 @@ def main():
     if "mcpServers" not in data:
         data["mcpServers"] = {}
         
+    squad_runtime = os.environ.get("SQUAD_RUNTIME", str(Path(__file__).resolve().parents[1]))
     # Inject agent-squad (merge idempotente)
     data["mcpServers"]["agent-squad"] = {
         "command": "python",
         "args": ["-m", "integrations.mcp_runner"],
         "env": {
-            "PYTHONPATH": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad",
+            "PYTHONPATH": squad_runtime,
             "PYTHONUNBUFFERED": "1"
         }
     }

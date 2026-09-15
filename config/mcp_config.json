@@ -15,13 +15,13 @@
       "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
     },
     "codebase-memory": {
-      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "command": "python",
       "args": [
         "-m",
         "codebase_memory_mcp"
       ],
       "env": {
-        "PYTHONPATH": "C:/Users/miche/OneDrive/Documentos/agent_squad/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
+        "PYTHONPATH": "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
       },
       "description": "High-performance persistent structural symbol knowledge graph.",
       "tools": [
@@ -31,7 +31,7 @@
       ]
     },
     "sinapse-hivemind": {
-      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "command": "python",
       "args": [
         "D:/Hive-Mind/scripts/services/sinapse-mcp.py"
       ],

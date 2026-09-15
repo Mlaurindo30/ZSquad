@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 import subprocess
 import pytest
 
@@ -10,7 +12,7 @@ def send_request(proc, req_dict):
     return json.loads(res_str)
 
 def test_mcp_lifecycle():
-    import os
+    repo_root = str(Path(__file__).resolve().parents[2])
     proc = subprocess.Popen(
         ["python", "mcp_runner.py"],
         stdin=subprocess.PIPE,
@@ -61,7 +63,7 @@ def test_mcp_lifecycle():
                 "name": "start_session",
                 "arguments": {
                     "host": "antigravity",
-                    "project_root": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad",
+                    "project_root": repo_root,
                     "work_item": "WI-123",
                     "capability_report_hash": "hash123"
                 }

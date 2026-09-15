@@ -293,7 +293,7 @@ def _build_cognitive_contract_section() -> str:
         "### 1. Ordem Mandatória de Carga do Subagente (5 Passos Inegociáveis)\n"
         "1. **Persona**: Ler e incorporar `agents/<id>/PROMPT.md` (identidade, axiomas, arquétipo, frameworks).\n"
         "2. **Manifesto**: Ler `agents/<id>/skills/manifest.yaml` (delimitação formal de competências).\n"
-        "3. **Skills**: Ler os `SKILL.md` das skills atribuídas (`native` e `assigned`).\n"
+        "3. **Skills**: Ler obrigatoriamente as skills de controle `%SQUAD_RUNTIME%/skills/agent-squad-mcp/SKILL.md` e `%SQUAD_RUNTIME%/skills/azure-devops-mcp/SKILL.md`, além dos `SKILL.md` das skills atribuídas (`native` e `assigned`).\n"
         "4. **Pesquisa Técnica Externa Obrigatória**: Pesquisar documentação oficial e referências técnicas atualizadas na web sobre os temas/APIs/libs antes de implementar, evitando inventar padrões ou usar convenções obsoletas.\n"
         "5. **DevOps**: Identificar e usar prioritariamente MCP `@azure-devops/mcp` para operações de Boards/PRs.\n\n"
         "### 2. Frameworks de Raciocínio (CoT, ToT e Self-Reflection)\n"

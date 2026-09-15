@@ -89,17 +89,49 @@ if (-not (Test-Path $userBinDir)) {
     Write-Host "  [OK] Diretório de binários criado em: $userBinDir" -ForegroundColor Green
 }
 
-# 5. Gerar o shim executável squad.cmd e agent-squad.cmd apontando para o Python do .venv e scripts/agent_squad.py
-$venvPython = Join-Path $scriptRoot ".venv\Scripts\python.exe"
-if (-not (Test-Path $venvPython)) {
-    $venvPython = "python"
+# 4.1. Registrar runtime ativo no registro global do usuário ($HOME\.agents_squad\config\active_runtime.json)
+$userConfigDir = Join-Path $HOME ".agents_squad\config"
+if (-not (Test-Path $userConfigDir)) {
+    New-Item -ItemType Directory -Force -Path $userConfigDir | Out-Null
 }
-$agentSquadScript = Join-Path $scriptRoot "scripts\agent_squad.py"
+$activeRuntimeFile = Join-Path $userConfigDir "active_runtime.json"
+$activeRuntimeData = @{ runtime = $scriptRoot } | ConvertTo-Json
+Set-Content -Path $activeRuntimeFile -Value $activeRuntimeData -Encoding UTF8
+Write-Host "  [OK] Registro de runtime ativo gravado em: $activeRuntimeFile" -ForegroundColor Green
 
-$cmdContent = "@echo off`r`n`"%venvPython%`" `"%agentSquadScript%`" %*"
+# 5. Gerar os shims executáveis dinâmicos squad.cmd e agent-squad.cmd
+$cmdContent = @'
+@echo off
+setlocal
+:: Dynamic discovery of SQUAD_RUNTIME if not set
+if "%SQUAD_RUNTIME%"=="" (
+    if exist "%USERPROFILE%\.agents_squad\config\active_runtime.json" (
+        for /f "tokens=*" %%i in ('python -c "import json; from pathlib import Path; print(json.loads((Path.home()/'.agents_squad'/'config'/'active_runtime.json').read_text('utf-8')).get('runtime',''))" 2^>nul') do set "SQUAD_RUNTIME=%%i"
+    )
+)
+if "%SQUAD_RUNTIME%"=="" (
+    for /f "tokens=*" %%i in ('python -c "import sys; from pathlib import Path; sys.path.append(r'%~dp0..\..\'); import scripts.project_context as pc; print(pc.resolve_runtime_root())" 2^>nul') do set "SQUAD_RUNTIME=%%i"
+)
+if "%SQUAD_RUNTIME%"=="" (
+    if exist "%~dp0..\..\scripts\agent_squad.py" (
+        for /f "tokens=*" %%i in ("%~dp0..\..") do set "SQUAD_RUNTIME=%%~fi"
+    )
+)
+if "%SQUAD_RUNTIME%"=="" (
+    echo Error: SQUAD_RUNTIME could not be resolved. Please set SQUAD_RUNTIME environment variable.
+    exit /b 1
+)
+if exist "%SQUAD_RUNTIME%\.venv\Scripts\python.exe" (
+    "%SQUAD_RUNTIME%\.venv\Scripts\python.exe" "%SQUAD_RUNTIME%\scripts\agent_squad.py" %*
+) else (
+    python "%SQUAD_RUNTIME%\scripts\agent_squad.py" %*
+)
+endlocal
+'@
 Set-Content -Path (Join-Path $userBinDir "squad.cmd") -Value $cmdContent -Encoding ASCII
 Set-Content -Path (Join-Path $userBinDir "agent-squad.cmd") -Value $cmdContent -Encoding ASCII
-Write-Host "  [OK] Shims squad.cmd e agent-squad.cmd gerados em $userBinDir" -ForegroundColor Green
+Write-Host "  [OK] Shims dinâmicos squad.cmd e agent-squad.cmd gerados em $userBinDir" -ForegroundColor Green
+
 
 # 6. Garantir que $HOME\.agents_squad\bin seja adicionado ao PATH da sessão e ao PATH de usuário do Windows
 if ($env:PATH -notlike "*$userBinDir*") {

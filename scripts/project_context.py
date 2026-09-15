@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -22,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
 
 PROJECT_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 
@@ -154,6 +156,67 @@ def resolve_project_context(start: Path, explicit_project_root: Path | None = No
     if root is None:
         raise ProjectContextError("marcador .agents_squad/config/project.yaml não encontrado")
     return load_project_context(root)
+
+
+def resolve_runtime_root() -> Path:
+    """Resolve o diretório raiz do SQUAD_RUNTIME usando fallback em 4 camadas:
+    1. Variável de ambiente SQUAD_RUNTIME (se válida e contiver scripts/ e agents/)
+    2. Marcador do consumidor .agents_squad/config/project.yaml via busca ascendente a partir do cwd
+    3. Registro global $HOME/.agents_squad/config/active_runtime.json
+    4. Auto-descoberta relativa a partir de Path(__file__).resolve().parents[1]
+    Lança ProjectContextError se nenhum runtime válido for encontrado.
+    """
+    # Tier 1: Environment variable
+    env_val = os.environ.get("SQUAD_RUNTIME")
+    if env_val:
+        p = Path(env_val).resolve()
+        if _is_valid_runtime(p):
+            return p
+
+    # Tier 2: Consumer project marker via upward search from cwd
+    project_root = find_project_root(Path.cwd())
+    if project_root:
+        try:
+            marker = project_root / ".agents_squad" / "config" / "project.yaml"
+            payload = yaml.safe_load(marker.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                rt = payload.get("runtime")
+                if rt:
+                    p = Path(str(rt)).resolve()
+                    if _is_valid_runtime(p):
+                        return p
+        except Exception:
+            pass
+
+    # Tier 3: Global user registry ($HOME/.agents_squad/config/active_runtime.json)
+    global_cfg = Path.home() / ".agents_squad" / "config" / "active_runtime.json"
+    if global_cfg.is_file():
+        try:
+            payload = json.loads(global_cfg.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                rt = payload.get("runtime")
+                if rt:
+                    p = Path(str(rt)).resolve()
+                    if _is_valid_runtime(p):
+                        return p
+        except Exception:
+            pass
+
+    # Tier 4: Self-relative discovery from script location (__file__ is in <runtime>/scripts/)
+    candidate = Path(__file__).resolve().parents[1]
+    if _is_valid_runtime(candidate):
+        return candidate
+
+    raise ProjectContextError(
+        "SQUAD_RUNTIME could not be resolved. Set SQUAD_RUNTIME environment variable "
+        "or run inside a bootstrapped consumer project."
+    )
+
+
+def _is_valid_runtime(path: Path) -> bool:
+    """Verifica se o caminho existe e contém as pastas essenciais do runtime: scripts/ e agents/."""
+    return path.is_dir() and (path / "scripts").is_dir() and (path / "agents").is_dir()
+
 
 
 # ---------------------------------------------------------------------------

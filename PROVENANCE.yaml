@@ -3,7 +3,7 @@ kind: project-squad-provenance
 created_at: '2026-08-19T15:00:00-03:00'
 updated_at: '2026-09-12T17:42:00-03:00'
 source:
-  path: C:/Users/miche/OneDrive/Documentos/.agents_squad
+  path: .agents_squad
   git_history_copied: false
 governance:
   workflow: config/workflow.yaml
