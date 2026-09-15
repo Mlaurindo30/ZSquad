@@ -3971,6 +3971,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Indisponível no T0: exige futuro controle autenticado de revogação",
     )
 
+    render_p = sub.add_parser("render-prompt", help="Renderiza o system prompt completo de um agente via render_agent_prompt")
+    render_p.add_argument("--agent", required=True, help="ID do agente")
+    render_p.add_argument("--work-item", help="Caminho do work item (opcional)")
+    render_p.add_argument("--project-name", help="Nome do projeto")
+    render_p.add_argument("--assigned", nargs="*", help="Skills assigned opcionais")
+    render_p.add_argument("--discovered", nargs="*", help="Skills discovered opcionais")
+    render_p.add_argument("--output", help="Caminho do arquivo de saída")
+    render_p.add_argument("--auto-select-skills", action="store_true", help="Seleciona skills automaticamente")
+    render_p.add_argument("--max-discovered", type=int, default=3, help="Máximo de skills descobertas")
+
     return parser
 
 
@@ -4190,6 +4200,22 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
             print(json.dumps(squad.sdd_deactivate(), ensure_ascii=False, indent=2))
         elif args.sdd_command == "pilot-revoke":
             raise SquadError("SDD_PILOT_REVOKE_UNAVAILABLE")
+    elif args.command == "render-prompt":
+        from render_agent_prompt import render_agent_prompt
+        rendered = render_agent_prompt(
+            agent=args.agent,
+            work_item=args.work_item,
+            assigned=args.assigned,
+            discovered=args.discovered,
+            output_path=args.output,
+            auto_select_skills=getattr(args, "auto_select_skills", False),
+            max_discovered=getattr(args, "max_discovered", 3),
+            project_name=args.project_name,
+        )
+        if args.output:
+            print(f"PROMPT_RENDERED_OK agent={args.agent} output={args.output} bytes={len(rendered.encode('utf-8'))}")
+        else:
+            print(rendered)
     return 0
 
 

@@ -389,7 +389,8 @@ def render_agent_prompt(
     project_name: str | None = None,
 ) -> str:
     """Compila o prompt de sistema completo de um agente com suas skills e contexto de work item."""
-    root_dir = Path(__file__).resolve().parent.parent
+    runtime_env = os.environ.get("SQUAD_RUNTIME")
+    root_dir = Path(runtime_env).resolve() if runtime_env else Path(__file__).resolve().parent.parent
 
     effective_project_name = _resolve_project_name(work_item, project_name)
     squad = AgentSquad(root=root_dir, project_name=effective_project_name)

@@ -108,7 +108,16 @@ def prepare_delegation(args, ctx, session_store):
         f"8. Boundaries: Strict cognitive protection (Max 8 Story Points); no unverified dependencies.\n"
     )
     b_hash = hashlib.sha256(briefing.encode("utf-8")).hexdigest()
-    return {"hash": b_hash, "briefing": briefing}
+
+    rendered_prompt = ""
+    try:
+        from scripts.render_agent_prompt import render_agent_prompt
+        w_item = work_item if work_item != "UNSPECIFIED" else None
+        rendered_prompt = render_agent_prompt(agent=target_role, work_item=w_item)
+    except Exception:
+        pass
+
+    return {"hash": b_hash, "briefing": briefing, "rendered_prompt": rendered_prompt}
 
 
 def create_handoff(args, ctx, session_store, db):
