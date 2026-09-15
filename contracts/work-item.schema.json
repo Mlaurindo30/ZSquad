@@ -112,6 +112,7 @@
 
     "decision_state": {"type": "object", "additionalProperties": {"type": "string"}},
     "reviews": {"type": "object", "additionalProperties": {"type": "string"}},
+    "retry_counts": {"type": "object", "additionalProperties": {"type": "integer"}},
 
     "metrics": {
       "type": "object",

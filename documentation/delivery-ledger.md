@@ -654,3 +654,37 @@ collected 870 items
   - gate-decisions/GD-MCP-FULL-CONTRACT-G5.yaml
 - **SoD**: Autor (06-software-engineer) != G2 (04-solution-architect) != G4 (09-code-reviewer) != G5 (12-qa-engineer) != G6 (14-governance-auditor).
 - **Decisão Final**: Code Quality (G4), QA (G5), and Traceability (G6) passed. Traceability custody chain is fully compliant with ISO 27001 A.8.32, SOC 2 CC8.1, and NIST CM-5. Automated tests passed (14/14 in 0.69s). Card officially closed.
+
+---
+# TASK-ARCH-REVISION-TDD-APPROVAL — Circuit Breaker da Máquina de Estados & Aprovação Autônoma
+
+- **Estado:** done; risco medium
+- **Data:** 2026-09-14
+- **Gate G6**: ✅ **RELEASE** (`14-governance-auditor`)
+- **Evidências**: 
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/reviews/compliance-audit.md`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/gate-decisions/GD-TASK-ARCH-REVISION-G6-GOVERNANCE.yaml`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/gate-decisions/GD-TASK-ARCH-REVISION-G2-DESIGN.yaml`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/gate-decisions/GD-TASK-ARCH-REVISION-G4.yaml`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/gate-decisions/GD-TASK-ARCH-REVISION-G5.yaml`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/design/blueprint.md`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/reviews/code-review.md`
+  - `work/agent_squad/TASK-ARCH-REVISION-TDD-APPROVAL/reports/qa-report.md`
+  - `scripts/tests/test_circuit_breaker_and_orchestrator_approval.py` (3/3 PASS)
+  - `scripts/tests/test_qa_circuit_breaker_sbtm.py` (7/7 PASS)
+- **SoD (Segregação de Funções)**:
+  - Autor da Implementação: `22-backend-engineer` / `06-software-engineer` (`backend-engineer`)
+  - Arquiteto de Solução (G2): `04-solution-architect`
+  - Revisor de Código (G4): `09-code-reviewer`
+  - Engenheiro de QA (G5): `12-qa-engineer`
+  - Auditor de Governança (G6): `14-governance-auditor`
+  - **Status SoD**: Aprovado sem sobreposição de funções (`Author != Architect != Reviewer != QA != Governance Auditor`).
+- **Resumo Técnico & Conformidade ISO 27001 / SOC 2**:
+  - **Pilar 1 (Circuit Breaker)**: Interrupção determinística de loops infinitos de agentes e tempestades de retry após threshold de falhas consecutivas (`max_retries_per_check = 2`, transição compulsória para `blocked` em `status.yaml`). Garante disponibilidade operacional e contenção de custos de tokens LLM (ISO 27001 A.12.1.2, SOC 2 CC7.2).
+  - **Pilar 2 (Aprovação Autônoma)**: Permite ao `00-delivery-orchestrator` homologar itens de risco médio/alto mediante comprovação física de evidência em disco (`_item_reference`), com registro auditável em nó estruturado `orchestrator_approval`. Preserva exigência humana para risco crítico (ISO 27001 A.8.28, SOC 2 CC6.1).
+- **Evidências de Testes & Linter**:
+  - Linter `ruff`: 100% limpo em `scripts/agent_squad.py` e arquivos de teste.
+  - Testes dedicados: 10/10 PASS em 3.34s (3 unitários + 7 SBTM de borda e isolamento).
+  - Regressão de governança: 47/47 PASS em 13.82s (`test_gate_evidence_enforcement`, `test_quality_gate_runner`, `test_sdd_gate_enforcement`).
+  - Schemas: 100% compatíveis com Draft 2020-12 (`contracts/gate-decision.schema.json`, `contracts/work-item.schema.json`).
+- **Decisão Final**: Code Quality (G4), QA (G5) e Governance Traceability (G6) formalmente aprovados. Card homologado e encerrado para RELEASE.

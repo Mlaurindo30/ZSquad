@@ -38,6 +38,15 @@
       "type": ["integer", "string"],
       "description": "Versão da política SDD vigente na decisão; divergência da política atual exige reavaliação (SDD_STALE_GATE)."
     },
+    "orchestrator_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approved_by", "evidence"],
+      "properties": {
+        "approved_by": {"type": "string"},
+        "evidence": {"type": "string"}
+      }
+    },
     "human_approval": {
       "type": "object",
       "additionalProperties": false,

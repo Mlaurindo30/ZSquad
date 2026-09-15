@@ -11,28 +11,19 @@ própria; integrações externas opcionais são chamadas sem shell e falham de m
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
+from functools import wraps
 import hashlib
 import json
 import logging
+from pathlib import Path
 import re
 import signal
 import subprocess
 import sys
-import uuid
-
-logger = logging.getLogger(__name__)
-
-
-def _signal_handler(sig, frame):
-    logger.info("Received SIGINT, cleaning up...")
-    sys.exit(0)
-
-
-from contextlib import contextmanager
-from functools import wraps
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any, Iterator
+import uuid
 
 # Garante que o pacote ``scripts`` (que abriga este módulo) esteja importável
 # independentemente do modo de invocação (script, ``python -m``, test runner).
@@ -42,13 +33,10 @@ for _candidate in (str(_THIS_DIR), str(_ROOT_DIR)):
     if _candidate not in sys.path:
         sys.path.insert(0, _candidate)
 
-import yaml
-from jsonschema import Draft202012Validator
-
-from governed_io import LockTimeoutError, atomic_write_text, file_lock
-from local_agent_db import LocalAgentDB
-from sdd_dispatch import FileSDDDispatcher
-from project_context import (
+from governed_io import LockTimeoutError, atomic_write_text, file_lock  # noqa: E402
+from jsonschema import Draft202012Validator  # noqa: E402
+from local_agent_db import LocalAgentDB  # noqa: E402
+from project_context import (  # noqa: E402
     ProjectContextError,
     SDD_ACTIVATION_REL,
     SDD_POLICY_REL,
@@ -56,12 +44,21 @@ from project_context import (
     build_sdd_activation,
     find_project_root,
     load_project_context,
-    read_sdd_activation,
     resolve_project_context,
     resolve_sdd_policy,
     sdd_required,
     write_sdd_activation,
 )
+from sdd_dispatch import FileSDDDispatcher  # noqa: E402
+import yaml  # noqa: E402
+
+logger = logging.getLogger(__name__)
+
+
+def _signal_handler(sig, frame):
+    logger.info("Received SIGINT, cleaning up...")
+    sys.exit(0)
+
 
 
 class SquadError(RuntimeError):
@@ -2527,10 +2524,23 @@ class AgentSquad:
             human_required = True
         if condition == "business-acceptance":
             human_required = True
+            
+        orchestrator_approval = None
+        if human_required and human_approved_by in {"00-delivery-orchestrator", "delivery-orchestrator"} and human_evidence:
+            orchestrator_approval = {
+                "approved_by": human_approved_by,
+                "evidence": human_evidence
+            }
+            human_required = False
+            human_approved_by = None
+            human_evidence = None
+
         if human_required and (not human_approved_by or not human_evidence):
             raise SquadError(f"{gate_id} exige aprovação humana e evidência")
         if human_evidence:
             self._item_reference(item_path, human_evidence, "evidência de aprovação humana")
+        elif orchestrator_approval:
+            self._item_reference(item_path, orchestrator_approval["evidence"], "evidência de aprovação autônoma")
 
         # Vínculos SDD (T5): computados sob o lock, com hash real (load_package).
         sdd_gate = SDD_CONFIG_GATES.get(gate_id)
@@ -2586,6 +2596,21 @@ class AgentSquad:
         }
         results = [{"name": name, "result": result} for name, result in criteria]
         decision = "approved" if all(entry["result"] in {"pass", "not_applicable"} for entry in results) else "changes_requested"
+        
+        if decision in {"changes_requested", "rejected"}:
+            retry_counts = status.get("retry_counts", {})
+            current_count = retry_counts.get(gate_id, 0) + 1
+            retry_counts[gate_id] = current_count
+            status["retry_counts"] = retry_counts
+            
+            max_retries = self.workflow.get("max_retries_per_check", 2)
+            if current_count > max_retries:
+                status["state"] = "blocked"
+                write_yaml(item_path / "status.yaml", status)
+                raise SquadError(f"CIRCUIT_BREAKER_OPEN: limite de {max_retries} tentativas excedido para o portão {gate_id}")
+            else:
+                write_yaml(item_path / "status.yaml", status)
+                
         value = {
             "decision_id": f"GD-{status['id']}-{gate_id.upper()}",
             "gate_id": gate_id,
@@ -2599,6 +2624,8 @@ class AgentSquad:
             "valid_until": None,
             "decided_at": now(),
         }
+        if orchestrator_approval:
+            value["orchestrator_approval"] = orchestrator_approval
         if author:
             value["author"] = author
         if reviewer:
