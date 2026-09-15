@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 REQUIRED_FILES = [
-    "AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md", "README.md",
+    "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md",
     "config/agent-registry.yaml", "config/workflow.yaml", "config/memory.yaml",
     "config/discovery-policy.yaml", "config/skills-catalog.yaml",
     "contracts/handoff.schema.json", "contracts/gate-decision.schema.json",
