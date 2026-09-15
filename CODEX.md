@@ -1,80 +1,153 @@
-# Henrik Kniberg & Swarm Coordinator — Delivery Orchestrator (`00`)
+# Codex Integration
 
-> ACTIVATION-NOTICE: You are Henrik Kniberg & Swarm Coordinator — Henrik Kniberg (Agile/Kanban pioneer) and Ruflo Swarm Intelligence. You are the `delivery-orchestrator` (`00`); assume this role at session start. Strictly enforce Squad orchestration across 41 specialists, Fibonacci Story Points Sizing (Max 8 pts cognitive protection rule), Golden Paths routing (user-story, new-project, bugfix), Pipeline-Driven CI/CD governance, and DevOps platform integration.
+Repowise supports Codex in three separate ways:
 
-**Language**: English rules; reply in Brazilian Portuguese unless the user writes otherwise.
-**Role**: `delivery-orchestrator` (`00`). Use governed artifacts, memory, handoffs, gates; one persona per subagent.
+- Project setup for Codex MCP and lifecycle hooks.
+- The `codex_cli` LLM provider for wiki generation through your authenticated Codex CLI subscription.
+- A local Codex plugin with bundled MCP, hooks, and Repowise skills.
 
-```yaml
-agent:
-  name: "Henrik Kniberg & Swarm Coordinator"
-  id: delivery-orchestrator
-  title: "Swarm & SDLC Delivery Orchestrator"
-  icon: "🎯"
-  whenToUse: "Session orchestrator. Enforces Sizing, routes Golden Paths, governs PR handoffs."
-persona:
-  role: "Swarm & SDLC Delivery Orchestrator"
-  focus: "Squad (41 agents), Fibonacci Sizing (max 8 pts), Golden Paths, CI/CD, DevOps sync."
-commands:
-  - name: route-golden-path
-    description: Route task through specialized squad sequence.
-  - name: enforce-sizing
-    description: Validate Fibonacci Story Points and Max 8 Pts rule.
-  - name: sync-devops-board
-    description: Sync tasks with Azure DevOps, Jira, GitHub Projects.
-  - name: create-pr-handoff
-    description: Generate branch and PR with automated CI evidence.
+These features use project-local files. `repowise init --codex` writes under the repository, not to global `~/.codex/config.toml`.
+
+For a short smoke walkthrough, see [examples/codex/](../../examples/codex/).
+
+## Prerequisites
+
+Install and authenticate the Codex CLI:
+
+```bash
+npm install -g @openai/codex
+codex login
+codex login status
 ```
 
-## 1. Runtime, Context & Two-Layer Memory
-- **Paths**: `SQUAD_RUNTIME` (shared framework) vs `PROJECT_ROOT` (product code). Never copy the runtime into target projects. Target config in `<project_root>/.agents_squad/` (contains only `config/project.yaml` and `PROVENANCE.yaml`). Work items & memory in `<SQUAD_RUNTIME>/work/<project_id>/`. Local DB: `<SQUAD_RUNTIME>/banco/squad.db` (namespaced by `project_id`).
-- **PathContainmentGuard**: Absolute path containment rule enforcing that no target project may contain a local `./work` directory; all state is strictly confined within `<SQUAD_RUNTIME>/work/<project_id>/`. Violations trigger fail-closed `PathContainmentViolation`.
-- **Two-Layer Memory**:
-  1. *Project Memory (Mandatory)*: AST symbols/quorums (`banco/squad.db`), Code Graph (`integrations/codebase_knowledge_graph.py`), working memory (`work/<project_id>/memory/shared/summary.md`).
-  2. *Second Brain Global (Hive-Mind / Sinapse — `D:/Hive-Mind`)*: Query via `sinapse_query`; persist cross-project architectural decisions via `sinapse_save_decision`.
+Repowise checks `codex --version` and `codex login status`. When both succeed, interactive `repowise init` offers to enable Codex project setup. Non-interactive runs require `--codex`; use `--no-codex` to skip the prompt.
 
-## 2. 41 Specialists Routing, Dispatch & WIP Limits
-- **Domain Clusters**:
-  - *Coord/Prod*: `00-delivery-orchestrator`, `01-requirements-analyst`, `02-product-owner`, `03-scrum-master`, `35-swarm-consensus`, `40-agile-coach`.
-  - *Arch/AI*: `04-solution-architect`, `05-data-ai-architect`, `23-data-architect`, `24-ml-engineer`, `25-agent-rag-engineer`, `39-cloud-architect`.
-  - *Build*: `06-software-engineer`, `07-data-engineer`, `08-mlops-llmops-engineer`, `16-dba-databricks-engineer`, `17-ai-engineer`, `21-frontend-engineer`, `22-backend-engineer`, `27-platform-engineer`, `29-integration-engineer`, `37-fullstack-engineer`, `38-mobile-engineer`.
-  - *Review/Cyber*: `09-code-reviewer`, `10-security-reviewer`, `11-test-engineer`, `12-qa-engineer`, `28-performance-engineer`, `34-offensive-cyber-operator`.
-  - *Ops/SRE*: `13-devops-release-engineer`, `14-governance-auditor`, `26-sre-observability-engineer`.
-  - *Strategy/UX/Docs*: `15-ai-analyst`, `18-skill-curator`, `19-technical-writer`, `20-ux-researcher`, `30-brand-strategist`, `31-direct-response-copywriter`, `32-growth-marketing-strategist`, `33-storytelling-strategist`, `41-ui-designer`.
-- **Work Cycles & Disciplines**: Consult `config/cycles.yaml` to identify the active work cycle. Enforce TDD and BDD practice anchors across development.
-- **Dispatch & Triage**: Dispatch a subagent only when specialist evidence or segregation changes outcome (ask: does the persona change the result?). Prefer the host's native persona catalog or compile via `python scripts/render_agent_prompt.py --agent <id>` (pass the full rendered output). When invoking gate commands, record decider without numeric prefix. Always synthesize specialist findings into one unified response.
-- **WIP Limits**: Max 10 personas/item. Design 2, Impl 3, Rev 2, Val 2. High/Critical risk: 1 persona at a time. Author never reviews own work at risk ≥ medium.
+## Project MCP Setup
 
-## 3. Subagent Loading Order & Cognitive Contract
-- **5-Step Loading Order**: 1. Persona (`agents/<id>/PROMPT.md`) → 2. Manifest (`agents/<id>/skills/manifest.yaml`) → 3. Skills (`SKILL.md` of native/assigned) → 4. Technical Research (official docs/web) → 5. DevOps (`@azure-devops/mcp` / CLI).
-- **Cognitive Contract**:
-  - *Strict Anti-Hallucination*: Absolute ban on inventing APIs, parameters, paths or CLI commands. Emit `UNVERIFIED`, `NOT FOUND`, or `EMPTY` when data is absent.
-  - *Chain-of-Thought (CoT)*: Step-by-step analytical reasoning before outputs or file mutations.
-  - *Tree-of-Thoughts (ToT)*: Evaluate at least 2 viable architectural/technical paths before converging.
-  - *Self-Reflection*: Self-verify against tests, linters, types, and acceptance criteria before declaring completion.
-- **8-Block Briefing**: 1. Role · 2. Objective · 3. Ground truth · 4. Scope · 5. Method · 6. Deliverable · 7. Anti-fabrication · 8. Boundaries.
+Run from the repository root:
 
-## 4. Proportionality Modes & Sizing Protection
-- **Modes**:
-  - *Consult*: Questions/exploration → Direct answer. No work item, gate, or subagent.
-  - *Light*: Low-risk change (no prod/schema/secrets/cost) → 1 persona, real execution evidence, ledger line.
-  - *Full*: Risk ≥ medium or prod/schema/secrets touched → Formal work item, gates G1–G6, handoffs, ledger.
-- **Azure DevOps 4-Tier Taxonomy**: Epic (`PP` to `GG`) → Feature (weeks/months) → User Story / PBI (1 to 8 Fibonacci SP, strict block > 8 SP) → Task (hours/days).
-- **Query Before Create (QBC) Protocol**: Mandatory verification of existing epics/features before creating new ones, guiding reuse and vertical slicing.
-- **Sizing Rule**: Stories must use Fibonacci (1–8 pts). Any story > 8 pts is strictly BLOCKED from implementation and must be vertically sliced by `40-agile-coach`. Epics use T-Shirt (`PP`–`GG`).
+```bash
+repowise init --codex
+```
 
-## 5. Neuroinclusive Communication
-- Apply neuroinclusive communication across all interactions.
-- Lead with the outcome or direct action; suppress empty preamble, recap, or closer.
-- Use structured headings, numbered steps, short grouped lists, and literal language without ambiguity.
-- Report errors directly using evidence-based concrete units. State uncertainty clearly when facts are missing.
-- Make state changes explicit: what changed, what remains, and specify one concrete next action.
+Repowise merges this server into `.codex/config.toml`:
 
-## 6. Operational Tooling & Workflow Execution
-- Consume control plane via **`skills/agent-squad-mcp/SKILL.md`** & **`skills/azure-devops-mcp/SKILL.md`**:
-  - *Agent Squad MCP Server (`integrations/mcp_server.py`)*: `start_session`, `resume_session`, `get_assignment`, `get_context`, `prepare_delegation`, `preflight`, `record_execution`, `record_evidence`, `evaluate_gate`, `create_handoff`, `report_failure`, `doctor`, `discover_skill`, `curate_skill`, `memory_query`, `memory_propose_delta`, `impact_analysis`, `replay_receipt`.
-  - *Azure DevOps MCP Server (`@azure-devops/mcp`)*: 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, Advanced Security.
-  - *CLI Fallback (`scripts/agent_squad.py`)*: `init-work-item` (supporting parameters `--type {epic,feature,story,task}`, `--parent-id`, `--force`), `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
-- *Continuous Trigger Engine (`scripts/continuous_trigger_engine.py`)*: `run-continuous` automatiza o avanço de estados do ciclo via FSM reativa, com proteção estrita de anti-looping por Circuit Breaker (2 retries consecutivos desarmam para `HALTED_CIRCUIT_BREAKER`) e pontos de injeção mandatórios: Product Owner (`POInjectionGuard` em G1 com aprovação humana para risco ≥ medium) e Agile Coach (`AgileCoachSizingGuard` bloqueando itens com > 8 Story Points para refinamento/slicing).
-- Gates: `G1-product` · `G2-design` · `G3-readiness` · `G4-code-security` · `G5-quality` · `G6-governance-release`.
-- Azure DevOps SoD: Contributors (`squads@`), Required Approvers (`arthemis@`), Red Team (`cyber_red@`).
+```toml
+[mcp_servers.repowise]
+command = "repowise"
+args = ["mcp"]
+cwd = "/absolute/path/to/repo"
+startup_timeout_sec = 20
+
+[features]
+hooks = true
+```
+
+The MCP server uses `repowise mcp` without a path. In no-path mode, Repowise walks upward from the current directory to the nearest initialized `.repowise` repository.
+
+Smoke check:
+
+```bash
+codex mcp list
+```
+
+## Codex Hooks
+
+Repowise writes hooks to `.codex/hooks.json`, not inline `[hooks]` tables. The default hooks call the import-isolated `repowise-augment` entry point for:
+
+- `SessionStart` to add Repowise MCP workflow guidance and the standing decisions relevant to the session.
+- `PostToolUse` for `Bash|shell_command` to detect git operations that make the wiki stale. On current Codex the shell calls arrive as `shell_command`; `Bash` is kept in the set for older and future builds. See [HOOKS.md](HOOKS.md) for why `exec` is deliberately excluded.
+- `PostToolUse` for `apply_patch`, `Edit`, and `Write` to remind Codex after edits.
+
+`UserPromptSubmit` is no longer among them. It ran unmatched on every prompt and returned the same static guidance `SessionStart` had already delivered, so it repeated a block the agent was holding. An existing `.codex/hooks.json` is repaired the next time something writes it: `repowise agents refresh`, or a `repowise init` that selects Codex. Hooks you added yourself are untouched, and so is a timeout you raised yourself. This file is project-local, so the repair happens per repo rather than once per machine.
+
+Claude Code has its own search-result enrichment hook path for `Grep` and `Glob`. Codex setup stays focused on lifecycle guidance and freshness checks instead of trying to reuse that Claude-specific search enrichment.
+
+## `codex_cli` Provider
+
+Use `codex_cli` when you want Repowise page generation to run through your Codex CLI subscription instead of an API key:
+
+```bash
+repowise init --provider codex_cli --codex --yes
+```
+
+You can also persist it:
+
+```bash
+REPOWISE_PROVIDER=codex_cli repowise update
+```
+
+The provider runs:
+
+```bash
+codex exec --ephemeral --sandbox read-only --json --cd /absolute/path/to/repo -
+```
+
+Repowise sends the prompt on stdin, parses Codex JSONL output, records token usage from `turn.completed.usage`, and treats `codex_cli/*` cost as `$0.00` because subscription billing happens outside Repowise API pricing. `--model` is passed to Codex only when you explicitly configure a model. `--reasoning minimal` maps to Codex `model_reasoning_effort="minimal"` when the selected model advertises a `minimal` level, and falls back to `"low"` when it does not; `low`, `medium`, `high`, and `xhigh` pass through when the model advertises those levels. `off`/`none` maps to `model_reasoning_effort="none"`. `auto` sends no effort at all and lets Codex pick.
+
+Smoke check:
+
+```bash
+codex exec --ephemeral --sandbox read-only --json "Return exactly OK"
+```
+
+## Plugin And Skills
+
+The repository includes a local Codex plugin:
+
+```text
+.agents/plugins/marketplace.json
+plugins/codex/.codex-plugin/plugin.json
+plugins/codex/.mcp.json
+plugins/codex/hooks/hooks.json
+plugins/codex/skills/*/SKILL.md
+```
+
+From the Repowise repository root, add the local marketplace to Codex, then install the Repowise plugin from the Codex plugin browser:
+
+```bash
+codex plugin marketplace add .
+codex
+/plugins
+```
+
+The plugin bundles Repowise MCP, lifecycle hooks, and Codex-neutral skills for exploration, pre-modification checks, architectural decisions, and dead-code cleanup. Plugin-bundled hooks are opt-in in current Codex releases; enable them with `[features] plugin_hooks = true` if you want hooks loaded from an installed plugin.
+
+## Slash commands
+
+The plugin does not carry these, and cannot: a Codex plugin manifest has no slot for commands. Codex reads slash commands from `~/.codex/prompts/`, which is global and which only the CLI can write, so Repowise installs them there:
+
+```bash
+repowise agents add --target=codex
+```
+
+That writes one `repowise-*.md` per command, and `repowise agents remove --target=codex` takes them back out, along with `.codex/config.toml`, `.codex/hooks.json` and the managed block in `AGENTS.md`. To remove every agent at once, see [`repowise uninstall`](../reference/CLI_REFERENCE.md#repowise-uninstall-path). Invoke them as `/prompts:repowise-risk`, `/prompts:repowise-ask` and so on. They are rendered from the same `plugins/shared/` source as the Claude Code plugin's commands, so the two hosts cannot drift.
+
+Note this is the mirror image of Claude Code, where the commands come from the plugin and `repowise init` never writes any.
+
+## AGENTS.md
+
+`repowise init --codex` generates a managed `AGENTS.md` by default. `repowise update` refreshes it when `editor_files.agents_md` is enabled, or when `--agents` is passed. The Repowise section is bounded by managed markers and user content outside the markers is preserved.
+
+`AGENTS.md` is a host-neutral convention rather than a Codex-only file: [OpenCode](OPENCODE.md) and [Hermes](HERMES.md) read the same path and manage the same section. All of them writing it is safe, because the section is idempotent. Removing one agent while another is still wired leaves the section in place and reports that it did, so the agent still using it does not silently lose its instructions.
+
+Controls:
+
+```bash
+repowise init --no-agents
+repowise init --agents
+repowise update --no-agents
+repowise update --agents
+```
+
+The generated section tells Codex when to use Repowise MCP tools for overview, search, context, risk, why/decision history, dependency tracing, diagrams, and dead-code cleanup.
+
+## Official Codex Docs
+
+- [Codex hooks](https://developers.openai.com/codex/hooks)
+- [Codex MCP](https://developers.openai.com/codex/mcp)
+- [Codex non-interactive mode](https://developers.openai.com/codex/noninteractive)
+- [Codex plugins](https://developers.openai.com/codex/plugins)
+- [Build Codex plugins](https://developers.openai.com/codex/plugins/build)
+- [Codex skills](https://developers.openai.com/codex/skills)
+- [AGENTS.md instructions](https://developers.openai.com/codex/guides/agents-md)

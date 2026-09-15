@@ -45,15 +45,32 @@ The squad consists of authentic domain expert personas spanning coordination, pr
 - **13-14, 26**: DevOps, Release, SRE & Governance (`devops-release-engineer`, `governance-auditor`, `sre-observability-engineer`)
 - **15, 18-20, 30-35**: Analysis, UX, Strategy & Growth (`ai-analyst`, `skill-curator`, `technical-writer`, `ux-ui-designer`, `brand-strategist`, `copywriter`, `growth-marketing-strategist`, `storytelling-strategist`, `cybersecurity-operator`, `swarm-consensus-coordinator`)
 
+## Zero-to-Hero Installation & AI Providers
+
+> [!IMPORTANT]
+> Para o guia completo, exaustivo e passo a passo de instalação, consulte [docs/INSTALLATION.md](file:///C:/Users/miche/OneDrive/Documentos/agent_squad/docs/INSTALLATION.md).
+
+O Agent Squad suporta instalação automatizada em um único comando e integração nativa com os principais runtimes e clientes de IA do mercado:
+
+- **Antigravity** (`~/.gemini/antigravity/mcp/mcp_config.json`)
+- **Claude Desktop** (`%APPDATA%\Claude\claude_desktop_config.json`)
+- **VS Code / GitHub Copilot** (`.vscode/mcp.json`)
+- **Cursor / Windsurf** (`.cursor/mcp.json`)
+- **Kilo Code** (`kilo.jsonc` via `integrations/kilo_adapter.py`)
+- **ZCode** (36 subagentes nativos via `scripts/install_zcode_subagents.py`)
+- **OpenClaw & Hermes** (`integrations/openclaw_adapter.py` & `integrations/hermes_adapter.py`)
+
+### Instalação Rápida
+```powershell
+# Windows (PowerShell)
+.\install.ps1
+
+# Cross-platform / Linux / macOS
+python scripts/setup_environment.py
+```
+
 ## Getting Started
 
-1. **One-Command Zero-to-Hero Installation** (Isolated `.venv` + SQLite + MCPs + Docker):
-   ```powershell
-   .\install.ps1
-   # or
-   python scripts/setup_environment.py
-   ```
-2. Read `AGENTS.md` and `config/workflow.yaml`.
 3. Initialize a governed work item:
    ```powershell
    python scripts/agent_squad.py init-work-item --id EPIC-EXAMPLE --risk medium
@@ -128,6 +145,25 @@ Initialize a governed work item with explicit risk and story-point sizing:
 python scripts/agent_squad.py init-work-item --id US-001 --risk low
 ```
 
+### Reclassificação governada de work item
+
+Use o subcomando dedicado para corrigir a classificação de um item existente
+sem recriar, mover ou apagar seus artefatos. A única transição atualmente
+permitida é `evolution -> epic`; a execução é dry-run por padrão.
+
+```powershell
+python scripts/agent_squad.py --project-root D:\Projeto reclassify-work-item `
+  --work-item EVOL-PROJETO-ARQUITETURA --from-type evolution --to-type epic
+
+python scripts/agent_squad.py --project-root D:\Projeto reclassify-work-item `
+  --work-item EVOL-PROJETO-ARQUITETURA --from-type evolution --to-type epic --apply
+```
+
+Antes de `--apply`, valide o item com `validate-work-item`. A operação valida o
+alvo exato, contenção, schema, ausência de pai no futuro Epic e compatibilidade
+dos filhos existentes. A aplicação é idempotente e grava o digest antes/depois
+em `evidence/reclassification-evolution-to-epic.json`.
+
 The command writes `work/US-001/status.yaml` and the linked scaffolding. Stories above 8 Fibonacci points are blocked by the orchestrator and must be split first.
 
 ### 5. Validate the structure
@@ -165,4 +201,3 @@ Periodic and ad-hoc audits land under:
 - `docs/audit-reports/`
 
 Each report is stamped with its date and scope (e.g. `2026-09-02-exhaustive-audit.md`). Use these as the canonical record of which findings were open, fixed, or accepted as risk.
-

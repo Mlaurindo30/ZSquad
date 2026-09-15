@@ -1,4 +1,28 @@
 {
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\agent-squad-mcp\\SKILL.md": {
+    "name": "agent-squad-mcp",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\agent-squad-mcp\\SKILL.md",
+    "source": "local",
+    "description": "Canonical operational skill for the Agent Squad MCP server (integrations/mcp_server.py). Governs session lifecycle, state machines, agent dispatching, gates, evidence hashing, and CLI fallback paths across all 18 tools.",
+    "metadata": {
+      "version": "1.0.0",
+      "author": "Martin Fowler & Gregor Hohpe (04-solution-architect)",
+      "compliance": {
+        "iso_27001": [
+          "A.5.3",
+          "A.8.28"
+        ],
+        "soc_2": [
+          "CC6.1",
+          "CC8.1"
+        ],
+        "nist_sp_800_53": [
+          "CM-5"
+        ]
+      }
+    },
+    "key": "1789488370188441400:22179"
+  },
   "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agent-development\\SKILL.md": {
     "name": "ai-agent-development",
     "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\ai\\agent-development\\ai-agent-development\\SKILL.md",
@@ -254,6 +278,31 @@
       }
     },
     "key": "1785642489017200200:4117"
+  },
+  "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\azure-devops-mcp\\SKILL.md": {
+    "name": "azure-devops-mcp",
+    "path": "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\azure-devops-mcp\\SKILL.md",
+    "source": "local",
+    "description": "Industrial-grade operational skill for the Azure DevOps MCP server (@azure-devops/mcp). Covers all 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, and Advanced Security with strict Segregation of Duties (SoD) and error handling.",
+    "metadata": {
+      "version": "1.0.0",
+      "author": "Martin Fowler & Gregor Hohpe (04-solution-architect)",
+      "compliance": {
+        "iso_27001": [
+          "A.5.3",
+          "A.8.28",
+          "A.8.32"
+        ],
+        "soc_2": [
+          "CC6.1",
+          "CC8.1"
+        ],
+        "nist_sp_800_53": [
+          "CM-5"
+        ]
+      }
+    },
+    "key": "1789476968867455700:50664"
   },
   "C:\\Users\\miche\\OneDrive\\Documentos\\agent_squad\\skills\\data\\data-architecture\\database-architect\\SKILL.md": {
     "name": "database-architect",

@@ -6,7 +6,7 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from agent_squad import AgentSquad, SquadError
+from agent_squad import AgentSquad, SquadError, _build_parser
 from project_context import PathContainmentGuard, PathContainmentViolation
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -93,3 +93,93 @@ def test_qbc_deduplication_protocol(squad_env):
 
     forced_epic = squad_env.init_work_item('EPIC-AUTH-02', 'high', item_type='epic', force=True)
     assert forced_epic.exists()
+
+
+def test_reclassify_evolution_to_epic_dry_run_and_apply(squad_env):
+    item = squad_env.init_work_item('EVOL-ARCH-01', 'high', item_type='evolution')
+    artifact = item / 'specs' / 'keep.md'
+    artifact.parent.mkdir(parents=True, exist_ok=True)
+    artifact.write_text('preserve me', encoding='utf-8')
+    before = (item / 'status.yaml').read_bytes()
+
+    preview = squad_env.reclassify_work_item(
+        'EVOL-ARCH-01', from_type='evolution', to_type='epic', dry_run=True
+    )
+
+    assert preview['status'] == 'would_reclassify'
+    assert (item / 'status.yaml').read_bytes() == before
+    assert artifact.read_text(encoding='utf-8') == 'preserve me'
+
+    result = squad_env.reclassify_work_item(
+        'EVOL-ARCH-01', from_type='evolution', to_type='epic', dry_run=False
+    )
+    status = yaml.safe_load((item / 'status.yaml').read_text(encoding='utf-8'))
+
+    assert result['status'] == 'reclassified'
+    assert status['type'] == 'epic'
+    assert status['hierarchy_level'] == 1
+    assert 'parent_id' not in status
+    assert artifact.read_text(encoding='utf-8') == 'preserve me'
+    assert Path(result['audit_path']).is_file()
+
+    feature = squad_env.init_work_item(
+        'FEAT-ARCH-01', 'medium', item_type='feature', parent_id='EVOL-ARCH-01', force=True
+    )
+    feature_status = yaml.safe_load((feature / 'status.yaml').read_text(encoding='utf-8'))
+    assert feature_status['parent_id'] == 'EVOL-ARCH-01'
+
+
+def test_reclassify_is_idempotent_and_rejects_invalid_transition(squad_env):
+    squad_env.init_work_item('EVOL-ARCH-02', 'high', item_type='evolution')
+    squad_env.reclassify_work_item(
+        'EVOL-ARCH-02', from_type='evolution', to_type='epic', dry_run=False
+    )
+
+    repeated = squad_env.reclassify_work_item(
+        'EVOL-ARCH-02', from_type='evolution', to_type='epic', dry_run=False
+    )
+    assert repeated['status'] == 'already_reclassified'
+
+    with pytest.raises(SquadError, match='transition not allowed'):
+        squad_env.reclassify_work_item(
+            'EVOL-ARCH-02', from_type='epic', to_type='story', dry_run=True
+        )
+
+
+def test_reclassify_rejects_parent_or_incompatible_children(squad_env):
+    item = squad_env.init_work_item('EVOL-ARCH-03', 'high', item_type='evolution')
+    status = yaml.safe_load((item / 'status.yaml').read_text(encoding='utf-8'))
+    status['parent_id'] = 'EPIC-OTHER'
+    (item / 'status.yaml').write_text(yaml.safe_dump(status, sort_keys=False), encoding='utf-8')
+
+    with pytest.raises(SquadError, match='must not have parent_id'):
+        squad_env.reclassify_work_item(
+            'EVOL-ARCH-03', from_type='evolution', to_type='epic', dry_run=True
+        )
+
+    del status['parent_id']
+    (item / 'status.yaml').write_text(yaml.safe_dump(status, sort_keys=False), encoding='utf-8')
+    child = squad_env.init_work_item('STUDY-CHILD-01', 'low', item_type='study')
+    child_status = yaml.safe_load((child / 'status.yaml').read_text(encoding='utf-8'))
+    child_status['parent_id'] = 'EVOL-ARCH-03'
+    (child / 'status.yaml').write_text(yaml.safe_dump(child_status, sort_keys=False), encoding='utf-8')
+
+    with pytest.raises(SquadError, match='incompatible child'):
+        squad_env.reclassify_work_item(
+            'EVOL-ARCH-03', from_type='evolution', to_type='epic', dry_run=True
+        )
+
+
+def test_reclassify_cli_is_dry_run_by_default_and_apply_is_explicit():
+    parser = _build_parser()
+    preview = parser.parse_args([
+        'reclassify-work-item', '--work-item', 'EVOL-ARCH-04',
+        '--from-type', 'evolution', '--to-type', 'epic',
+    ])
+    apply = parser.parse_args([
+        'reclassify-work-item', '--work-item', 'EVOL-ARCH-04',
+        '--from-type', 'evolution', '--to-type', 'epic', '--apply',
+    ])
+
+    assert preview.apply is False
+    assert apply.apply is True

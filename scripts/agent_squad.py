@@ -449,6 +449,96 @@ class AgentSquad:
             migrated.append(path.name)
         return {"dry_run": dry_run, "migrated": migrated, "skipped": skipped}
 
+    def reclassify_work_item(
+        self,
+        work_id: str,
+        *,
+        from_type: str,
+        to_type: str,
+        dry_run: bool = True,
+    ) -> dict[str, Any]:
+        """Reclassifica um item existente por transição governada e auditável."""
+        transition = (from_type.lower(), to_type.lower())
+        if transition not in {("evolution", "epic")}:
+            raise SquadError(
+                f"work item type transition not allowed: '{transition[0]}' -> '{transition[1]}'"
+            )
+
+        item = self._item(work_id)
+        if self.project_name:
+            PathContainmentGuard.validate_work_path(item, self.root, self.project_name)
+        if item.name != work_id or Path(work_id).name != work_id:
+            raise SquadError(f"work item target must be an exact ID: {work_id}")
+
+        with self._artifact_lock(item):
+            status_path = item / "status.yaml"
+            before_bytes = status_path.read_bytes()
+            status = read_yaml(status_path)
+            current_type = str(status.get("type", "")).lower()
+            if current_type == transition[1]:
+                return {
+                    "status": "already_reclassified",
+                    "work_item": work_id,
+                    "from_type": transition[0],
+                    "to_type": transition[1],
+                    "dry_run": dry_run,
+                }
+            if current_type != transition[0]:
+                raise SquadError(
+                    f"work item '{work_id}' type is '{current_type}', expected '{transition[0]}'"
+                )
+            if status.get("parent_id"):
+                raise SquadError(f"target type 'epic' must not have parent_id: {status['parent_id']}")
+
+            incompatible_children: list[str] = []
+            for sibling in sorted(item.parent.iterdir()):
+                sibling_status_path = sibling / "status.yaml"
+                if sibling == item or not sibling.is_dir() or not sibling_status_path.is_file():
+                    continue
+                child_status = read_yaml(sibling_status_path)
+                if child_status.get("parent_id") == work_id and str(child_status.get("type", "")).lower() != "feature":
+                    incompatible_children.append(
+                        f"{child_status.get('id', sibling.name)}:{child_status.get('type', 'EMPTY')}"
+                    )
+            if incompatible_children:
+                raise SquadError(
+                    "incompatible child work items for target type 'epic': " + ", ".join(incompatible_children)
+                )
+
+            updated = dict(status)
+            updated["type"] = transition[1]
+            updated["hierarchy_level"] = 1
+            updated["updated_at"] = now()
+            self._validate(updated, "work-item.schema.json")
+            result: dict[str, Any] = {
+                "status": "would_reclassify" if dry_run else "reclassified",
+                "work_item": work_id,
+                "from_type": transition[0],
+                "to_type": transition[1],
+                "dry_run": dry_run,
+                "status_sha256_before": hashlib.sha256(before_bytes).hexdigest(),
+                "preserved_directory": str(item),
+                "compatible_children": [],
+            }
+            if dry_run:
+                return result
+
+            write_yaml(status_path, updated)
+            after_bytes = status_path.read_bytes()
+            audit = {
+                **result,
+                "executed_at": now(),
+                "status_sha256_after": hashlib.sha256(after_bytes).hexdigest(),
+                "rollback": "Restore the pre-change status.yaml from version control or the recorded before digest under independent review.",
+            }
+            evidence_dir = item / "evidence"
+            evidence_dir.mkdir(parents=True, exist_ok=True)
+            audit_path = evidence_dir / f"reclassification-{transition[0]}-to-{transition[1]}.json"
+            atomic_write_text(audit_path, json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            result["audit_path"] = str(audit_path)
+            result["status_sha256_after"] = audit["status_sha256_after"]
+            return result
+
     def _schema(self, name: str) -> dict[str, Any]:
         return json.loads((self.contracts / name).read_text(encoding="utf-8"))
 
@@ -3663,6 +3753,19 @@ def _build_parser() -> argparse.ArgumentParser:
     migrate.add_argument("--work-item", required=True)
     migrate.add_argument("--dry-run", action="store_true")
 
+    reclassify = sub.add_parser(
+        "reclassify-work-item",
+        help="Reclassifica um work item existente; dry-run por padrão",
+    )
+    reclassify.add_argument("--work-item", required=True)
+    reclassify.add_argument("--from-type", required=True, choices=["evolution"])
+    reclassify.add_argument("--to-type", required=True, choices=["epic"])
+    reclassify.add_argument(
+        "--apply",
+        action="store_true",
+        help="Aplica a mudança e grava evidência; sem esta flag apenas simula",
+    )
+
     init = sub.add_parser("init-work-item")
     init.add_argument("--id", required=True)
     init.add_argument("--risk", default="medium", choices=["low", "medium", "high", "critical"])
@@ -3875,6 +3978,14 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
     """Executa o comando já validado pelo parser e retorna seu código de saída."""
     if args.command == "migrate-handoffs":
         print(json.dumps(squad.migrate_handoffs(args.work_item, dry_run=args.dry_run), ensure_ascii=False, indent=2))
+    elif args.command == "reclassify-work-item":
+        result = squad.reclassify_work_item(
+            args.work_item,
+            from_type=args.from_type,
+            to_type=args.to_type,
+            dry_run=not args.apply,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     elif args.command == "init-work-item":
         kwargs: dict[str, Any] = {}
         if getattr(args, "item_type", None) is not None:
