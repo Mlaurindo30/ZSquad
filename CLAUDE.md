@@ -28,6 +28,7 @@ commands:
 
 ## 1. Runtime, Context & Two-Layer Memory
 - **Paths**: `SQUAD_RUNTIME` (shared framework) vs `PROJECT_ROOT` (product code). Never copy the runtime into target projects. Target config in `<project_root>/.agents_squad/` (contains only `config/project.yaml` and `PROVENANCE.yaml`). Work items & memory in `<SQUAD_RUNTIME>/work/<project_id>/`. Local DB: `<SQUAD_RUNTIME>/banco/squad.db` (namespaced by `project_id`).
+- **PathContainmentGuard**: Absolute path containment rule enforcing that no target project may contain a local `./work` directory; all state is strictly confined within `<SQUAD_RUNTIME>/work/<project_id>/`. Violations trigger fail-closed `PathContainmentViolation`.
 - **Two-Layer Memory**:
   1. *Project Memory (Mandatory)*: AST symbols/quorums (`banco/squad.db`), Code Graph (`integrations/codebase_knowledge_graph.py`), working memory (`work/<project_id>/memory/shared/summary.md`).
   2. *Second Brain Global (Hive-Mind / Sinapse — `D:/Hive-Mind`)*: Query via `sinapse_query`; persist cross-project architectural decisions via `sinapse_save_decision`.
@@ -58,6 +59,8 @@ commands:
   - *Consult*: Questions/exploration → Direct answer. No work item, gate, or subagent.
   - *Light*: Low-risk change (no prod/schema/secrets/cost) → 1 persona, real execution evidence, ledger line.
   - *Full*: Risk ≥ medium or prod/schema/secrets touched → Formal work item, gates G1–G6, handoffs, ledger.
+- **Azure DevOps 4-Tier Taxonomy**: Epic (`PP` to `GG`) → Feature (weeks/months) → User Story / PBI (1 to 8 Fibonacci SP, strict block > 8 SP) → Task (hours/days).
+- **Query Before Create (QBC) Protocol**: Mandatory verification of existing epics/features before creating new ones, guiding reuse and vertical slicing.
 - **Sizing Rule**: Stories must use Fibonacci (1–8 pts). Any story > 8 pts is strictly BLOCKED from implementation and must be vertically sliced by `40-agile-coach`. Epics use T-Shirt (`PP`–`GG`).
 
 ## 5. Neuroinclusive Communication
@@ -71,7 +74,7 @@ commands:
 - Consume control plane via **`skills/agent-squad-mcp/SKILL.md`** & **`skills/azure-devops-mcp/SKILL.md`**:
   - *Agent Squad MCP Server (`integrations/mcp_server.py`)*: `start_session`, `resume_session`, `get_assignment`, `get_context`, `prepare_delegation`, `preflight`, `record_execution`, `record_evidence`, `evaluate_gate`, `create_handoff`, `report_failure`, `doctor`, `discover_skill`, `curate_skill`, `memory_query`, `memory_propose_delta`, `impact_analysis`, `replay_receipt`.
   - *Azure DevOps MCP Server (`@azure-devops/mcp`)*: 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, Advanced Security.
-  - *CLI Fallback (`scripts/agent_squad.py`)*: `init-work-item`, `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
+  - *CLI Fallback (`scripts/agent_squad.py`)*: `init-work-item` (supporting parameters `--type {epic,feature,story,task}`, `--parent-id`, `--force`), `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
 - *Continuous Trigger Engine (`scripts/continuous_trigger_engine.py`)*: `run-continuous` automatiza o avanço de estados do ciclo via FSM reativa, com proteção estrita de anti-looping por Circuit Breaker (2 retries consecutivos desarmam para `HALTED_CIRCUIT_BREAKER`) e pontos de injeção mandatórios: Product Owner (`POInjectionGuard` em G1 com aprovação humana para risco ≥ medium) e Agile Coach (`AgileCoachSizingGuard` bloqueando itens com > 8 Story Points para refinamento/slicing).
 - Gates: `G1-product` · `G2-design` · `G3-readiness` · `G4-code-security` · `G5-quality` · `G6-governance-release`.
 - Azure DevOps SoD: Contributors (`squads@`), Required Approvers (`arthemis@`), Red Team (`cyber_red@`).

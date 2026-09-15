@@ -105,6 +105,11 @@ def _active_skill_paths(root: Path) -> set[str]:
         for path in integrations_root.glob("experimental/*.py")
         if path.name != "__init__.py"
     )
+    paths.update(
+        path.relative_to(root).as_posix()
+        for path in integrations_root.glob("resolvers/*.py")
+        if path.name != "__init__.py"
+    )
     return paths
 
 
