@@ -7,6 +7,7 @@ import yaml
 from scripts.project_context import (
     ProjectContextError,
     _is_valid_runtime,
+    load_project_context,
     resolve_runtime_root,
 )
 
@@ -14,6 +15,7 @@ from scripts.project_context import (
 def _make_dummy_runtime(path: Path) -> Path:
     (path / "scripts").mkdir(parents=True, exist_ok=True)
     (path / "agents").mkdir(parents=True, exist_ok=True)
+    (path / "contracts").mkdir(parents=True, exist_ok=True)
     return path
 
 
@@ -96,3 +98,68 @@ def test_resolve_runtime_failure_raises(tmp_path, monkeypatch):
 
     with pytest.raises(ProjectContextError, match="SQUAD_RUNTIME could not be resolved"):
         resolve_runtime_root()
+
+
+def test_load_project_context_expands_variables_same_repo(tmp_path):
+    repo_dir = _make_dummy_runtime(tmp_path / "agent_squad")
+    marker_dir = repo_dir / ".agents_squad" / "config"
+    marker_dir.mkdir(parents=True)
+    (marker_dir / "project.yaml").write_text(
+        yaml.safe_dump({
+            "version": 2,
+            "project_id": "agent_squad",
+            "runtime": "${SQUAD_RUNTIME}",
+            "project_root": "${PROJECT_ROOT}",
+            "work_dir": "${SQUAD_RUNTIME}/work/agent_squad",
+            "db_path": "${SQUAD_RUNTIME}/banco/squad.db",
+        }),
+        encoding="utf-8",
+    )
+    ctx = load_project_context(repo_dir)
+    assert ctx.runtime_root == repo_dir.resolve()
+    assert ctx.project_root == repo_dir.resolve()
+    assert ctx.project_id == "agent_squad"
+    assert ctx.work_dir == repo_dir.resolve() / "work" / "agent_squad"
+    assert ctx.db_path == repo_dir.resolve() / "banco" / "squad.db"
+
+
+def test_load_project_context_expands_variables_external_consumer(tmp_path, monkeypatch):
+    dummy_runtime = _make_dummy_runtime(tmp_path / "shared_runtime")
+    monkeypatch.setenv("SQUAD_RUNTIME", str(dummy_runtime))
+
+    consumer_dir = tmp_path / "consumer_project"
+    marker_dir = consumer_dir / ".agents_squad" / "config"
+    marker_dir.mkdir(parents=True)
+    (marker_dir / "project.yaml").write_text(
+        yaml.safe_dump({
+            "version": 2,
+            "project_id": "consumer",
+            "runtime": "${SQUAD_RUNTIME}",
+            "project_root": "${PROJECT_ROOT}",
+        }),
+        encoding="utf-8",
+    )
+    ctx = load_project_context(consumer_dir)
+    assert ctx.runtime_root == dummy_runtime.resolve()
+    assert ctx.project_root == consumer_dir.resolve()
+    assert ctx.project_id == "consumer"
+
+
+def test_load_project_context_expands_relative_runtime(tmp_path):
+    runtime_dir = _make_dummy_runtime(tmp_path / "central_runtime")
+    consumer_dir = tmp_path / "consumer_project"
+    marker_dir = consumer_dir / ".agents_squad" / "config"
+    marker_dir.mkdir(parents=True)
+    (marker_dir / "project.yaml").write_text(
+        yaml.safe_dump({
+            "version": 2,
+            "project_id": "consumer_rel",
+            "runtime": "../central_runtime",
+            "project_root": "${PROJECT_ROOT}",
+        }),
+        encoding="utf-8",
+    )
+    ctx = load_project_context(consumer_dir)
+    assert ctx.runtime_root == runtime_dir.resolve()
+    assert ctx.project_root == consumer_dir.resolve()
+

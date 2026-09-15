@@ -124,6 +124,36 @@ def find_project_root(start: Path) -> Path | None:
     return None
 
 
+def _is_valid_runtime(path: Path) -> bool:
+    """Verifica se o caminho existe e contém as pastas essenciais do runtime: scripts/ e agents/."""
+    return path.is_dir() and (path / "scripts").is_dir() and (path / "agents").is_dir()
+
+
+def _expand_marker_variables(
+    value: str,
+    project_root: Path,
+    runtime_root: Path | None = None,
+) -> str:
+    """Expande ${SQUAD_RUNTIME} e ${PROJECT_ROOT} em strings de configuração."""
+    if not isinstance(value, str) or "${" not in value:
+        return value
+    if runtime_root is None:
+        if _is_valid_runtime(project_root):
+            runtime_root = project_root
+        else:
+            env_val = os.environ.get("SQUAD_RUNTIME")
+            if env_val and _is_valid_runtime(Path(env_val).resolve()):
+                runtime_root = Path(env_val).resolve()
+            else:
+                try:
+                    runtime_root = resolve_runtime_root()
+                except Exception:
+                    runtime_root = project_root
+    result = value.replace("${PROJECT_ROOT}", project_root.resolve().as_posix())
+    result = result.replace("${SQUAD_RUNTIME}", runtime_root.resolve().as_posix())
+    return result
+
+
 def load_project_context(project_root: Path) -> ProjectContext:
     """Carrega e valida o marcador mínimo criado pelo bootstrap."""
     project_root = project_root.resolve()
@@ -140,14 +170,21 @@ def load_project_context(project_root: Path) -> ProjectContext:
     recorded_root = payload.get("project_root")
     if not isinstance(runtime_value, str) or not runtime_value:
         raise ProjectContextError("runtime ausente no marcador de projeto")
-    if recorded_root and Path(str(recorded_root)).resolve() != project_root:
-        raise ProjectContextError("project_root do marcador não corresponde ao projeto atual")
 
-    runtime_root = Path(runtime_value).resolve()
+    expanded_runtime = _expand_marker_variables(runtime_value, project_root)
+    runtime_path = Path(expanded_runtime)
+    runtime_root = runtime_path.resolve() if runtime_path.is_absolute() else (project_root / runtime_path).resolve()
+
+    if recorded_root:
+        expanded_recorded = _expand_marker_variables(str(recorded_root), project_root, runtime_root)
+        if Path(expanded_recorded).resolve() != project_root:
+            raise ProjectContextError("project_root do marcador não corresponde ao projeto atual")
+
     required = (runtime_root / "scripts", runtime_root / "agents", runtime_root / "contracts")
     if not runtime_root.is_dir() or not all(path.is_dir() for path in required):
         raise ProjectContextError(f"runtime compartilhado inválido: {runtime_root}")
     return ProjectContext(runtime_root, project_root, project_id)
+
 
 
 def resolve_project_context(start: Path, explicit_project_root: Path | None = None) -> ProjectContext:
@@ -182,7 +219,8 @@ def resolve_runtime_root() -> Path:
             if isinstance(payload, dict):
                 rt = payload.get("runtime")
                 if rt:
-                    p = Path(str(rt)).resolve()
+                    expanded_rt = _expand_marker_variables(str(rt), project_root)
+                    p = Path(expanded_rt).resolve() if Path(expanded_rt).is_absolute() else (project_root / expanded_rt).resolve()
                     if _is_valid_runtime(p):
                         return p
         except Exception:
@@ -211,11 +249,6 @@ def resolve_runtime_root() -> Path:
         "SQUAD_RUNTIME could not be resolved. Set SQUAD_RUNTIME environment variable "
         "or run inside a bootstrapped consumer project."
     )
-
-
-def _is_valid_runtime(path: Path) -> bool:
-    """Verifica se o caminho existe e contém as pastas essenciais do runtime: scripts/ e agents/."""
-    return path.is_dir() and (path / "scripts").is_dir() and (path / "agents").is_dir()
 
 
 

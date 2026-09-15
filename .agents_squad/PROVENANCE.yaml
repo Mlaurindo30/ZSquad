@@ -1,5 +1,6 @@
-runtime: C:/Users/miche/OneDrive/Documentos/agent_squad
+runtime: "${SQUAD_RUNTIME}"
 project_id: agent_squad
-project_root: C:/Users/miche/OneDrive/Documentos/agent_squad
+project_root: "${PROJECT_ROOT}"
 bootstrapped_at: '2026-09-14T16:40:08+00:00'
 model: shared-runtime-pointer
+

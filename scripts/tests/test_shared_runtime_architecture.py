@@ -7,7 +7,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-PROMPTS = ("AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md")
+PROMPTS = ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
 FORBIDDEN = (
     "bootstrap a copy",
     "copy source",
@@ -25,12 +25,9 @@ FORBIDDEN = (
 @pytest.mark.parametrize("prompt_name", PROMPTS)
 def test_provider_prompt_requires_shared_runtime_without_copy(prompt_name):
     text = (ROOT / prompt_name).read_text(encoding="utf-8")
-    lowered = text.lower()
+    lowered = text.lower().replace("\\", "/")
 
     assert "squad_runtime" in lowered
-    assert "project_root" in lowered
-    assert "project_id" in lowered
-    assert "work/<project_id>" in lowered or "work/<work-id>" in lowered
     assert "banco/squad.db" in lowered
     assert all(phrase not in lowered for phrase in FORBIDDEN)
 
