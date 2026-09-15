@@ -71,6 +71,7 @@ commands:
 - Consume control plane via **`skills/agent-squad-mcp/SKILL.md`** & **`skills/azure-devops-mcp/SKILL.md`**:
   - *Agent Squad MCP Server (`integrations/mcp_server.py`)*: `start_session`, `resume_session`, `get_assignment`, `get_context`, `prepare_delegation`, `preflight`, `record_execution`, `record_evidence`, `evaluate_gate`, `create_handoff`, `report_failure`, `doctor`, `discover_skill`, `curate_skill`, `memory_query`, `memory_propose_delta`, `impact_analysis`, `replay_receipt`.
   - *Azure DevOps MCP Server (`@azure-devops/mcp`)*: 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, Advanced Security.
-  - *CLI Fallback (`scripts/agent_squad.py`)*: `init-work-item`, `advance-state`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
+  - *CLI Fallback (`scripts/agent_squad.py`)*: `init-work-item`, `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
+- *Continuous Trigger Engine (`scripts/continuous_trigger_engine.py`)*: `run-continuous` automatiza o avanço de estados do ciclo via FSM reativa, com proteção estrita de anti-looping por Circuit Breaker (2 retries consecutivos desarmam para `HALTED_CIRCUIT_BREAKER`) e pontos de injeção mandatórios: Product Owner (`POInjectionGuard` em G1 com aprovação humana para risco ≥ medium) e Agile Coach (`AgileCoachSizingGuard` bloqueando itens com > 8 Story Points para refinamento/slicing).
 - Gates: `G1-product` · `G2-design` · `G3-readiness` · `G4-code-security` · `G5-quality` · `G6-governance-release`.
 - Azure DevOps SoD: Contributors (`squads@`), Required Approvers (`arthemis@`), Red Team (`cyber_red@`).

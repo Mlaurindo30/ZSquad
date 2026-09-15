@@ -28,6 +28,13 @@ flow:
     # retry = 1 re-execucao do mesmo criterio de gate apos `fail` (gate-decidido rejected/changes_requested)
     max_cycles_per_target: 3
     max_retries_per_check: 2
+continuous_engine:
+  enabled: true
+  max_retries_per_check: 2
+  circuit_breaker_timeout_sec: 1800
+  injection_points:
+    g1_product_human_required_from_risk: medium
+    max_story_points_cognitive_protection: 8
 work_item:
   root: work/<project>/<WORK-ID>
   status_schema: contracts/work-item.schema.json

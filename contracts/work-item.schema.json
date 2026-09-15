@@ -6,8 +6,10 @@
   "additionalProperties": false,
   "required": ["id", "type", "state", "risk", "owner", "active_agents", "next_action", "artifacts"],
   "properties": {
-    "id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
-    "type": {"enum": ["epic", "story", "task", "bug", "release", "evolution", "study", "spike"]},
+    "id": {"type": "string", "pattern": "^(EPIC|FEAT|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
+    "type": {"enum": ["epic", "feature", "story", "task", "bug", "release", "evolution", "study", "spike"]},
+    "parent_id": {"type": "string"},
+    "hierarchy_level": {"type": "integer", "minimum": 1, "maximum": 4},
     "cycle": {"type": "string", "minLength": 1},
     "state": {"enum": ["blueprint", "scaffolding", "implementation", "code-security-review", "quality-validation", "governance-release", "done", "intake", "discovery", "product-ready", "design", "design-ready", "ready-for-build", "review", "validation", "documentation", "ready-for-release", "triage", "mitigation", "postmortem"]},
     "risk": {"enum": ["low", "medium", "high", "critical"]},

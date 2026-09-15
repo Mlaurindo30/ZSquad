@@ -5,6 +5,7 @@ default_cycle: development
 # sem alterar prompts: o orquestrador identifica a função e segue o ciclo correspondente.
 type_to_cycle:
   epic: development
+  feature: development
   story: user-story
   task: development
   bug: bugfix

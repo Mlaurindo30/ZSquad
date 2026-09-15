@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-squad.local/contracts/continuous-trigger.schema.json",
+  "title": "Continuous Trigger Engine Schema",
+  "description": "Contrato formal para eventos e estados do Circuit Breaker do Continuous Trigger Engine.",
+  "oneOf": [
+    { "$ref": "#/$defs/engine_event" },
+    { "$ref": "#/$defs/circuit_breaker_state" }
+  ],
+  "$defs": {
+    "engine_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "work_item_id",
+        "payload",
+        "timestamp"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "description": "Identificador único do evento (UUID ou prefixado)."
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "EVENT_HANDOFF_CREATED",
+            "EVENT_GATE_EVALUATED",
+            "EVENT_STATE_ADVANCED",
+            "EVENT_CYCLE_HALTED",
+            "EVENT_CIRCUIT_BREAKER_TRIPPED",
+            "EVENT_CIRCUIT_BREAKER_RESET"
+          ],
+          "description": "Tipo do evento disparado no ciclo de vida."
+        },
+        "work_item_id": {
+          "type": "string",
+          "description": "Identificador do work item associado."
+        },
+        "payload": {
+          "type": "object",
+          "description": "Carga útil com metadados contextuais do evento."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp ISO-8601 UTC do disparo."
+        }
+      }
+    },
+    "circuit_breaker_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "failure_count",
+        "max_retries",
+        "state"
+      ],
+      "properties": {
+        "work_item_id": {
+          "type": "string",
+          "description": "Identificador do work item protegido."
+        },
+        "failure_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Contador de falhas consecutivas registradas."
+        },
+        "max_retries": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Limite máximo de retries antes de desarmar o circuito (padrão: 2)."
+        },
+        "state": {
+          "type": "string",
+          "enum": ["CLOSED", "OPEN", "HALF_OPEN"],
+          "description": "Estado operacional do Circuit Breaker."
+        },
+        "last_failure_reason": {
+          "type": ["string", "null"],
+          "description": "Diagnóstico ou causa raiz da última falha registrada."
+        },
+        "updated_at": {
+          "type": ["string", "null"],
+          "description": "Timestamp ISO-8601 UTC da última atualização de estado."
+        }
+      }
+    }
+  }
+}

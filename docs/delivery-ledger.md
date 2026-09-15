@@ -6,6 +6,86 @@
 
 ---
 
+## TASK-GOV-BACKLOG-HIERARCHY-AND-CONTAINMENT — Backlog Hierarchy and Containment (Full, 5 pts)
+
+**Work item**: `TASK-GOV-BACKLOG-HIERARCHY-AND-CONTAINMENT`  
+**Status**: ✅ Aprovado e Homologado no Portão G6 (`14-governance-auditor`)  
+**Data**: 2026-09-15  
+**Sizing**: 5 Story Points (Fibonacci, < 8 pts — Sizing Guard compliant)  
+**Risco**: `medium`  
+
+### Segregação de Funções (SoD)
+- **Product Definition (G1)**: `02-product-owner`  
+- **Design & Readiness (G3)**: `00-delivery-orchestrator`  
+- **Implementação**: `06-software-engineer` / `22-backend-engineer`  
+- **Revisão de Código / Segurança (G4)**: `09-code-reviewer`  
+- **Qualidade / QA (G5)**: `12-qa-engineer`  
+- **Auditoria e Release (G6)**: `14-governance-auditor`  
+- **SoD Check**: Aprovado (`PO != Architect != Reviewer != QA != Auditor`).  
+
+### Comandos de Verificação Executados
+```bash
+python -m pytest scripts/tests/test_path_containment_and_hierarchy.py
+# Output: 27 passed in 9.16s
+
+python scripts/bdd_runner.py --work-item TASK-GOV-BACKLOG-HIERARCHY-AND-CONTAINMENT
+# Output: bdd.json generated (passed=True, 3/3 scenarios verified)
+```
+
+### Arquivos Principais Criados / Modificados
+| Arquivo | Mudança |
+|---|---|
+| `specs/features/backlog-hierarchy-and-containment.feature` | Especificação BDD de hierarquia e containamento |
+| `scripts/tests/test_path_containment_and_hierarchy.py` | Testes unitários de path containment e hierarquia de 4 tiers |
+| `work/agent_squad/TASK-GOV-BACKLOG-HIERARCHY-AND-CONTAINMENT/gate-decisions/*` | Decisões G1, G3, G4, G5 e G6 |
+
+### Decisão Final
+Portão G6 (Governance & Release) aprovado e homologado por `governance-auditor`. Card encerrado (`state: done`).
+
+---
+
+## TASK-ARCH-CONTINUOUS-TRIGGER-ENGINE — Motor Contínuo de Orquestração (Full, 5 pts)
+
+**Work item**: `TASK-ARCH-CONTINUOUS-TRIGGER-ENGINE`  
+**Status**: ✅ Aprovado e Homologado no Portão G6 (`14-governance-auditor`)  
+**Data**: 2026-09-15  
+**Sizing**: 5 Story Points (Fibonacci, < 8 pts — Sizing Guard compliant)  
+**Risco**: `medium`  
+
+### Segregação de Funções (SoD)
+- **Design (G2)**: `04-solution-architect`  
+- **Implementação**: `06-software-engineer` / `22-backend-engineer`  
+- **Revisão de Código / Segurança (G4)**: `09-code-reviewer`  
+- **Qualidade / QA (G5)**: `12-qa-engineer`  
+- **Auditoria e Release (G6)**: `14-governance-auditor`  
+- **SoD Check**: Aprovado (`Author != Reviewer != QA != Architect != Auditor`).  
+
+### Comandos de Verificação Executados
+```bash
+python -m pytest scripts/tests/test_continuous_trigger_engine.py
+# Output: 13 passed in 0.45s
+
+python scripts/bdd_runner.py --work-item TASK-ARCH-CONTINUOUS-TRIGGER-ENGINE
+# Output: bdd.json generated (passed=True)
+
+python -m pytest scripts/tests/test_circuit_breaker_and_orchestrator_approval.py
+# Output: 3 passed in 2.92s
+```
+
+### Arquivos Principais Criados / Modificados
+| Arquivo | Mudança |
+|---|---|
+| `scripts/continuous_trigger_engine.py` | Implementação do motor de gatilho contínuo FSM com Circuit Breaker e Guardas |
+| `scripts/agent_squad.py` | Integração do continuous trigger engine no fluxo do Agent Squad |
+| `contracts/continuous-trigger.schema.json` | Schema de contrato para eventos e estado do motor |
+| `config/workflow.yaml` | Regras e mapeamentos de portões e transições |
+| `scripts/tests/test_continuous_trigger_engine.py` | Suíte de testes unitários (13 testes verdes) |
+| `work/agent_squad/TASK-ARCH-CONTINUOUS-TRIGGER-ENGINE/gate-decisions/*` | Decisões G1, G2, G4, G5 e G6 |
+
+### Decisão Final
+Portão G6 (Governance & Release) aprovado e homologado por `governance-auditor`. Card encerrado (`state: done`).
+
+---
 ## Lote 1 — Drift Corrections + Service Accounts (Light, medium)
 
 **Work items**: US-SCHEMA-01, US-DRIFT-01, US-ACCT-01

@@ -43,6 +43,37 @@ class ProjectContextError(ValueError):
     """Indica que o vínculo projeto-runtime não pode ser validado."""
 
 
+class PathContainmentViolation(ProjectContextError):
+    """Raised when an operation attempts to create or access work folders outside SQUAD_RUNTIME."""
+    pass
+
+
+class PathContainmentGuard:
+    @staticmethod
+    def validate_work_path(target_path: Path, runtime_root: Path, project_id: str) -> Path:
+        """Validates that any work path resides strictly inside runtime_root/work/project_id."""
+        resolved_target = target_path.resolve()
+        canonical_work_root = (runtime_root / "work" / project_id).resolve()
+        
+        parts = resolved_target.parts
+        if "work" in parts:
+            try:
+                resolved_target.relative_to(canonical_work_root)
+            except ValueError:
+                raise PathContainmentViolation(
+                    f"PathContainmentViolation: Creation of work directory at {resolved_target} "
+                    f"is strictly prohibited. All work state must reside in canonical root: {canonical_work_root}"
+                )
+        
+        try:
+            resolved_target.relative_to(canonical_work_root)
+        except ValueError:
+            raise PathContainmentViolation(
+                f"PathContainmentViolation: Path {resolved_target} escapes canonical work boundary {canonical_work_root}"
+            )
+        return resolved_target
+
+
 @dataclass(frozen=True)
 class SDDRequirementResolution:
     """Resolução efetiva por work item, sem alterar a política global."""

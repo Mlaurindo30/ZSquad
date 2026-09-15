@@ -37,6 +37,7 @@ from governed_io import LockTimeoutError, atomic_write_text, file_lock  # noqa: 
 from jsonschema import Draft202012Validator  # noqa: E402
 from local_agent_db import LocalAgentDB  # noqa: E402
 from project_context import (  # noqa: E402
+    PathContainmentGuard,
     ProjectContextError,
     SDD_ACTIVATION_REL,
     SDD_POLICY_REL,
@@ -65,7 +66,7 @@ class SquadError(RuntimeError):
     pass
 
 
-ID_RE = re.compile(r"^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$")
+ID_RE = re.compile(r"^(EPIC|FEAT|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$")
 AGENT_RE = re.compile(r"^[a-z0-9-]+$")
 
 WORK_ITEM_DIRS: list[str] = [
@@ -483,10 +484,11 @@ class AgentSquad:
         return errors
 
     def _work_base(self) -> Path:
-        """Resolve o diretório base de work items do projeto atual."""
+        """Resolve o diretório base de work items do projeto atual com guarda de contenção."""
+        base = (self.root / "work" / self.project_name).resolve() if self.project_name else (self.root / "work").resolve()
         if self.project_name:
-            return self.root / "work" / self.project_name
-        return self.root / "work"
+            PathContainmentGuard.validate_work_path(base, self.root, self.project_name)
+        return base
 
     def _db_path(self) -> Path:
         """Resolve o caminho do banco SQLite central compartilhado."""
@@ -513,28 +515,99 @@ class AgentSquad:
         devops: bool = False,
         *,
         item_type: str | None = None,
+        parent_id: str | None = None,
+        force: bool = False,
     ) -> Path:
         """Inicializa um novo work item Full sob lock exclusivo entre processos."""
-        if story_points is not None and story_points not in {1, 2, 3, 5, 8}:
-            raise SquadError("story_points deve usar Fibonacci 1, 2, 3, 5 ou 8")
+        if story_points is not None:
+            if story_points > 8:
+                raise SquadError("Story Points > 8 são estritamente bloqueados; divisão vertical (slicing) obrigatória.")
+            if story_points not in {1, 2, 3, 5, 8}:
+                raise SquadError("story_points deve usar Fibonacci 1, 2, 3, 5 ou 8")
+
         if base is None and not self.project_name and not self.allow_legacy:
             raise SquadError(
                 "work item solto recusado: informe project_name (ou --project-name/--project-root) "
                 "para criar em work/<projeto>/<WORK-ID>"
             )
         parent = Path(base) if base else self._work_base()
-        # Resolve before the first filesystem mutation so invalid configuration
-        # cannot leave a partial work item behind.
-        resolved_type = item_type if item_type is not None else self._legacy_type_for_id(work_id)
+        
+        is_explicit_type = item_type is not None
+        resolved_type = (item_type if item_type is not None else self._legacy_type_for_id(work_id)).lower()
+        
+        # 4-Tier Hierarchy Parent Validation
+        hierarchy_levels = {"epic": 1, "feature": 2, "story": 3, "pbi": 3, "task": 4, "bug": 3}
+        level = hierarchy_levels.get(resolved_type, 3)
+        
+        if resolved_type == "epic" and parent_id:
+            raise SquadError("Epics cannot have a parent_id")
+
+        if is_explicit_type:
+            if resolved_type in {"feature"} and not parent_id:
+                raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'epic'")
+            elif resolved_type in {"story", "pbi"} and not parent_id:
+                raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'feature'")
+            elif resolved_type in {"task"} and not parent_id:
+                raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'story'")
+
+        if parent_id:
+            parent_item_path = (parent / parent_id).resolve()
+            if not (parent_item_path / "status.yaml").exists():
+                raise SquadError(f"Parent work item '{parent_id}' does not exist at {parent_item_path}")
+            parent_status = read_yaml(parent_item_path / "status.yaml")
+            parent_type = str(parent_status.get("type", "")).lower()
+            
+            expected_parent_type = {
+                "feature": "epic",
+                "story": "feature",
+                "pbi": "feature",
+                "task": "story",
+            }.get(resolved_type)
+            
+            if expected_parent_type and parent_type != expected_parent_type:
+                raise SquadError(
+                    f"Parent work item '{parent_id}' type '{parent_type}' does not match required parent type '{expected_parent_type}'"
+                )
+
+        # Query Before Create (QBC) protocol for Epics and Features
+        if resolved_type in {"epic", "feature"} and not force:
+            for candidate_path in parent.glob("*"):
+                if candidate_path.is_dir() and (candidate_path / "status.yaml").exists():
+                    try:
+                        cand_status = read_yaml(candidate_path / "status.yaml")
+                        cand_type = str(cand_status.get("type", "")).lower()
+                        if cand_type == resolved_type:
+                            cand_id = candidate_path.name
+                            if work_id.lower() == cand_id.lower() or work_id.lower().split('-')[0] == cand_id.lower().split('-')[0]:
+                                raise SquadError(
+                                    f"QBC Violation: Duplicate {resolved_type} detected ({cand_id}). Use --force to override."
+                                )
+                    except Exception as exc:
+                        if isinstance(exc, SquadError) and "QBC Violation" in str(exc):
+                            raise
+                        pass
+
         self._resolve_cycle_entry(resolved_type)
         item = (parent / work_id).resolve()
+        
+        if self.project_name:
+            PathContainmentGuard.validate_work_path(item, self.root, self.project_name)
+
         with self._artifact_lock(item):
-            item = self._init_work_item_unlocked(work_id, risk, parent, item_type=item_type)
+            item = self._init_work_item_unlocked(
+                work_id, risk, parent, item_type=resolved_type, parent_id=parent_id, hierarchy_level=level
+            )
             status_path = item / "status.yaml"
             status = read_yaml(status_path)
             needs_write = False
             if story_points is not None:
                 status["story_points"] = story_points
+                needs_write = True
+            if parent_id is not None:
+                status["parent_id"] = parent_id
+                needs_write = True
+            if level is not None:
+                status["hierarchy_level"] = level
                 needs_write = True
 
             # Verifica flag explícita ou devops.yaml ativo
@@ -723,7 +796,7 @@ class AgentSquad:
         return {"phase": phase, "limit": limit, "elapsed_minutes": round(elapsed, 1), "exceeded": elapsed > limit}
 
     def _init_work_item_unlocked(
-        self, work_id: str, risk: str, parent: Path, *, item_type: str | None = None
+        self, work_id: str, risk: str, parent: Path, *, item_type: str | None = None, parent_id: str | None = None, hierarchy_level: int = 3
     ) -> Path:
         """Cria a árvore governada; deve ser chamado com o lock do item obtido."""
         if not ID_RE.fullmatch(work_id):
@@ -758,7 +831,11 @@ class AgentSquad:
             "artifacts": ["status.yaml", "blueprint.md", "epic.md", "documentation/delivery-ledger.md"],
             "updated_at": now(),
             "phase_started_at": now(),
+            "hierarchy_level": hierarchy_level,
         }
+        if parent_id:
+            status["parent_id"] = parent_id
+
         self._validate(status, "work-item.schema.json")
         write_yaml(item / "status.yaml", status)
         ledger = (self.templates / "delivery-ledger.md").read_text(encoding="utf-8")
@@ -2418,6 +2495,30 @@ class AgentSquad:
         self.validate_sod_snapshot(value["sod_snapshot"])
         self._validate(value, "handoff.schema.json")
         write_yaml(item_path / "handoffs" / f"{value['id']}.yaml", value)
+
+        # Disparo reativo do ContinuousTriggerEngine se habilitado
+        try:
+            cfg = self.workflow.get("continuous_engine", {})
+            if cfg.get("enabled", False):
+                from continuous_trigger_engine import (
+                    EVENT_HANDOFF_CREATED,
+                    ContinuousTriggerEngine,
+                )
+
+                engine = ContinuousTriggerEngine(self)
+                engine.emit_event(
+                    EVENT_HANDOFF_CREATED,
+                    status["id"],
+                    {
+                        "handoff_id": value["id"],
+                        "from": sender,
+                        "to": recipient,
+                        "next_gate": next_gate,
+                    },
+                )
+        except Exception as exc:
+            logger.debug("ContinuousTriggerEngine dispatch gracefully skipped: %s", exc)
+
         return value
 
     @locked_artifact_mutation
@@ -2839,6 +2940,24 @@ class AgentSquad:
             "selectable_agents": selectable,
             "cycle": cycle_name,
         }
+
+    def run_continuous(
+        self,
+        item: Path | str,
+        *,
+        max_steps: int = 10,
+        dry_run: bool = False,
+        reset_circuit_breaker: bool = False,
+    ) -> dict[str, Any]:
+        """Executa o motor contínuo de gatilhos para o work item."""
+        from continuous_trigger_engine import ContinuousTriggerEngine
+
+        engine = ContinuousTriggerEngine(self)
+        item_path = self._item(item)
+        work_id = item_path.name
+        if reset_circuit_breaker:
+            engine.reset_circuit_breaker(work_id)
+        return engine.run_continuous(work_id, max_steps=max_steps, dry_run=dry_run)
 
     def check_sizing(
         self, points: int | None = None, item: Path | str | None = None
@@ -3549,10 +3668,12 @@ def _build_parser() -> argparse.ArgumentParser:
     init.add_argument("--risk", default="medium", choices=["low", "medium", "high", "critical"])
     init.add_argument(
         "--type", dest="item_type",
-        choices=["epic", "story", "task", "bug", "release", "evolution", "study", "spike"],
+        choices=["epic", "feature", "story", "task", "bug", "release", "evolution", "study", "spike"],
         default=None,
     )
     init.add_argument("--story-points", type=int, default=None)
+    init.add_argument("--parent-id", type=str, default=None)
+    init.add_argument("--force", action="store_true")
     init.add_argument("--devops", action="store_true", help="Cria card no Azure DevOps")
 
     light = sub.add_parser("light-start")
@@ -3662,6 +3783,24 @@ def _build_parser() -> argparse.ArgumentParser:
     adv.add_argument("--reason")
     adv.add_argument("--authorization-ref")
 
+    run_cont = sub.add_parser(
+        "run-continuous", help="Executa o motor contínuo de gatilhos do orquestrador"
+    )
+    run_cont.add_argument(
+        "--work-item", "--item", dest="work_item", required=True, help="ID ou caminho do work item"
+    )
+    run_cont.add_argument(
+        "--max-steps", type=int, default=10, help="Número máximo de passos contínuos"
+    )
+    run_cont.add_argument(
+        "--dry-run", action="store_true", help="Simula os passos sem persistir transições"
+    )
+    run_cont.add_argument(
+        "--reset-circuit-breaker",
+        action="store_true",
+        help="Rearma o circuit breaker antes de executar",
+    )
+
     sizing = sub.add_parser("check-sizing")
     sizing.add_argument("--points", type=int, default=None)
     sizing.add_argument("--work-item", "--item", dest="work_item", default=None)
@@ -3744,6 +3883,10 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
             kwargs["devops"] = True
         if getattr(args, "story_points", None) is not None:
             kwargs["story_points"] = args.story_points
+        if getattr(args, "parent_id", None) is not None:
+            kwargs["parent_id"] = args.parent_id
+        if getattr(args, "force", False):
+            kwargs["force"] = True
         print(squad.init_work_item(args.id, args.risk, **kwargs))
     elif args.command == "light-start":
         print(squad.init_light_item(args.id, args.risk, args.objective))
@@ -3886,6 +4029,20 @@ def _execute_command(squad: AgentSquad, args: argparse.Namespace) -> int:
             authorization_ref=getattr(args, "authorization_ref", None),
         )
         print(json.dumps(res, ensure_ascii=False, indent=2))
+    elif args.command == "run-continuous":
+        from continuous_trigger_engine import ContinuousTriggerEngine
+
+        engine = ContinuousTriggerEngine(squad)
+        if getattr(args, "reset_circuit_breaker", False):
+            engine.reset_circuit_breaker(args.work_item)
+        res = engine.run_continuous(
+            args.work_item,
+            max_steps=getattr(args, "max_steps", 10),
+            dry_run=getattr(args, "dry_run", False),
+        )
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+        if res.get("status") in {"HALTED_CIRCUIT_BREAKER", "ERROR"}:
+            return 1
     elif args.command == "check-sizing":
         res = squad.check_sizing(points=args.points, item=args.work_item)
         print(json.dumps(res, ensure_ascii=False, indent=2))

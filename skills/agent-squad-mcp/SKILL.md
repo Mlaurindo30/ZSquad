@@ -472,6 +472,18 @@ sequenceDiagram
 | **Agent-Squad Session Expiry** | Session TTL > 3600 seconds | Reject calls with `-32603: Invalid session` | Invoke `resume_session(session, last_revision)` to refresh TTL |
 | **MCP Server Transport Crash** | JSON-RPC stdio process dies | Zero-downtime switch to canonical CLI | Execute corresponding command via `python scripts/agent_squad.py` |
 | **Gate Rejection (Stale SDD)** | `sdd/` hash mismatch in `package.json` | Gate status set to `blocked` | Run `python scripts/agent_squad.py sdd status` and recalculate SHA-256 hashes |
+| **Continuous Engine 2-Retry Threshold** | 2 consecutive transition/gate failures | Trip Circuit Breaker (`HALTED_CIRCUIT_BREAKER`) | Investigate error; reset via `python scripts/agent_squad.py run-continuous --work-item <ID> --reset-circuit-breaker` |
+| **G1 PO Human Approval Required** | Item in blueprint with risk ≥ medium without G1 human sign-off | Halt execution with `AWAITING_PO_APPROVAL` | Obtain human approval for G1-product; record in `gate-decisions/GD-G1-PRODUCT.yaml` |
+| **Cognitive Protection (Sizing > 8 pts)** | Story points strictly greater than 8 pts | Block execution with `BLOCKED_SIZING_EXCEEDED` | Re-assign item to `40-agile-coach` for vertical slicing into items ≤ 8 pts |
+
+### 3.2.1 Continuous Trigger Engine (`scripts/continuous_trigger_engine.py`) & CLI `run-continuous`
+- **Comando CLI**:
+  ```powershell
+  python scripts/agent_squad.py run-continuous --work-item <ID> [--max-steps 10] [--dry-run] [--reset-circuit-breaker]
+  ```
+- **Anti-Looping Circuit Breaker**: Monitora falhas consecutivas de transição e avaliações de gate. No limite exato de 2 retries (configurado em `config/workflow.yaml:continuous_engine.max_retries_per_check`), o circuito abre (`OPEN`), interrompendo o loop com `HALTED_CIRCUIT_BREAKER`.
+- **Injeção Product Owner (`POInjectionGuard`)**: Bloqueia avanço de itens de risco `medium`, `high` ou `critical` além de `blueprint` até que o gate `G1-product` possua decisão `approved` com `human_approval.status: approved`.
+- **Injeção Agile Coach (`AgileCoachSizingGuard`)**: Intercepta qualquer item com `story_points > 8` com o status `BLOCKED_SIZING_EXCEEDED`, encaminhando para o `40-agile-coach` para fatiamento vertical (regra de proteção cognitiva de 8 Story Points).
 
 ---
 
