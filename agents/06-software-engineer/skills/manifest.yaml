@@ -30,6 +30,7 @@ assigned:
 - path: integrations/resolvers/impact_analyzer.py
 - path: integrations/resolvers/session_manager.py
 - path: integrations/resolvers/skill_manager.py
+- path: skills/agent-squad-mcp
 - path: skills/delivery/superpowers/executing-plans
 - path: skills/engineering/clean-code/clean-code
 - path: skills/engineering/clean-code/clean-code-guard

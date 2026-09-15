@@ -2,6 +2,7 @@ agent: security-reviewer
 native:
 - path: agents/10-security-reviewer/skills/native/security-reviewer-native
 assigned:
+- path: skills/azure-devops-mcp
 - path: skills/memory/agent-memory
 - path: skills/platform/devops/ci-cd-and-automation
 - path: skills/security/api-security-best-practices

@@ -1,7 +1,7 @@
 version: 2
 mode: local-curated
 generated_at: 2026-08-21T10:30:27.0000000-0300
-active_skill_count: 148
+active_skill_count: 150
 catalog:
 - name: codebase_knowledge_graph
   path: integrations/codebase_knowledge_graph.py
@@ -2275,6 +2275,39 @@ catalog:
   folder_sha256: e53a64d55491ecc813eff10d8b0ce726b99ce1cd5c9f3198d0f1741198abd916
   description: Systematically identify and fix all failing tests using smart grouping
     strategies. Use when explicitly asks to fix tests (
+- name: azure-devops-mcp
+  path: skills/azure-devops-mcp
+  domain: devops-platform
+  specialization: devops-mcp
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - delivery-orchestrator
+  - devops-release-engineer
+  - governance-auditor
+  - qa-engineer
+  - security-reviewer
+  load: on-demand
+  folder_sha256: f0269d507c613f6bb70c64f22a39d7d7ef25fad7f23452cdcee1f9830e2b25bd
+  description: Industrial-grade operational skill for the Azure DevOps MCP server (@azure-devops/mcp). Covers all 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, and Advanced Security with strict Segregation of Duties (SoD) and error handling.
+- name: agent-squad-mcp
+  path: skills/agent-squad-mcp
+  domain: workflow-governance
+  specialization: workflow-mcp
+  source: squad-internal
+  provenance: internal-original
+  license_status: proprietary
+  assigned_to:
+  - code-reviewer
+  - delivery-orchestrator
+  - governance-auditor
+  - qa-engineer
+  - scrum-master
+  - software-engineer
+  load: on-demand
+  folder_sha256: 683d7a5bb59391c9af2218d2e8f47fba68f1cc7ca4ecbbd4c225aba446cabb4c
+  description: Canonical operational skill for the Agent Squad MCP server (integrations/mcp_server.py). Governs session lifecycle, state machines, agent dispatching, gates, evidence hashing, and CLI fallback paths across all 18 tools.
 - name: claude_adapter
   path: integrations/claude_adapter.py
   domain: integration-engines

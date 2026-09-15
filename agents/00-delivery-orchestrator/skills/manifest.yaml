@@ -11,6 +11,8 @@ assigned:
 - path: integrations/experimental/zcode_subagents.py
 - path: integrations/mcp_devops_client.py
 - path: integrations/mcp_server.py
+- path: skills/agent-squad-mcp
+- path: skills/azure-devops-mcp
 - path: skills/delivery/orchestration/closed-loop-delivery
 - path: skills/delivery/orchestration/govern-agent-handoffs
 - path: skills/delivery/orchestration/orchestrate-sdlc-gates

@@ -3,6 +3,8 @@ native:
 - path: agents/12-qa-engineer/skills/native/qa-engineer-native
 assigned:
 - path: integrations/experimental/toon.py
+- path: skills/agent-squad-mcp
+- path: skills/azure-devops-mcp
 - path: skills/engineering/clean-code/verification-before-completion
 - path: skills/memory/agent-memory
 - path: skills/testing/bdd/behavior-driven-development

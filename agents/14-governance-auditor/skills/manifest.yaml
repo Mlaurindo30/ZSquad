@@ -3,6 +3,8 @@ native:
 - path: agents/14-governance-auditor/skills/native/governance-auditor-native
 assigned:
 - path: integrations/resolvers/gate_evaluator.py
+- path: skills/agent-squad-mcp
+- path: skills/azure-devops-mcp
 - path: skills/delivery/orchestration/govern-agent-handoffs
 - path: skills/delivery/orchestration/orchestrate-sdlc-gates
 - path: skills/documentation/documentation-and-adrs

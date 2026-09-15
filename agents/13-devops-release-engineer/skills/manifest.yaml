@@ -13,6 +13,7 @@ assigned:
 - path: integrations/mcp_devops_client.py
 - path: integrations/openclaw_adapter.py
 - path: integrations/zcode_adapter.py
+- path: skills/azure-devops-mcp
 - path: skills/data/databricks/databricks-dabs
 - path: skills/memory/agent-memory
 - path: skills/platform/containers/docker-expert
