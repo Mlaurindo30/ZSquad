@@ -111,7 +111,7 @@ modelo SoD-compliant)". Summary:
 - **Card / G6 closer**: `governance-auditor` (`arthemis@`, não vota PR).
 - **SoD**: `squads@` ≠ `arthemis@` ≠ `cyber_red@` (nível AAD). Personas usam threads da PR com
   tag `[NN-persona-id] approve|reject` parseado por `pr_governance.py` e
-  gravado em `documentation/delivery-ledger.md`.
+  gravado em `docs/delivery-ledger.md`.
 - **Normas aplicadas**: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32; SOC 2 TSC
   CC8.1, CC6.1; NIST SP 800-53 CM-5.
 - **Defaults desligados** (US-3/US-5/US-6): dashboards, wiki, delivery_plan só

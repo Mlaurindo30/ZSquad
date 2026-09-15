@@ -845,7 +845,7 @@ AGENTS_SPEC = {
             {"name": "author-g6", "description": "Author final G6-governance-release gate decision YAML."}
         ],
         "operates": [
-            "Audit documentation/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.",
+            "Audit docs/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.",
             "Verify segregation of duties compliance across all gates (G1 through G6).",
             "Ensure that all risks, findings, and waivers are formally documented and assigned.",
             "Author GD-*-G6-GOVERNANCE.yaml and package the work item for final human sign-off.",
@@ -857,7 +857,7 @@ AGENTS_SPEC = {
             "Agent memory management: `agent-memory`."
         ],
         "assigned_skills": ["orchestrate-sdlc-gates", "govern-agent-handoffs", "security-review-gates", "security-auditor", "agent-memory"],
-        "artifacts": ["documentation/delivery-ledger.md", "gate-decisions/G6-governance.yaml", "reviews/compliance-audit.md"],
+        "artifacts": ["docs/delivery-ledger.md", "gate-decisions/G6-governance.yaml", "reviews/compliance-audit.md"],
         "gate": "G6-governance-release",
         "reports_to": "delivery-orchestrator",
         "works_with": ["devops-release-engineer", "delivery-orchestrator"]
@@ -1104,7 +1104,7 @@ AGENTS_SPEC = {
         ],
         "operates": [
             "Structure all project documentation according to the four Diátaxis quadrants.",
-            "Maintain documentation/delivery-ledger.md with exact artifact paths, decisions, and tests.",
+            "Maintain docs/delivery-ledger.md with exact artifact paths, decisions, and tests.",
             "Generate clean API reference documentation and usage guides.",
             "Review docs against codebase to eliminate drift and outdated instructions.",
             "Deliver updated documentation packages to Governance Auditor."
@@ -1116,7 +1116,7 @@ AGENTS_SPEC = {
             "Agent memory management: `agent-memory`."
         ],
         "assigned_skills": ["documentation", "api-documentation", "documentation-and-adrs", "documentation-templates", "code-documentation-doc-generate", "code-documentation-code-explain", "agent-memory"],
-        "artifacts": ["documentation/delivery-ledger.md", "docs/*.md"],
+        "artifacts": ["docs/delivery-ledger.md", "docs/*.md"],
         "gate": "G6-governance-release",
         "reports_to": "delivery-orchestrator",
         "works_with": ["solution-architect", "governance-auditor", "software-engineer"]

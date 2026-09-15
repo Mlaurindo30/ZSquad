@@ -55,7 +55,7 @@ C4Container
    lê `templates/devops.yaml`, valida contra `devops-config.schema.json`,
    provisiona via REST com a conta apropriada.
 2. **PR vote → ledger**: `pr_governance.py` parseia threads, registra em
-   `documentation/delivery-ledger.md` com `evidence` por work item.
+   `docs/delivery-ledger.md` com `evidence` por work item.
 3. **Persona → LLM**: `render_agent_prompt.py` compila o system prompt da
    persona a partir de `PROMPT.md` + skills; chama provider; resposta volta
    como texto estruturado.
@@ -66,5 +66,5 @@ C4Container
 persona action -> script (REST) -> Azure DevOps
                               -> banco/squad.db
                               -> sinapse (vault)
-                              -> documentation/delivery-ledger.md
+                              -> docs/delivery-ledger.md
 ```

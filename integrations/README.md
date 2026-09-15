@@ -44,14 +44,14 @@ integrations/
 | **Entrada canônica** | CLI do Squad (`python scripts/agent_squad.py`) — não há segundo orquestrador |
 | **Componentes ativos** | `adapter/` (contratos, validação, política, rendering, backlog), `overlays/commands/` (7 comandos governados), enforcement no CLI (`decide-gate`, `advance-state`, `run-engine`) |
 | **Integridade** | `UPSTREAM_FILES.sha256` (567 entradas) verificado por `verify_snapshot.py` |
-| **Operação** | `documentation/spec-kit-operations.md` (atualização, rollback, diagnóstico, adoção legada) |
+| **Operação** | `docs/spec-kit-operations.md` (atualização, rollback, diagnóstico, adoção legada) |
 | **Política por projeto** | `<project_root>/.agents_squad/config/sdd-policy.yaml` (schema: `contracts/sdd-policy.schema.json`) |
 | **Proveniência** | `integrations/spec-kit/PROVENANCE.yaml`; patches em `integrations/spec-kit/PATCHES.md` |
 
 **Notas de catálogo:** o `agent_squad.py audit` reporta ~255 apontamentos "skill
 ativa fora do catálogo" sob `integrations/spec-kit/` (upstream + adapter/tests) —
 classe conhecida, baseline documentada na seção 6.1 de
-`documentation/spec-kit-operations.md` (tratamento: exclusão de catálogo ou aceite
+`docs/spec-kit-operations.md` (tratamento: exclusão de catálogo ou aceite
 de governança; não é silenciosamente ignorado).
 
 ---

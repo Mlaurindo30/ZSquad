@@ -5,7 +5,7 @@
 > limitações residuais da integração `integrations/spec-kit/`.
 >
 > **Procedência**: documentado na Tarefa T8 (`work/agent_squad/TASK-SPECKIT-T8-20260911`)
-> conforme `documentation/plans/2026-09-11-spec-kit-integration.md` (§4, §7-T8, §9).
+> conforme `docs/plans/2026-09-11-spec-kit-integration.md` (§4, §7-T8, §9).
 > Todo comando listado foi executado ou verificado via `--help` nesta sessão
 > (2026-09-11). O que não foi executado está marcado como **não executado nesta sessão**.
 
@@ -368,7 +368,7 @@ Registrados conforme §7-T8 (item 3) do plano:
 
 ## 10. Referências
 
-- Plano: `documentation/plans/2026-09-11-spec-kit-integration.md` (§4, §7-T8, §9)
+- Plano: `docs/plans/2026-09-11-spec-kit-integration.md` (§4, §7-T8, §9)
 - Snapshot: `integrations/spec-kit/README.md`, `integrations/spec-kit/PROVENANCE.yaml`
 - Contratos: `contracts/sdd-package.schema.json`, `contracts/sdd-policy.schema.json`
 - Work item: `work/agent_squad/TASK-SPECKIT-T8-20260911/`

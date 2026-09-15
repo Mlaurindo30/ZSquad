@@ -50,14 +50,14 @@ release_readiness:
     live_devops_validation: "NÃO EXECUTADA — nenhuma validação live de Azure DevOps foi realizada"
   t8_verification:
     validate_structure: "VALID structure agents=41 active_skills=148 schemas=15 (exit 0)"
-    audit: "exit 1 — 255 apontamentos 'skill ativa fora do catálogo', todos sob integrations/spec-kit/ (classe conhecida, baseline documentada em documentation/spec-kit-operations.md §6.1)"
+    audit: "exit 1 — 255 apontamentos 'skill ativa fora do catálogo', todos sob integrations/spec-kit/ (classe conhecida, baseline documentada em docs/spec-kit-operations.md §6.1)"
     verify_snapshot: "OK: snapshot íntegro (UPSTREAM_FILES.sha256) (exit 0)"
     snapshot_swap_rehearsal: "PASS — temp fora do repo: A/A-manifesto exit 0; B(simulado novo commit)/A-manifesto exit 1 (MISMATCH: README.md); rollback seguro provado; temp removido"
-  legacy_adoption: "Critérios registrados em documentation/spec-kit-operations.md §8 (baseline mínima revisada; sem backfill de aprovações; itens pré-ativação bloqueados fail-closed)"
+  legacy_adoption: "Critérios registrados em docs/spec-kit-operations.md §8 (baseline mínima revisada; sem backfill de aprovações; itens pré-ativação bloqueados fail-closed)"
   rollout:
     phase: "pronto para submissão de G6 (humana-gated); NÃO habilitado globalmente"
     g6_submission: "PREPARADA, NÃO EXECUTADA — depende de autorização humana explícita (decider governance-auditor)"
-  operations_doc: "documentation/spec-kit-operations.md"
+  operations_doc: "docs/spec-kit-operations.md"
   correction_2026_09_11: >-
     Auditoria pos-entrega (TASK-SPECKIT-AUDIT-20260911) concluiu CHANGES_REQUESTED:
     integracao operacional parcial, evidencia stale na T5, G6 sem aceite especifico.

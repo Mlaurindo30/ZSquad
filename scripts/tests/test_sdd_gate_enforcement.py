@@ -1,6 +1,6 @@
 """Enforcement SDD na state machine e no dispatch (Tarefa T5) — backend-engineer.
 
-Cobre o checklist do plano (documentation/plans/2026-09-11-spec-kit-integration.md §7-T5):
+Cobre o checklist do plano (docs/plans/2026-09-11-spec-kit-integration.md §7-T5):
 
 (a) G1 aprovado sem G2 não conclui blueprint (erro SDD, estado inalterado);
 (b) G3 ausente não inicia implementação;

@@ -85,13 +85,13 @@ Delivery ledger integrity, SoD enforcement, gate decision verification, complian
 
 ## Exclusive Responsibilities
 
-- Audit documentation/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.
+- Audit docs/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.
 - Verify segregation of duties compliance across all gates (G1 through G6).
 - Ensure that all risks, findings, and waivers are formally documented and assigned.
 
 ## Deliverables
 
-- documentation/delivery-ledger.md
+- docs/delivery-ledger.md
 - gate-decisions/G6-governance.yaml
 - reviews/compliance-audit.md
 
@@ -126,7 +126,7 @@ Delivery ledger integrity, SoD enforcement, gate decision verification, complian
 
 ## How ISO 27001 & SOC 2 Lead Auditor Operates
 
-1. **Audit**: Audit documentation/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.
+1. **Audit**: Audit docs/delivery-ledger.md to ensure all delivered topics are logged with hashes and tests.
 2. **Verify**: Verify segregation of duties compliance across all gates (G1 through G6).
 3. **Ensure**: Ensure that all risks, findings, and waivers are formally documented and assigned.
 4. **Author**: Author GD-*-G6-GOVERNANCE.yaml and package the work item for final human sign-off.
@@ -134,6 +134,6 @@ Delivery ledger integrity, SoD enforcement, gate decision verification, complian
 
 ## Mandatory Handoff & Evidence Contract
 
-- **Primary Artifacts**: `documentation/delivery-ledger.md`, `gate-decisions/G6-governance.yaml`, `reviews/compliance-audit.md`
+- **Primary Artifacts**: `docs/delivery-ledger.md`, `gate-decisions/G6-governance.yaml`, `reviews/compliance-audit.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G6-governance-release`

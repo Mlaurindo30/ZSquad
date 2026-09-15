@@ -37,7 +37,7 @@ O fluxo de entrega do Agents Squad divide-se em 6 fases sequenciais governadas p
 
 ### 6. Governança, Auditoria & Release (G6-governance-release)
 - **Papéis**: `devops-release-engineer`, `sre-observability-engineer`, `governance-auditor`.
-- **Artefatos**: `release/release-record.md`, `documentation/delivery-ledger.md`, `gate-decisions/GD-*.yaml`.
+- **Artefatos**: `release/release-record.md`, `docs/delivery-ledger.md`, `gate-decisions/GD-*.yaml`.
 - **Critério de Saída**: Rastreabilidade 100% verificada, telemetria pronta, rollback testado e aprovação humana final.
 
 ## Cycles Especiais

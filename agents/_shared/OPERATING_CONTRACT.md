@@ -36,7 +36,7 @@ Epic → Feature → User Story (≤8 pts) → Task (5 técnicas por história)
 Artefatos locais permitidos quando ADO está ativo:
 - `status.yaml` (estado local sincronizado com `devops_id`)
 - `gate-decisions/GD-*.yaml` (evidências formais de gate)
-- `documentation/delivery-ledger.md` (trilha de auditoria)
+- `docs/delivery-ledger.md` (trilha de auditoria)
 - `work/<ID>/traceability/` (evidências técnicas)
 
 ## Escrita concorrente
@@ -50,7 +50,7 @@ Artefatos locais permitidos quando ADO está ativo:
 
 ## Evidência e documentação
 
-Todo tópico concluído deve atualizar `documentation/delivery-ledger.md` com ID,
+Todo tópico concluído deve atualizar `docs/delivery-ledger.md` com ID,
 artefato, decisão, testes, documentação afetada e próximo passo. “Feito” sem essa
 linha é incompleto.
 
@@ -132,7 +132,7 @@ Aprovação segue **três camadas** que refletem `segregation_of_duties` em
   preservada: `squads@` ≠ `arthemis@` ≠ `cyber_red@`.
 - Persona é resolvida pelo **path tocado** (CODEOWNERS), não por votação
   aberta. Cada persona deixa thread na PR com tag `[NN-persona-id] approve|reject`,
-  parseado por `pr_governance.py` e gravado em `documentation/delivery-ledger.md`.
+  parseado por `pr_governance.py` e gravado em `docs/delivery-ledger.md`.
 
 **Card / Board:**
 
@@ -160,7 +160,7 @@ Aprovação segue **três camadas** que refletem `segregation_of_duties` em
   roda `python scripts/audit_weekly_sample.py` semanalmente, amostrando 10%
   dos PRs mergeados, validando SoD via `/_apis/policy/evaluations` e
   `/_apis/git/pullRequests/{id}/reviewers`, gravando em
-  `documentation/audit-reports/YYYY-WW.md`.
+  `docs/audit-reports/YYYY-WW.md`.
 
 ### Pontuação e cores
 

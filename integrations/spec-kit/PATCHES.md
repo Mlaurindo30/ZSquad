@@ -18,6 +18,6 @@ alterados ou removidos).
 Toda futura divergência local sobre a árvore upstream (arquivo alterado,
 adicionado ou removido) deve ser registrada aqui com data, tipo, justificativa
 e autor, e refletida no manifesto `UPSTREAM_FILES.sha256` somente por meio de
-procedimento documentado (ver `documentation/plans/2026-09-11-spec-kit-integration.md`,
+procedimento documentado (ver `docs/plans/2026-09-11-spec-kit-integration.md`,
 seção 4). O verificador `verify_snapshot.py` rejeita qualquer divergência não
 manifestada.

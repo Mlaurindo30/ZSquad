@@ -154,7 +154,7 @@ Coverage threshold is governed by `pyproject.toml` (`fail_under = 85` until the 
 
 Every work item produces an immutable ledger entry. Inspect the chronological delivery record at:
 
-- `documentation/delivery-ledger.md`
+- `docs/delivery-ledger.md`
 
 The ledger records work-item IDs, gate decisions (G1–G6), handoffs, and verification evidence.
 
@@ -162,7 +162,7 @@ The ledger records work-item IDs, gate decisions (G1–G6), handoffs, and verifi
 
 Periodic and ad-hoc audits land under:
 
-- `documentation/audit-reports/`
+- `docs/audit-reports/`
 
 Each report is stamped with its date and scope (e.g. `2026-09-02-exhaustive-audit.md`). Use these as the canonical record of which findings were open, fixed, or accepted as risk.
 

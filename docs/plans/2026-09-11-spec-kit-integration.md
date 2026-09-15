@@ -52,7 +52,7 @@ Novos arquivos/diretórios:
 - contracts/sdd-package.schema.json: contrato proposto dos artefatos SDD.
 - contracts/sdd-policy.schema.json: contrato proposto da política por projeto.
 - scripts/tests/test_sdd_gate_enforcement.py: integração com estados/gates.
-- documentation/spec-kit-operations.md: operação, atualização, diagnóstico e rollback.
+- docs/spec-kit-operations.md: operação, atualização, diagnóstico e rollback.
 
 Arquivos existentes afetados:
 - scripts/agent_squad.py: entrada CLI, avaliação de gates e avanço protegido.
@@ -228,7 +228,7 @@ Aceite: provas positivas e negativas, sem afirmar validação live de DevOps se 
 
 ### T8 — Operação, atualização e rollout (3 pts)
 Owner devops-release-engineer; reviewer governance-auditor. Depende T7.
-Arquivos: documentation/spec-kit-operations.md, integrations/README.md, PROVENANCE.yaml.
+Arquivos: docs/spec-kit-operations.md, integrations/README.md, PROVENANCE.yaml.
 - [ ] Documentar instalação isolada, política, comandos efetivamente implementados e recuperação.
 - [ ] Ensaiar troca entre dois snapshots em fixture e rollback preservando artefatos.
 - [ ] Registrar critérios de adoção legada: baseline mínima revisada antes da próxima implementação; sem backfill de aprovações.

@@ -63,7 +63,6 @@ DISTRIBUTION_TOP = {
     "config",
     "contracts",
     "docs",
-    "documentation",
     "integrations",
     "rendered_prompts",
     "scripts",
@@ -180,7 +179,7 @@ def classify(relative: str) -> dict[str, Any]:
         classification, owner = "module", "skill-curator"
     elif top in {"templates", "tasks", "workflows"}:
         classification, owner = "adapter", "delivery-orchestrator"
-    elif top in {"docs", "documentation", "rendered_prompts"}:
+    elif top in {"docs", "rendered_prompts"}:
         classification, owner = "doc", "technical-writer"
     else:
         raise ManifestError(f"unclassified file: {relative}")

@@ -6,7 +6,7 @@ CODEX.md, GEMINI.md) e verifica:
 - sobreposição textual entre CLAUDE.md e CODEX.md (alvo: <= 80%);
 - hash SHA-256 dos arquivos para detectar drift silencioso entre execuções.
 
-Quando ``--write`` é informado, regenera ``documentation/provider-prompts-hashes.json``
+Quando ``--write`` é informado, regenera ``docs/provider-prompts-hashes.json``
 com os hashes atuais e o relatório de sobreposição. Caso contrário, apenas
 verifica e sai com código 0 quando OK, 1 quando falha.
 """
@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None, max_overlap: float | None = None) -> int
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Atualiza o relatório de hashes em documentation/provider-prompts-hashes.json.",
+        help="Atualiza o relatório de hashes em docs/provider-prompts-hashes.json.",
     )
     parser.add_argument(
         "--max-claude-codex-overlap",
@@ -124,7 +124,7 @@ def main(argv: list[str] | None = None, max_overlap: float | None = None) -> int
     hashes = {name: _hash(ROOT / name) for name in PROVIDER_LIMITS}
 
     if args.write:
-        target = ROOT / "documentation" / "provider-prompts-hashes.json"
+        target = ROOT / "docs" / "provider-prompts-hashes.json"
         target.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "schema_version": 1,

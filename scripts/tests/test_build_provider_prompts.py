@@ -91,11 +91,11 @@ def test_main_writes_report_when_flag_present(tmp_path, monkeypatch, capsys):
         codex="codex payload",
         gemini="gemini payload",
     )
-    (root / "documentation").mkdir(exist_ok=True)
+    (root / "docs").mkdir(exist_ok=True)
     mod = _load()
     monkeypatch.setattr(mod, "ROOT", root)
     rc = mod.main(["--write", "--max-claude-codex-overlap", "1.0"])
-    report = json.loads((root / "documentation" / "provider-prompts-hashes.json").read_text())
+    report = json.loads((root / "docs" / "provider-prompts-hashes.json").read_text())
     assert report["hashes"]["AGENTS.md"]
 
 

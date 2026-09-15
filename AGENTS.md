@@ -137,7 +137,7 @@ Canonical mapping: `agents/_shared/OPERATING_CONTRACT.md` §"Quem aprova o quê"
 - **PR reviewers** (`arthemis@`): `code-reviewer` (default), `security-reviewer` (sensitive paths), `qa-engineer` (tests/bdd/specs), `performance-engineer` (perf/hotpaths).
 - **PR reviewer (`cyber_red@`)**: `offensive-cyber-operator` (auth/crypto/iac) — dual sign-off with `security-reviewer` (`arthemis@`). Compensating control: `double_signoff_with: [security-reviewer]`.
 - **Card / G6 closer**: `governance-auditor` (`arthemis@`, no PR vote).
-- **SoD**: `squads@` ≠ `arthemis@` ≠ `cyber_red@` (AAD level). PR threads use `[NN-persona-id] approve|reject` parsed by `pr_governance.py` into `documentation/delivery-ledger.md`.
+- **SoD**: `squads@` ≠ `arthemis@` ≠ `cyber_red@` (AAD level). PR threads use `[NN-persona-id] approve|reject` parsed by `pr_governance.py` into `docs/delivery-ledger.md`.
 - **Compliance**: ISO 27001 A.5.3/A.8.28/A.8.32, SOC 2 CC8.1/CC6.1, NIST CM-5. Dashboards/wiki/delivery_plan apply only if `enabled: true` in `devops.yaml`.
 
 ## 10. Git Hygiene & Commits

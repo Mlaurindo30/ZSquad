@@ -140,5 +140,5 @@ Mapeamento canônico: `agents/_shared/OPERATING_CONTRACT.md` §"Quem aprova o qu
 - **Revisores de PR** (`arthemis@`): `code-reviewer` (default), `security-reviewer` (paths sensíveis), `qa-engineer` (testes/bdd/specs), `performance-engineer` (perf/hotpaths).
 - **Revisor de PR (`cyber_red@`)**: `offensive-cyber-operator` em auth/crypto/iac — duplo sign-off com `security-reviewer` (`arthemis@`). Controle compensatório: `double_signoff_with: [security-reviewer]`.
 - **Fechamento de Card / G6**: `governance-auditor` (`arthemis@`, não vota em PR).
-- **SoD**: `squads@` ≠ `arthemis@` ≠ `cyber_red@` (nível AAD). Threads de PR usam `[NN-persona-id] approve|reject` parseado por `pr_governance.py` em `documentation/delivery-ledger.md`.
+- **SoD**: `squads@` ≠ `arthemis@` ≠ `cyber_red@` (nível AAD). Threads de PR usam `[NN-persona-id] approve|reject` parseado por `pr_governance.py` em `docs/delivery-ledger.md`.
 - **Conformidade**: ISO 27001 A.5.3/A.8.28/A.8.32, SOC 2 CC8.1/CC6.1, NIST CM-5. Dashboards/wiki/delivery_plan aplicam apenas se `enabled: true` em `devops.yaml`.

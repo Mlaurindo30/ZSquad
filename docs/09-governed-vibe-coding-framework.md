@@ -71,7 +71,7 @@ O ciclo de vida CAEL é composto por cinco etapas sequenciais e retroalimentadas
 ### Fase 4: Auditoria de Gates e Segurança (*Gate Verification & Review*)
 - Os agentes `code-reviewer` e `security-reviewer` avaliam o código contra OWASP Top 10, ASVS 4.0 e Clean Code.
 - Emissão da decisão formal de gate em `gate-decisions/GD-*.yaml`.
-- Atualização do `documentation/delivery-ledger.md` com hashes, testes e artefatos.
+- Atualização do `docs/delivery-ledger.md` com hashes, testes e artefatos.
 
 ### Fase 5: Feedback Loop & Refinamento de Regras (*Rule Refinement*)
 - Padrões de falha detectados ou novas diretrizes aprendidas são registrados como deltas de memória (`MEM-*.yaml`) e promovidos para as regras canônicas do projeto.

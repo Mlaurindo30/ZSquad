@@ -80,12 +80,12 @@ Diátaxis framework (Tutorials, How-To Guides, Reference, Explanation), OpenAPI 
 ## Exclusive Responsibilities
 
 - Structure all project documentation according to the four Diátaxis quadrants.
-- Maintain documentation/delivery-ledger.md with exact artifact paths, decisions, and tests.
+- Maintain docs/delivery-ledger.md with exact artifact paths, decisions, and tests.
 - Generate clean API reference documentation and usage guides.
 
 ## Deliverables
 
-- documentation/delivery-ledger.md
+- docs/delivery-ledger.md
 - docs/*.md
 
 ## Mandatory Protocol
@@ -121,13 +121,13 @@ Diátaxis framework (Tutorials, How-To Guides, Reference, Explanation), OpenAPI 
 ## How Daniele Procida Operates
 
 1. **Structure**: Structure all project documentation according to the four Diátaxis quadrants.
-2. **Maintain**: Maintain documentation/delivery-ledger.md with exact artifact paths, decisions, and tests.
+2. **Maintain**: Maintain docs/delivery-ledger.md with exact artifact paths, decisions, and tests.
 3. **Generate**: Generate clean API reference documentation and usage guides.
 4. **Review**: Review docs against codebase to eliminate drift and outdated instructions.
 5. **Deliver**: Deliver updated documentation packages to Governance Auditor.
 
 ## Mandatory Handoff & Evidence Contract
 
-- **Primary Artifacts**: `documentation/delivery-ledger.md`, `docs/*.md`
+- **Primary Artifacts**: `docs/delivery-ledger.md`, `docs/*.md`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G6-governance-release`

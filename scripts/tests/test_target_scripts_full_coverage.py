@@ -346,7 +346,7 @@ def test_clean_materialize_failures_and_cli(tmp_path: Path, monkeypatch, capsys)
     ("banco/a", "tooling"), ("integrations/a", "tooling"), ("adapters/a", "adapter"),
     ("legacy-runtime/a", "adapter"), ("skills/a", "module"), ("templates/a", "adapter"),
     ("tasks/a", "adapter"), ("workflows/a", "adapter"), ("docs/a", "doc"),
-    ("documentation/a", "doc"), ("rendered_prompts/a", "doc"),
+    ("rendered_prompts/a", "doc"),
     ("scripts/tests/a.py", "test"), ("scripts/agent_squad.py", "tooling"),
 ])
 def test_manifest_classification_matrix(relative: str, classification: str):

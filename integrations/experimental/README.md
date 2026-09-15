@@ -4,7 +4,7 @@
 
 These 12 modules were moved from `integrations/` to `integrations/experimental/`
 during the **2026-09-02 exhaustive audit**
-(`documentation/audit-reports/2026-09-02-exhaustive-audit.md`, section 4.1).
+(`docs/audit-reports/2026-09-02-exhaustive-audit.md`, section 4.1).
 
 The audit found that **no active callers exist** for any of these modules — they
 are dead code with zero imports across the entire repository. The active
@@ -32,7 +32,7 @@ integration connector (`devops_platform_connector.py`) remains in
 
 ## Audit report reference
 
-Full details: `documentation/audit-reports/2026-09-02-exhaustive-audit.md`
+Full details: `docs/audit-reports/2026-09-02-exhaustive-audit.md`
 (Section 4.1 — Dead Code: 12 Orphan Modules; Issue B-4).
 
 ## How to restore a module if needed

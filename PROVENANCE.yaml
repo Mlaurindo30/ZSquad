@@ -122,7 +122,7 @@ applied_changes:
       - work/agent_squad/EPIC-SPECKIT-20260911/epic.md
       - work/agent_squad/EPIC-SPECKIT-20260911/documentation/delivery-ledger.md
       - work/agent_squad/EPIC-SPECKIT-20260911/gate-decisions/GD-EPIC-SPECKIT-20260911-G6-GOVERNANCE-RELEASE.yaml
-      - documentation/delivery-ledger.md
+      - docs/delivery-ledger.md
       - integrations/spec-kit/PROVENANCE.yaml
 constraints:
   - Keep work-item state, evidence, handoffs, memory and gates authoritative.
