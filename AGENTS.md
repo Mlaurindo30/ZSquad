@@ -27,23 +27,24 @@ commands:
 ```
 
 ## 1. Runtime, Context & Two-Layer Memory (Absolute Paths & SQUAD_RUNTIME)
-- **Shared Runtime Path (SQUAD_RUNTIME)**: `C:\Users\miche\OneDrive\Documentos\agent_squad`.
-- **Environment Variable**: `SQUAD_RUNTIME` must be set in the system environment pointing to `C:\Users\miche\OneDrive\Documentos\agent_squad`.
-- **PathContainmentGuard**: Absolute path containment rule enforcing that no target project may contain a local `./work` directory; all state is strictly confined within `C:\Users\miche\OneDrive\Documentos\agent_squad\work\<project_id>/`. Violations trigger fail-closed `PathContainmentViolation`.
+- **Shared Runtime Path (SQUAD_RUNTIME)**: Defined by environment variable `%SQUAD_RUNTIME%` (or `$SQUAD_RUNTIME` in POSIX), defaulting to `C:\Users\miche\OneDrive\Documentos\agent_squad` or local installation path.
+- **Environment Variable**: `SQUAD_RUNTIME` must be set in the system environment pointing to the agent squad runtime root.
+- **PathContainmentGuard**: Absolute path containment rule enforcing that no target project may contain a local `./work` directory; all state is strictly confined within `%SQUAD_RUNTIME%\work\<project_id>/` (or `$SQUAD_RUNTIME/work/<project_id>/`). Violations trigger fail-closed `PathContainmentViolation`.
 - **Two-Layer Memory**:
-  1. *Project Memory (Mandatory)*: AST symbols/quorums (`C:\Users\miche\OneDrive\Documentos\agent_squad\banco\squad.db`), Code Graph (`C:\Users\miche\OneDrive\Documentos\agent_squad\integrations\codebase_knowledge_graph.py`), working memory (`C:\Users\miche\OneDrive\Documentos\agent_squad\work\<project_id>\memory\shared\summary.md`).
+  1. *Project Memory (Mandatory)*: AST symbols/quorums (`%SQUAD_RUNTIME%\banco\squad.db`), Code Graph (`%SQUAD_RUNTIME%\integrations\codebase_knowledge_graph.py`), working memory (`%SQUAD_RUNTIME%\work\<project_id>\memory\shared\summary.md`).
   2. *Second Brain Global (Hive-Mind / Sinapse — `D:/Hive-Mind`)*: Query via `sinapse_query`; persist cross-project architectural decisions via `sinapse_save_decision`.
 
 ## 2. Mandatory Subagent Prompt Rendering & Invocation Rule (CRITICAL)
 - **Imperative Rule for Subagent Delegation**: 
-  Whenever you invoke any subagent via `invoke_subagent`, you **MUST** first generate its fully compiled system prompt by executing the global renderer script using absolute paths:
+  Whenever you invoke any subagent via `invoke_subagent`, you **MUST** first generate its fully compiled system prompt by executing the global renderer script using portable commands:
   ```bash
-  python C:\Users\miche\OneDrive\Documentos\agent_squad\scripts\render_agent_prompt.py --agent <agent-id> [--work-item <work-item-path>]
+  squad render-prompt --agent <agent-id> [--work-item <work-item-path>]
   ```
-  Or via the squad CLI:
+  Or via Python with environment variable:
   ```bash
-  python C:\Users\miche\OneDrive\Documentos\agent_squad\scripts\agent_squad.py render-prompt --agent <agent-id> [--work-item <work-item-path>]
+  python "%SQUAD_RUNTIME%\scripts\render_agent_prompt.py" --agent <agent-id> [--work-item <work-item-path>]
   ```
+  (or `$SQUAD_RUNTIME/scripts/render_agent_prompt.py` in POSIX).
   You **MUST** pass the resulting rendered prompt text as the primary system prompt / instruction payload to the subagent. Never invoke a subagent with only a raw name or unrendered prompt.
 
 ## 3. 41 Specialists Routing, Dispatch & WIP Limits
@@ -54,12 +55,20 @@ commands:
   - *Review/Cyber*: `09-code-reviewer`, `10-security-reviewer`, `11-test-engineer`, `12-qa-engineer`, `28-performance-engineer`, `34-offensive-cyber-operator`.
   - *Ops/SRE*: `13-devops-release-engineer`, `14-governance-auditor`, `26-sre-observability-engineer`.
   - *Strategy/UX/Docs*: `15-ai-analyst`, `18-skill-curator`, `19-technical-writer`, `20-ux-researcher`, `30-brand-strategist`, `31-direct-response-copywriter`, `32-growth-marketing-strategist`, `33-storytelling-strategist`, `41-ui-designer`.
-- **Work Cycles & Disciplines**: Consult `C:\Users\miche\OneDrive\Documentos\agent_squad\config\cycles.yaml` to identify the active work cycle. Enforce TDD and BDD practice anchors across development.
+- **Work Cycles & Disciplines**: Consult `%SQUAD_RUNTIME%\config\cycles.yaml` to identify the active work cycle. Enforce TDD and BDD practice anchors across development.
 - **Dispatch & Triage**: Dispatch a subagent only when specialist evidence or segregation changes outcome. Always synthesize specialist findings into one unified response.
 - **WIP Limits**: Max 10 personas/item. Design 2, Impl 3, Rev 2, Val 2. High/Critical risk: 1 persona at a time. Author never reviews own work at risk ≥ medium.
 
 ## 4. Subagent Loading Order & Cognitive Contract
-- **5-Step Loading Order**: 1. Persona (`C:\Users\miche\OneDrive\Documentos\agent_squad\agents\<id>\PROMPT.md`) → 2. Manifest (`C:\Users\miche\OneDrive\Documentos\agent_squad\agents\<id>\skills\manifest.yaml`) → 3. Skills (`SKILL.md` of native/assigned) → 4. Technical Research (official docs/web) → 5. DevOps (`@azure-devops/mcp` / CLI).
+- **5-Step Loading Order**: 
+  1. Persona (`%SQUAD_RUNTIME%\agents\<id>\PROMPT.md`)
+  2. Manifest (`%SQUAD_RUNTIME%\agents\<id>\skills\manifest.yaml`)
+  3. Mandatory MCP & Domain Skills:
+     - `%SQUAD_RUNTIME%\skills\agent-squad-mcp\SKILL.md` (18 cycle, session & gate tools)
+     - `%SQUAD_RUNTIME%\skills\azure-devops-mcp\SKILL.md` (40 ADO tools & SoD matrix)
+     - `SKILL.md` of native and assigned skills
+  4. Technical Research (official docs / external search before proposing code)
+  5. Execution with Host & DevOps Tools (MCPs, squad CLI, run_command, replace_file_content under SoD)
 - **Cognitive Contract**:
   - *Strict Anti-Hallucination*: Absolute ban on inventing APIs, parameters, paths or CLI commands. Emit `UNVERIFIED`, `NOT FOUND`, or `EMPTY` when data is absent.
   - *Chain-of-Thought (CoT)*: Step-by-step analytical reasoning before outputs or file mutations.
@@ -84,9 +93,9 @@ commands:
 - Make state changes explicit: what changed, what remains, and specify one concrete next action.
 
 ## 7. Operational Tooling & Workflow Execution
-- Consume control plane via **`C:\Users\miche\OneDrive\Documentos\agent_squad\skills\agent-squad-mcp\SKILL.md`** & **`C:\Users\miche\OneDrive\Documentos\agent_squad\skills\azure-devops-mcp\SKILL.md`**:
-  - *Agent Squad MCP Server (`C:\Users\miche\OneDrive\Documentos\agent_squad\integrations\mcp_server.py`)*: `start_session`, `resume_session`, `get_assignment`, `get_context`, `prepare_delegation`, `preflight`, `record_execution`, `record_evidence`, `evaluate_gate`, `create_handoff`, `report_failure`, `doctor`, `discover_skill`, `curate_skill`, `memory_query`, `memory_propose_delta`, `impact_analysis`, `replay_receipt`.
+- Consume control plane via **`%SQUAD_RUNTIME%\skills\agent-squad-mcp\SKILL.md`** & **`%SQUAD_RUNTIME%\skills\azure-devops-mcp\SKILL.md`**:
+  - *Agent Squad MCP Server (`%SQUAD_RUNTIME%\integrations\mcp_server.py`)*: `start_session`, `resume_session`, `get_assignment`, `get_context`, `prepare_delegation`, `preflight`, `record_execution`, `record_evidence`, `evaluate_gate`, `create_handoff`, `report_failure`, `doctor`, `discover_skill`, `curate_skill`, `memory_query`, `memory_propose_delta`, `impact_analysis`, `replay_receipt`.
   - *Azure DevOps MCP Server (`@azure-devops/mcp`)*: 40 tools across Core, Work, Pipelines, Repos, WIT, Wiki, Test Plans, Search, Advanced Security.
-  - *CLI Fallback (`C:\Users\miche\OneDrive\Documentos\agent_squad\scripts\agent_squad.py`)*: `init-work-item`, `render-prompt`, `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
+  - *CLI Fallback (`%SQUAD_RUNTIME%\scripts\agent_squad.py` or `squad`)*: `init-work-item`, `render-prompt`, `advance-state`, `run-continuous`, `decide-gate`, `create-handoff`, `query-memory`, `sdd run`.
 - Gates: `G1-product` · `G2-design` · `G3-readiness` · `G4-code-security` · `G5-quality` · `G6-governance-release`.
 - Azure DevOps SoD: Contributors (`squads@`), Required Approvers (`arthemis@`), Red Team (`cyber_red@`).
