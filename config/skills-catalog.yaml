@@ -44,7 +44,7 @@ catalog:
   description: OBRIGATORIO antes de alterar producao/schema/credencial/dado sensivel.
     Identifica afetados pelo change e calcula raio de explosao.
 - name: clone_or_update_repos
-  path: integrations/experimental/clone_or_update_repos.py
+  path: integrations/clone_or_update_repos.py
   domain: integration-engines
   specialization: repo-sync
   source: squad-internal

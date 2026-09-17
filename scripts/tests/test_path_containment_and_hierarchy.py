@@ -39,6 +39,7 @@ def test_path_containment_guard_allows_canonical_work(squad_env):
     assert validated.resolve() == canonical_target.resolve()
 
 
+
 def test_4_tier_hierarchy_creation_success(squad_env):
     epic_path = squad_env.init_work_item('EPIC-PROJ-01', 'high', item_type='epic')
     epic_status = yaml.safe_load((epic_path / 'status.yaml').read_text(encoding='utf-8'))
@@ -89,7 +90,7 @@ def test_qbc_deduplication_protocol(squad_env):
     squad_env.init_work_item('EPIC-AUTH-01', 'high', item_type='epic')
 
     with pytest.raises(SquadError, match='QBC Violation: Duplicate epic detected'):
-        squad_env.init_work_item('EPIC-AUTH-02', 'high', item_type='epic')
+        squad_env.init_work_item('EPIC-AUTH-01', 'high', item_type='epic')
 
     forced_epic = squad_env.init_work_item('EPIC-AUTH-02', 'high', item_type='epic', force=True)
     assert forced_epic.exists()

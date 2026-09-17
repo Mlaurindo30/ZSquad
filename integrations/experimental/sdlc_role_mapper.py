@@ -14,7 +14,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2] if Path(__file__).resolve().parent.name == "experimental" else Path(__file__).resolve().parents[1]
 
 
 class SDLCRoleMapper:
@@ -27,6 +27,17 @@ class SDLCRoleMapper:
             squad_root: Raiz do squad.
         """
         self.squad_root = Path(squad_root) if squad_root else ROOT
+
+    def get_canonical_sdlc_agents(self) -> list[str]:
+        """Descobre os agentes SDLC canônicos definidos em integrations/vendor/sdlc-agents/agents/.
+
+        Returns:
+            list[str]: Lista de nomes de agentes (ex: ['design', 'execution', ...]).
+        """
+        vendor_agents_dir = self.squad_root / "integrations" / "vendor" / "sdlc-agents" / "agents"
+        if not vendor_agents_dir.is_dir():
+            return []
+        return sorted(p.stem.replace(".agent", "") for p in vendor_agents_dir.glob("*.agent.md"))
 
     def map_squad_agents_to_roles(self, squad_agents: list[str]) -> list[dict[str, str]]:
         """Mapeia os agentes do squad para as definições de papéis padronizadas.
@@ -53,3 +64,4 @@ class SDLCRoleMapper:
             {"squad_agent": agent, "sdlc_role": mapping.get(agent, "specialist")}
             for agent in squad_agents
         ]
+

@@ -39,9 +39,11 @@ class MCPSyncManagerTests(unittest.TestCase):
         sinapse_args = data["mcpServers"]["sinapse-hivemind"]["args"]
         self.assertEqual(sinapse_args, ["D:/Hive-Mind/scripts/services/sinapse-mcp.py"])
 
-        # codebase-memory importa do vendor via PYTHONPATH explícito.
-        codebase_env = data["mcpServers"]["codebase-memory"]["env"]["PYTHONPATH"]
-        self.assertTrue(codebase_env.endswith("codebase-memory-mcp/pkg/pypi/src"))
+        # codebase-memory aponta diretamente para o executável binário canônico sem PYTHONPATH.
+        codebase_cmd = data["mcpServers"]["codebase-memory"]["command"]
+        self.assertTrue(codebase_cmd.endswith("integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"))
+        self.assertEqual(data["mcpServers"]["codebase-memory"]["args"], [])
+        self.assertNotIn("env", data["mcpServers"]["codebase-memory"])
 
         expected_tools = {
             "sinapse_health",

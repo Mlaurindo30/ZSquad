@@ -275,7 +275,7 @@ class AgentSquadTests(unittest.TestCase):
         from render_agent_prompt import render_agent_prompt
         rendered = render_agent_prompt("delivery-orchestrator")
         self.assertIn("# AGENT SYSTEM PROMPT: delivery-orchestrator", rendered)
-        self.assertIn("ARQUITETURA DE MEMÓRIA EM DUAS CAMADAS (PROJETO + HIVE-MIND)", rendered)
+        self.assertIn("ARQUITETURA CANÔNICA DE MEMÓRIA EM 3 PILARES", rendered)
 
     def test_index_codebase_and_query_memory(self):
         # Cria work item

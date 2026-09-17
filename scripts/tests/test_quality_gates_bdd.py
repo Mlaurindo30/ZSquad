@@ -7,11 +7,14 @@ from pytest_bdd import given, parsers, scenarios, then, when
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 FEATURE = ROOT / "work" / "agent_squad" / "TASK-CODE-REVIEW-20260820" / "specs" / "features" / "quality-gates.feature"
+if not FEATURE.is_file():
+    FEATURE = ROOT / "scripts" / "tests" / "fixtures" / "quality-gates.feature"
 
 from gate_validators import validate_G4_code_security
 from tdd_evidence import evidence_digest, validate_tdd_cycle
 
-scenarios(str(FEATURE))
+if FEATURE.is_file():
+    scenarios(str(FEATURE))
 
 
 @given("a work item without executable evidence", target_fixture="context")

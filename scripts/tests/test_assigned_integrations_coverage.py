@@ -8,10 +8,11 @@ from unittest import mock
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "integrations"))
 sys.path.insert(0, str(ROOT / "integrations" / "experimental"))
 
 import clone_or_update_repos
-from clone_or_update_repos import RepoSpec, clone_or_update
+from clone_or_update_repos import RepoSpec, clone_or_update, validate_vendor_root
 from code_health_analyzer import CodeHealthAnalyzer
 from contextual_ast_chunker import ContextualASTChunker
 
@@ -19,19 +20,44 @@ from contextual_ast_chunker import ContextualASTChunker
 class TestCloneOrUpdateRepos:
     repo = RepoSpec("example", "https://example.test/repo.git", "Example")
 
+    def test_canonical_catalog_contract(self):
+        assert len(clone_or_update_repos.UPSTREAM_REPOSITORIES) == 7
+        names = [r.name for r in clone_or_update_repos.UPSTREAM_REPOSITORIES]
+        expected_names = [
+            "boostprompt",
+            "sdlc-agents",
+            "graphify",
+            "trace-mcp",
+            "codebase-memory-mcp",
+            "chunkhound",
+            "repowise",
+        ]
+        assert names == expected_names
+        for r in clone_or_update_repos.UPSTREAM_REPOSITORIES:
+            assert r.classification == "UPSTREAM_REQUIRED"
+
     def test_updates_existing_repository_successfully(self, tmp_path):
         target = tmp_path / self.repo.name
         (target / ".git").mkdir(parents=True)
-        result = SimpleNamespace(returncode=0, stdout="Already current\n", stderr="")
+        origin_res = SimpleNamespace(returncode=0, stdout="https://example.test/repo.git\n", stderr="")
+        pull_res = SimpleNamespace(returncode=0, stdout="Already current\n", stderr="")
 
-        with mock.patch.object(clone_or_update_repos.subprocess, "run", return_value=result) as run:
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", side_effect=[origin_res, pull_res]) as run:
             assert clone_or_update(self.repo, tmp_path) == (
                 "example",
                 True,
                 "Atualizado com sucesso (Already current)",
             )
 
-        run.assert_called_once_with(
+        assert run.call_count == 2
+        run.assert_any_call(
+            ["git", "remote", "get-url", "origin"],
+            cwd=str(target),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        run.assert_any_call(
             ["git", "pull", "--ff-only"],
             cwd=str(target),
             capture_output=True,
@@ -41,16 +67,18 @@ class TestCloneOrUpdateRepos:
 
     def test_update_uses_fallback_message_for_empty_stdout(self, tmp_path):
         (tmp_path / self.repo.name / ".git").mkdir(parents=True)
-        result = SimpleNamespace(returncode=0, stdout="", stderr="")
+        origin_res = SimpleNamespace(returncode=0, stdout="https://example.test/repo\n", stderr="")
+        pull_res = SimpleNamespace(returncode=0, stdout="", stderr="")
 
-        with mock.patch.object(clone_or_update_repos.subprocess, "run", return_value=result):
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", side_effect=[origin_res, pull_res]):
             assert clone_or_update(self.repo, tmp_path)[2] == "Atualizado com sucesso (up to date)"
 
     def test_reports_update_failure(self, tmp_path):
         (tmp_path / self.repo.name / ".git").mkdir(parents=True)
-        result = SimpleNamespace(returncode=1, stdout="", stderr="cannot pull\n")
+        origin_res = SimpleNamespace(returncode=0, stdout="https://example.test/repo.git\n", stderr="")
+        pull_res = SimpleNamespace(returncode=1, stdout="", stderr="cannot pull\n")
 
-        with mock.patch.object(clone_or_update_repos.subprocess, "run", return_value=result):
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", side_effect=[origin_res, pull_res]):
             assert clone_or_update(self.repo, tmp_path) == (
                 "example",
                 False,
@@ -59,13 +87,50 @@ class TestCloneOrUpdateRepos:
 
     def test_reports_update_exception(self, tmp_path):
         (tmp_path / self.repo.name / ".git").mkdir(parents=True)
+        origin_res = SimpleNamespace(returncode=0, stdout="https://example.test/repo.git\n", stderr="")
 
-        with mock.patch.object(clone_or_update_repos.subprocess, "run", side_effect=TimeoutError("late")):
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", side_effect=[origin_res, TimeoutError("late")]):
             assert clone_or_update(self.repo, tmp_path) == (
                 "example",
                 False,
                 "Exceção ao atualizar: late",
             )
+
+    def test_reports_origin_mismatch(self, tmp_path):
+        target = tmp_path / self.repo.name
+        (target / ".git").mkdir(parents=True)
+        origin_res = SimpleNamespace(returncode=0, stdout="https://attacker.test/repo.git\n", stderr="")
+
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", return_value=origin_res):
+            success_name, success_status, msg = clone_or_update(self.repo, tmp_path)
+            assert success_status is False
+            assert "Origin mismatch" in msg
+
+    def test_reports_origin_get_url_failure(self, tmp_path):
+        target = tmp_path / self.repo.name
+        (target / ".git").mkdir(parents=True)
+        origin_res = SimpleNamespace(returncode=1, stdout="", stderr="fatal: no such remote 'origin'")
+
+        with mock.patch.object(clone_or_update_repos.subprocess, "run", return_value=origin_res):
+            success_name, success_status, msg = clone_or_update(self.repo, tmp_path)
+            assert success_status is False
+            assert "Falha ao obter remote origin" in msg
+
+    def test_reports_existing_target_not_git_repo(self, tmp_path):
+        target = tmp_path / self.repo.name
+        target.mkdir(parents=True)
+        success_name, success_status, msg = clone_or_update(self.repo, tmp_path)
+        assert success_status is False
+        assert "não é um repositório git válido" in msg
+
+    def test_nested_vendor_path_rejected(self, tmp_path):
+        nested_dir = tmp_path / "vendor" / "sub" / "vendor"
+        with pytest.raises(ValueError, match="Nested vendor path not allowed"):
+            validate_vendor_root(nested_dir)
+
+        canonical_sub = clone_or_update_repos.CANONICAL_VENDOR_DIR / "nested"
+        with pytest.raises(ValueError, match="Nested vendor path not allowed"):
+            validate_vendor_root(canonical_sub)
 
     @pytest.mark.parametrize(
         ("shallow", "expected_command"),
@@ -113,6 +178,11 @@ class TestCloneOrUpdateRepos:
         assert clone_or_update_repos.main(["--vendor-dir", str(tmp_path), "--repo", "missing"]) == 1
         assert "não encontrado" in capsys.readouterr().out
 
+    def test_main_rejects_invalid_nested_vendor_dir(self, capsys, tmp_path):
+        nested = tmp_path / "vendor" / "another" / "vendor"
+        assert clone_or_update_repos.main(["--vendor-dir", str(nested)]) == 1
+        assert "Diretório vendor inválido" in capsys.readouterr().err
+
     def test_main_syncs_selected_repository_without_shallow_clone(self, capsys, tmp_path):
         with mock.patch.object(
             clone_or_update_repos,
@@ -139,9 +209,21 @@ class TestCloneOrUpdateRepos:
 
         assert sync.call_count == len(clone_or_update_repos.UPSTREAM_REPOSITORIES)
 
+    def test_main_returns_failure_when_partial_sync_fails(self, tmp_path):
+        side_effects = [
+            (r.name, i != 0, "ok" if i != 0 else "failed")
+            for i, r in enumerate(clone_or_update_repos.UPSTREAM_REPOSITORIES)
+        ]
+        with mock.patch.object(
+            clone_or_update_repos,
+            "clone_or_update",
+            side_effect=side_effects,
+        ):
+            assert clone_or_update_repos.main(["--vendor-dir", str(tmp_path)]) == 1
+
     def test_script_entry_point_uses_sys_argv(self, tmp_path):
         result = SimpleNamespace(returncode=0, stdout="", stderr="")
-        script = ROOT / "integrations" / "experimental" / "clone_or_update_repos.py"
+        script = ROOT / "integrations" / "clone_or_update_repos.py"
         argv = [str(script), "--vendor-dir", str(tmp_path), "--repo", "boostprompt"]
 
         with (

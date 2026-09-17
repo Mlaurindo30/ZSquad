@@ -7,7 +7,7 @@
   "required": ["route_id", "work_item_id", "schema_version", "catalog_version", "state", "router", "created_at", "updated_at", "request_fingerprint", "normalized_intent", "risk", "mode", "candidates", "confidence", "confidence_band", "facts", "assumptions", "out_of_scope", "disambiguation", "selected_squad", "chain", "reroutes", "authorization", "source_refs", "routing_verdict_ref"],
   "properties": {
     "route_id": {"type": "string", "pattern": "^ROUTE-[A-Z0-9-]+-[0-9]{3}$"},
-    "work_item_id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9][A-Z0-9-]*$"},
+    "work_item_id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE|INCIDENT)-[A-Z0-9][A-Z0-9-]*$"},
     "schema_version": {"const": 1},
     "catalog_version": {"type": "integer", "minimum": 1},
     "state": {"enum": ["diagnosing", "awaiting_disambiguation", "routed", "chief_selecting", "executing_link", "checkpointed", "routing_review", "completed", "no_squad_match", "needs_human_route", "changes_requested", "blocked", "cancelled"]},

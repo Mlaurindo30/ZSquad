@@ -58,7 +58,11 @@ deprecated_locations:
   status: deprecated
   notice: "work/<project>/<WORK-ID>/memory/ is deprecated. Use banco/squad.db and Azure DevOps for project persistence."
   private: work/<project>/<WORK-ID>/memory/agents/<AGENT-ID>.md
-  shared: work/<project>/<WORK-ID>/memory/shared/summary.md
+  shared:
+    path: work/<project>/<WORK-ID>/memory/shared/summary.md
+    status: DERIVED_COMPATIBILITY
+    projection_source: banco/squad.db
+    semantics: "Deterministic projection of memory_facts from SQLite squad.db. Read-only compatibility artifact, not an authoritative store."
   deltas: work/<project>/<WORK-ID>/memory/deltas/MEM-<SEQ>.yaml
   episodic: work/<project>/<WORK-ID>/handoffs
   durable: docs/knowledge

@@ -30,11 +30,11 @@ A retenção de conhecimento e a cognição do Agents Squad estruturam-se em tr�
 
 ---
 
-## 2. Camada Depreciada (Legado em Disco)
+## 2. Camada Depreciada & Projeção de Compatibilidade (DERIVED_COMPATIBILITY)
 
-- Os arquivos físicos de memória em disco sob `work/<project_id>/memory/` (`shared/summary.md`, `agents/<persona>.md`, `deltas/MEM-*.yaml`) estão **depreciados**.
-- A persistência primária do projeto agora reside no `banco/squad.db` e as discussões colaborativas ocorrem diretamente no Azure DevOps.
-- O diretório em disco é mantido temporariamente apenas para retrocompatibilidade com work items históricos, não devendo ser utilizado como fonte primária por novos agentes.
+- A persistência primária do projeto reside exclusivamente no SQLite `banco/squad.db` e as discussões colaborativas ocorrem diretamente no Azure DevOps.
+- O arquivo `work/<project_id>/memory/shared/summary.md` possui status **`DERIVED_COMPATIBILITY`**: trata-se de uma projeção determinística gerada a partir do `banco/squad.db` mantida estritamente para compatibilidade com ferramentas legadas e inspeção humana, não sendo uma fonte de verdade autoritativa. Nunca deve ser editado manualmente.
+- Os demais arquivos físicos sob `work/<project_id>/memory/` (`agents/<persona>.md`, `deltas/MEM-*.yaml`) estão **depreciados** e mantidos apenas para rastreabilidade histórica.
 
 ---
 

@@ -15,14 +15,8 @@
       "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
     },
     "codebase-memory": {
-      "command": "python",
-      "args": [
-        "-m",
-        "codebase_memory_mcp"
-      ],
-      "env": {
-        "PYTHONPATH": "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
-      },
+      "command": "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe",
+      "args": [],
       "description": "High-performance persistent structural symbol knowledge graph.",
       "tools": [
         "query_symbol",

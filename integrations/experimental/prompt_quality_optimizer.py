@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2] if Path(__file__).resolve().parent.name == "experimental" else Path(__file__).resolve().parents[1]
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +58,8 @@ class PromptQualityOptimizer:
             from boostprompt.models.schemas import DiscoveryMode
             evaluator = PromptQualityEvaluator()
             ctx = {"objetivo": text, "tipo_solucao": "agent-prompt", "seguranca": "fail-closed"}
-            eval_res = evaluator.evaluate(mode=DiscoveryMode.ESTRUTURACAO_PROMPT_FINAL, context=ctx, decisions=[], questions_count=0)
+            mode = getattr(DiscoveryMode, "ESTRUTURACAO_PROMPT_FINAL", None) or getattr(DiscoveryMode, "PROMPT_DESENVOLVIMENTO", None)
+            eval_res = evaluator.evaluate(mode=mode, context=ctx, decisions=[], questions_count=0)
             if eval_res and eval_res.prompt_readiness:
                 pass
         except Exception:

@@ -44,7 +44,6 @@ applied_changes:
       - agents/_shared/OPERATING_CONTRACT.md
       - AGENTS.md
       - CLAUDE.md
-      - CODEX.md
       - GEMINI.md
       - HERMES.md
   - id: US-1

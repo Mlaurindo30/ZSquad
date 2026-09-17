@@ -153,11 +153,10 @@ def _validate_legacy_references(root: Path, errors: list[str]) -> None:
             errors.append(f"legacy or permissive reference in {relative}")
 
 
-PROMPT_FILES = ("AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md")
+PROMPT_FILES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
 PROMPT_CHARACTER_BUDGETS = {
     "AGENTS.md": 12_000,
     "CLAUDE.md": 40_000,
-    "CODEX.md": 32 * 1024,
     "GEMINI.md": 12_000,
 }
 COPY_MODEL_PATTERNS = (

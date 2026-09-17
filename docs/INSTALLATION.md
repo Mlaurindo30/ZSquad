@@ -39,11 +39,11 @@ python scripts/setup_environment.py
 ```
 
 O script executa 6 etapas automatizadas:
-1. **Sincronização Upstream (`integrations/vendor/`)**: Atualiza submódulos e dependências de repositórios integrados.
+1. **Sincronização Upstream (`integrations/vendor/`)**: Clona ou atualiza todos os repositórios oficiais do catálogo canônico upstream (`UPSTREAM_REQUIRED`: `boostprompt`, `sdlc-agents`, `graphify`, `trace-mcp`, `codebase-memory-mcp`, `chunkhound`, `repowise`).
 2. **Ambiente Virtual Isolado (`.venv`)**: Cria o ambiente virtual (`.venv`) e instala os pacotes listados em `requirements.txt`.
 3. **Banco de Dados SQLite (`banco/squad.db`)**: Inicializa o banco relacional executando o esquema canônico (`banco/schema.sql`).
-4. **Servidores MCP (`config/mcp_config.json`)**: Configura e registra todos os servidores Model Control Protocol.
-5. **Stack Docker**: Verifica se o daemon do Docker está ativo e sobe os serviços descritos em `docker-compose.yml`.
+4. **Instalação e Sincronização MCP (`config/mcp_config.json`)**: Instala pacotes vendor editáveis (`codebase-memory-mcp`) e sincroniza servidores MCP.
+5. **Stack Docker**: Verifica se o daemon do Docker está ativo e provisiona os serviços descritos em `docker-compose.yml`.
 6. **Validação e Testes**: Executa o validador estrutural e a suíte de testes automatizados (`pytest`).
 
 ---
@@ -66,7 +66,7 @@ Ou utilizando o script de inicialização do CLI:
   ```
 - Executar diagnóstico do ambiente:
   ```powershell
-  squad doctor
+  squad audit
   ```
 - Executar o motor contínuo de fluxo:
   ```powershell
@@ -175,9 +175,9 @@ Se houver falhas de configuração ou inconsistências no ambiente, execute as f
    ```
 2. **Diagnóstico do Squad**:
    ```powershell
-   squad doctor
+   squad audit
    # ou
-   python scripts/agent_squad.py doctor
+   python scripts/agent_squad.py audit
    ```
 3. **Suíte de Testes Automatizados**:
    ```powershell

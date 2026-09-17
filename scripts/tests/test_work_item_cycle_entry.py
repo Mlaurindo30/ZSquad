@@ -9,15 +9,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+import shutil
+import sys
+
+RUNTIME = Path(__file__).resolve().parents[2]
+if str(RUNTIME) not in sys.path:
+    sys.path.insert(0, str(RUNTIME))
+if str(RUNTIME / "scripts") not in sys.path:
+    sys.path.insert(0, str(RUNTIME / "scripts"))
 
 import pytest
 
 from scripts import agent_squad, sre_incident_loop
 from scripts.agent_squad import AgentSquad, SquadError, read_yaml, write_yaml
-
-
-RUNTIME = Path(__file__).resolve().parents[2]
 VALID_TYPES = {
     "epic": ("development", "blueprint"),
     "story": ("user-story", "blueprint"),
@@ -27,22 +33,64 @@ VALID_TYPES = {
     "evolution": ("evolution", "blueprint"),
     "study": ("spike", "blueprint"),
     "spike": ("spike", "blueprint"),
+    "incident": ("incident", "triage"),
 }
 
 
-def _squad() -> AgentSquad:
-    return AgentSquad(RUNTIME, project_name="agent_squad")
+def _link_or_copy(src: Path, dst: Path) -> None:
+    if not src.exists() or dst.exists():
+        return
+    if sys.platform == "win32":
+        try:
+            import _winapi
+
+            _winapi.CreateJunction(str(src), str(dst))
+            return
+        except Exception:
+            pass
+    try:
+        os.symlink(src, dst, target_is_directory=src.is_dir())
+    except Exception:
+        if src.is_dir():
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
+
+
+def make_authorized_runtime(tmp_path: Path, project_id: str = "agent_squad") -> tuple[AgentSquad, Path]:
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("agents", "config", "contracts", "templates", "skills", "integrations"):
+        _link_or_copy(RUNTIME / name, runtime_dir / name)
+    work_dir = runtime_dir / "work" / project_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+    squad = AgentSquad(runtime_dir, project_name=project_id)
+    return squad, work_dir
 
 
 def _init_with_type(
     squad: AgentSquad,
     work_id: str,
-    tmp_path: Path,
+    work_dir: Path,
     item_type: str,
+    parent_id: str | None = None,
 ) -> Path:
     """Chama a seam aprovada e transforma API ausente em RED explícito."""
+    if item_type == "story" and not parent_id:
+        feat_parent = work_dir / "FEAT-PARENT-01"
+        feat_parent.mkdir(parents=True, exist_ok=True)
+        (feat_parent / "status.yaml").write_text("id: FEAT-PARENT-01\ntype: feature\nstate: blueprint\n", encoding="utf-8")
+        parent_id = "FEAT-PARENT-01"
+    elif item_type == "task" and not parent_id:
+        story_parent = work_dir / "US-PARENT-01"
+        story_parent.mkdir(parents=True, exist_ok=True)
+        (story_parent / "status.yaml").write_text("id: US-PARENT-01\ntype: story\nstate: blueprint\n", encoding="utf-8")
+        parent_id = "US-PARENT-01"
     try:
-        return squad.init_work_item(work_id, "medium", base=tmp_path, item_type=item_type)
+        kwargs = {"item_type": item_type}
+        if parent_id:
+            kwargs["parent_id"] = parent_id
+        return squad.init_work_item(work_id, "medium", base=work_dir, **kwargs)
     except TypeError as exc:
         pytest.fail(f"RED: init_work_item ainda não aceita item_type: {exc}")
 
@@ -69,7 +117,9 @@ def _repair(
 
 
 def test_legacy_prefix_without_type_persists_compatible_cycle_and_entry(tmp_path: Path) -> None:
-    item = _squad().init_work_item("TASK-CYCLE-LEGACY-20260913", "medium", base=tmp_path)
+    squad, work_dir = make_authorized_runtime(tmp_path)
+    item = squad.init_work_item("TASK-CYCLE-LEGACY-20260913", "medium", base=work_dir)
+
     status = read_yaml(item / "status.yaml")
 
     assert status["type"] == "task"
@@ -78,7 +128,9 @@ def test_legacy_prefix_without_type_persists_compatible_cycle_and_entry(tmp_path
 
 
 def test_explicit_type_overrides_id_prefix_and_uses_cycle_entry(tmp_path: Path) -> None:
-    item = _init_with_type(_squad(), "TASK-CYCLE-OVERRIDE-20260913", tmp_path, "bug")
+    squad, work_dir = make_authorized_runtime(tmp_path)
+    item = _init_with_type(squad, "TASK-CYCLE-OVERRIDE-20260913", work_dir, "bug")
+
     status = read_yaml(item / "status.yaml")
 
     assert status["type"] == "bug"
@@ -90,7 +142,8 @@ def test_explicit_type_overrides_id_prefix_and_uses_cycle_entry(tmp_path: Path) 
 def test_each_accepted_type_starts_at_configured_cycle_entry(
     tmp_path: Path, item_type: str, expected: tuple[str, str]
 ) -> None:
-    item = _init_with_type(_squad(), f"TASK-CYCLE-{item_type.upper()}-20260913", tmp_path, item_type)
+    squad, work_dir = make_authorized_runtime(tmp_path)
+    item = _init_with_type(squad, f"TASK-CYCLE-{item_type.upper()}-20260913", work_dir, item_type)
     status = read_yaml(item / "status.yaml")
     assert (status["cycle"], status["state"]) == expected
 
@@ -141,16 +194,16 @@ def test_cli_parser_accepts_optional_type_and_repair_contract() -> None:
 
 
 def test_invalid_cycle_config_fails_closed_without_creating_item(tmp_path: Path) -> None:
-    squad = _squad()
+    squad, work_dir = make_authorized_runtime(tmp_path)
     squad.cycles.setdefault("type_to_cycle", {})["bug"] = "missing-cycle"
     with pytest.raises(SquadError):
-        _init_with_type(squad, "TASK-CYCLE-DRIFT-20260913", tmp_path, "bug")
-    assert not (tmp_path / "TASK-CYCLE-DRIFT-20260913").exists()
+        _init_with_type(squad, "TASK-CYCLE-DRIFT-20260913", work_dir, "bug")
+    assert not (work_dir / "TASK-CYCLE-DRIFT-20260913").exists()
 
 
 def test_explicit_cycle_drift_does_not_fallback_to_default_on_advance(tmp_path: Path) -> None:
-    squad = _squad()
-    item = squad.init_work_item("TASK-CYCLE-ADVANCE-20260913", "medium", base=tmp_path)
+    squad, work_dir = make_authorized_runtime(tmp_path)
+    item = squad.init_work_item("TASK-CYCLE-ADVANCE-20260913", "medium", base=work_dir)
     status_path = item / "status.yaml"
     status = read_yaml(status_path)
     status.update({"cycle": "cycle-that-does-not-exist", "state": "blueprint"})
@@ -163,8 +216,8 @@ def test_explicit_cycle_drift_does_not_fallback_to_default_on_advance(tmp_path: 
 
 
 def _legacy_bug(tmp_path: Path, *, state: str = "blueprint", cycle: str | None = None) -> tuple[AgentSquad, Path]:
-    squad = _squad()
-    item = squad.init_work_item("BUG-CYCLE-LEGACY-20260913", "medium", base=tmp_path)
+    squad, work_dir = make_authorized_runtime(tmp_path)
+    item = squad.init_work_item("BUG-CYCLE-LEGACY-20260913", "medium", base=work_dir)
     status_path = item / "status.yaml"
     status = read_yaml(status_path)
     status["type"] = "bug"
@@ -245,14 +298,17 @@ def test_sre_incident_loop_uses_bugfix_implementation_without_gt_entry_promise(
     original = AgentSquad.init_work_item
     captured: dict[str, object] = {}
 
+    squad, work_dir = make_authorized_runtime(tmp_path)
+
     def isolated_init(self: AgentSquad, work_id: str, risk: str, *args, **kwargs):
         captured["kwargs"] = dict(kwargs)
-        return original(self, work_id, risk, base=tmp_path)
+        self.root = squad.root
+        return original(self, work_id, risk, base=work_dir)
 
     monkeypatch.setattr(sre_incident_loop.AgentSquad, "init_work_item", isolated_init)
-    loop = sre_incident_loop.SREIncidentLoop(RUNTIME, project_name="agent_squad")
+    loop = sre_incident_loop.SREIncidentLoop(squad.root, project_name="agent_squad")
     bug_id = loop.create_incident_bug("alert-1", "checkout", "HTTP 500", "high")
-    item = next(tmp_path.glob(f"{bug_id}"))
+    item = next(work_dir.glob(f"{bug_id}"))
     status = read_yaml(item / "status.yaml")
 
     assert "item_type" not in captured["kwargs"]
@@ -260,3 +316,28 @@ def test_sre_incident_loop_uses_bugfix_implementation_without_gt_entry_promise(
     assert status["cycle"] == "bugfix"
     assert status["state"] == "implementation"
     assert "GT-entry" not in status["next_action"]
+
+
+def test_sre_incident_loop_native_incident_uses_incident_cycle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, dict] = {}
+    original = AgentSquad.init_work_item
+    squad, work_dir = make_authorized_runtime(tmp_path)
+
+    def isolated_init(self: AgentSquad, work_id: str, risk: str, *args, **kwargs):
+        captured["kwargs"] = dict(kwargs)
+        self.root = squad.root
+        return original(self, work_id, risk, base=work_dir, **kwargs)
+
+    monkeypatch.setattr(sre_incident_loop.AgentSquad, "init_work_item", isolated_init)
+    loop = sre_incident_loop.SREIncidentLoop(squad.root, project_name="agent_squad")
+    incident_id = loop.create_incident("alert-oom", "api-gateway", "Out of Memory", "critical")
+    item = next(work_dir.glob(f"{incident_id}"))
+    status = read_yaml(item / "status.yaml")
+
+    assert captured["kwargs"].get("item_type") == "incident"
+    assert status["type"] == "incident"
+    assert status["cycle"] == "incident"
+    assert status["state"] == "triage"
+    assert "triagem do incidente" in status["next_action"]

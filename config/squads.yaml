@@ -1,3 +1,9 @@
+# ARCHITECTURAL SPECIFICATION — TEAM TOPOLOGIES & SQUAD TAXONOMY (NON-RUNTIME)
+# Este catálogo formal define a divisão do Agents Squad em 7 Squads Temáticas.
+# Serve exclusivamente como especificação de referência para Team Topologies, taxonomia
+# de capacidades para ativação proporcional por produto e mapeamento de swimlanes/squad_tags
+# no Azure DevOps (templates/devops.yaml).
+# NOTA: Este arquivo NÃO é consumido diretamente pelos motores de execução em runtime.
 version: 1
 managed_by: agents-squad
 description: Catalogo formal de Squads Tematicas para ativacao proporcional por tipo de projeto.

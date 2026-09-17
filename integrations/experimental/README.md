@@ -2,29 +2,21 @@
 
 ## Why these modules were moved
 
-These 12 modules were moved from `integrations/` to `integrations/experimental/`
-during the **2026-09-02 exhaustive audit**
-(`docs/audit-reports/2026-09-02-exhaustive-audit.md`, section 4.1).
+These 10 modules reside in `integrations/experimental/` as specialized integrations.
+An exhaustive caller audit was performed across `scripts/`, `agents/`, `integrations/`, `config/`, and `docs/`.
 
-The audit found that **no active callers exist** for any of these modules — they
-are dead code with zero imports across the entire repository. The active
-integration connector (`devops_platform_connector.py`) remains in
-`integrations/` and is the sole actively-used integration module.
-
-| File | Audit Status |
-|---|---|
-| `blast_radius_analyzer.py` | No caller |
-| `clone_or_update_repos.py` | No caller |
-| `code_health_analyzer.py` | No caller |
-| `codebase_knowledge_graph.py` | No caller |
-| `contextual_ast_chunker.py` | No caller |
-| `gitingest.py` | No caller |
-| `procedural_skill_engine.py` | No caller |
-| `prompt_quality_optimizer.py` | No caller |
-| `sdlc_role_mapper.py` | No caller |
-| `toon.py` | No caller |
-| `trajectory_refinement_engine.py` | No caller |
-| `zcode_subagents.py` | No caller |
+| File | Classification | Role / Operational Purpose | Caller & Reference Evidence |
+|---|---|---|---|
+| `blast_radius_analyzer.py` | `EXPERIMENTAL_ON_DEMAND` | Dependency graph traversal & impact radius calculation before production/schema changes | `config/skills-catalog.yaml`, `agents/06-software-engineer/skills/manifest.yaml`, `agents/37-fullstack-engineer/skills/manifest.yaml`, `scripts/render_agent_prompt.py`, `scripts/bootstrap_pack.py`, `scripts/tests/test_integrations_adapters.py` |
+| `code_health_analyzer.py` | `EXPERIMENTAL_ON_DEMAND` | Codebase health scoring (0.0–10.0) based on cyclomatic complexity and contracts | `config/skills-catalog.yaml`, `agents/05-data-ai-architect/skills/manifest.yaml`, `agents/06-software-engineer/skills/manifest.yaml`, `agents/37-fullstack-engineer/skills/manifest.yaml`, `scripts/bootstrap_pack.py`, `scripts/tests/test_assigned_integrations_coverage.py`, `scripts/tests/test_integrations_adapters.py` |
+| `contextual_ast_chunker.py` | `EXPERIMENTAL_ON_DEMAND` | Syntactic AST boundary chunking preserving function and class scopes (cAST) | `config/skills-catalog.yaml`, `agents/06-software-engineer/skills/manifest.yaml`, `agents/17-ai-engineer/skills/manifest.yaml`, `docs/07-operacao-e-integracoes.md`, `scripts/tests/test_assigned_integrations_coverage.py`, `scripts/tests/test_integrations_adapters.py` |
+| `gitingest.py` | `EXPERIMENTAL_ON_DEMAND` | Token compaction and budget-aware repository context ingestion for LLMs | `config/skills-catalog.yaml`, `agents/00-delivery-orchestrator/skills/manifest.yaml`, `agents/06-software-engineer/skills/manifest.yaml`, `agents/17-ai-engineer/skills/manifest.yaml`, `scripts/tests/test_e2e_orchestration.py`, `scripts/tests/test_integration_engines.py`, `scripts/tests/test_remaining_integrations_coverage.py` |
+| `procedural_skill_engine.py` | `EXPERIMENTAL_ON_DEMAND` | Synthesis of `agentskills.io` skills, AST security audit, and strict linter | `config/skills-catalog.yaml`, `agents/27-platform-engineer/skills/manifest.yaml`, `docs/07-operacao-e-integracoes.md`, `scripts/tests/test_e2e_real_integration.py`, `scripts/tests/test_integrations_adapters.py`, `scripts/tests/test_remaining_integrations_coverage.py` |
+| `prompt_quality_optimizer.py` | `EXPERIMENTAL_ON_DEMAND` | Quality scoring for 8-block prompts (Role, Ground Truth, Anti-Fabrication) | `config/skills-catalog.yaml`, `agents/17-ai-engineer/skills/manifest.yaml`, `docs/07-operacao-e-integracoes.md`, `scripts/tests/test_integrations_adapters.py`, `scripts/tests/test_remaining_integrations_coverage.py`, `scripts/tests/test_e2e_real_integration.py` |
+| `sdlc_role_mapper.py` | `EXPERIMENTAL_ON_DEMAND` | Role taxonomy mapping for IDE extensions (Cursor, Cline, Roo, Copilot) | `config/skills-catalog.yaml`, `agents/00-delivery-orchestrator/skills/manifest.yaml`, `agents/04-solution-architect/skills/manifest.yaml`, `skills/agent-squad-mcp/SKILL.md`, `docs/07-operacao-e-integracoes.md`, `scripts/tests/test_integrations_adapters.py` |
+| `toon.py` | `EXPERIMENTAL_ON_DEMAND` | Token-Oriented Object Notation serialization/deserialization for prompt payloads | `config/skills-catalog.yaml`, manifests of `00, 06, 11, 12, 17`, `scripts/tests/test_integration_engines.py`, `scripts/tests/test_remaining_integrations_coverage.py`, `scripts/tests/test_e2e_orchestration.py` |
+| `trajectory_refinement_engine.py` | `EXPERIMENTAL_ON_DEMAND` | Step tracing, ErrorCode taxonomy, and `/refine` heuristic extraction | `config/skills-catalog.yaml`, `agents/00-delivery-orchestrator/skills/manifest.yaml`, `agents/17-ai-engineer/skills/manifest.yaml`, `scripts/bootstrap_pack.py`, `docs/07-operacao-e-integracoes.md`, `scripts/tests/test_integrations_adapters.py` |
+| `zcode_subagents.py` | `ACTIVE_CALLED` | Subagent profile synchronization, validation, and CLI management for ZCode IDEs | Directly imported by CLI `scripts/install_zcode_subagents.py`; registered in `config/skills-catalog.yaml`; manifests of `00, 27`; `README.md`, `docs/INSTALLATION.md`; tested in `scripts/tests/test_zcode_subagents.py` |
 
 ## Date of move
 

@@ -3,7 +3,7 @@ native:
 - path: agents/00-delivery-orchestrator/skills/native/delivery-orchestrator-native
 assigned:
 - path: integrations/devops_platform_connector.py
-- path: integrations/experimental/clone_or_update_repos.py
+- path: integrations/clone_or_update_repos.py
 - path: integrations/experimental/gitingest.py
 - path: integrations/experimental/sdlc_role_mapper.py
 - path: integrations/experimental/toon.py

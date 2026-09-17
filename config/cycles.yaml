@@ -13,6 +13,7 @@ type_to_cycle:
   evolution: evolution
   study: spike
   spike: spike
+  incident: incident
 cycles:
   development:
     description: Ciclo completo de entrega de software (Spec-Driven com gates proporcionais).

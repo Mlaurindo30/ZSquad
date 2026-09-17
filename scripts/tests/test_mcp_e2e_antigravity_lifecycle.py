@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import pytest
 
 def send_request(proc, req_dict):
@@ -14,12 +15,13 @@ def send_request(proc, req_dict):
 def test_mcp_lifecycle():
     repo_root = str(Path(__file__).resolve().parents[2])
     proc = subprocess.Popen(
-        ["python", "mcp_runner.py"],
+        [sys.executable, "mcp_runner.py"],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
-        cwd=os.path.join(os.path.dirname(__file__), "..", "..", "integrations")
+        cwd=os.path.join(os.path.dirname(__file__), "..", "..", "integrations"),
+        env=os.environ.copy()
     )
     
     try:

@@ -8,6 +8,7 @@ Este diretório contém os motores funcionais e adaptadores autônomos que opera
 
 ```text
 integrations/
+├── clone_or_update_repos.py       # Gerenciador canônico de clones e atualizações upstream vendor
 ├── devops_platform_connector.py   # Conector Azure DevOps/Jira (ativo)
 ├── spec-kit/                      # Integração SDD governada (snapshot upstream + adapter) — ver abaixo
 ├── experimental/                  # Motores órfãos (sem caller ativo — audit 2026-09-02)
@@ -19,7 +20,6 @@ integrations/
 │   ├── code_health_analyzer.py
 │   ├── contextual_ast_chunker.py
 │   ├── sdlc_role_mapper.py
-│   ├── clone_or_update_repos.py
 │   ├── gitingest.py
 │   ├── toon.py
 │   ├── zcode_subagents.py

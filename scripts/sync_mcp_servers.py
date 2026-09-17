@@ -32,6 +32,13 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
     python_exe = sys.executable
     root_str = str(squad_root).replace("\\", "/")
 
+    if squad_root.resolve() == ROOT.resolve():
+        cmd_python = "python"
+        codebase_cmd = "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"
+    else:
+        cmd_python = python_exe
+        codebase_cmd = f"{root_str}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"
+
     return {
         "mcpServers": {
             "azure-devops": {
@@ -49,16 +56,13 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
             # Um wrapper MCP real para o banco do squad entra como fase futura do
             # EVOL-LIVING-MEMORY-20260822 (ver plans/delivery-plan.md).
             "codebase-memory": {
-                "command": python_exe,
-                "args": ["-m", "codebase_memory_mcp"],
-                "env": {
-                    "PYTHONPATH": f"{root_str}/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
-                },
+                "command": codebase_cmd,
+                "args": [],
                 "description": "High-performance persistent structural symbol knowledge graph.",
                 "tools": ["query_symbol", "find_callers", "find_dependencies"],
             },
             "sinapse-hivemind": {
-                "command": python_exe,
+                "command": cmd_python,
                 "args": ["D:/Hive-Mind/scripts/services/sinapse-mcp.py"],
                 "description": "Global durable semantic memory bridge for Hive-Mind vault.",
                 "tools": [

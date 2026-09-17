@@ -38,38 +38,46 @@ class SREIncidentLoop:
         self.root = Path(squad_root) if squad_root else ROOT
         self.project_name = project_name
 
-    def create_incident_bug(
+    def create_incident(
         self,
         alert_id: str,
         service_name: str,
         error_details: str,
         severity: str = "high",
+        *,
+        item_type: str = "incident",
     ) -> str:
-        """Cria automaticamente um work item de bug governado a partir de um alerta de produção.
+        """Cria automaticamente um work item governado a partir de um alerta de produção.
 
-        Delega a criação da árvore de artefatos ao ``AgentSquad.init_work_item`` para
-        que o ``status.yaml`` resultante conforme ao ``work-item.schema.json`` — o
-        mesmo contrato validado por ``validate-work-item`` e ``audit``.
-
-        Args:
-            alert_id: Identificador do alerta (ex: high_error_rate_5xx).
-            service_name: Nome do microsserviço ou componente afetado.
-            error_details: Descrição textual ou trace do erro.
-            severity: Gravidade do incidente ('critical', 'high', 'medium', 'low').
-
-        Returns:
-            str: ID do work item gerado (ex: BUG-INCIDENT-...).
+        Quando item_type='incident' (padrão), cria com prefixo INCIDENT-* e tipo formal 'incident',
+        iniciando no estado 'triage' do ciclo SRE 'incident'.
+        Quando item_type='bug', cria como BUG-INCIDENT-* executando o ciclo 'bugfix'.
         """
         timestamp_str = time.strftime("%Y%m%d-%H%M%S")
-        bug_id = f"BUG-INCIDENT-{service_name.upper()}-{timestamp_str}"
+        is_incident = item_type == "incident"
+        work_id = (
+            f"INCIDENT-{service_name.upper()}-{timestamp_str}"
+            if is_incident
+            else f"BUG-INCIDENT-{service_name.upper()}-{timestamp_str}"
+        )
         risk = severity if severity in {"low", "medium", "high", "critical"} else "high"
 
         squad = AgentSquad(self.root, project_name=self.project_name, allow_legacy=self.project_name is None)
-        work_dir = squad.init_work_item(bug_id, risk)
+        if is_incident:
+            work_dir = squad.init_work_item(work_id, risk, item_type="incident")
+        else:
+            work_dir = squad.init_work_item(work_id, risk)
 
         status_path = work_dir / "status.yaml"
         status = read_yaml(status_path)
-        status["next_action"] = f"Investigar causa raiz do alerta '{alert_id}' em '{service_name}' e iniciar a implementação do bugfix."
+        if is_incident:
+            status["next_action"] = (
+                f"Classificar severidade, publicar comunicados e iniciar triagem do incidente para o alerta '{alert_id}' em '{service_name}'."
+            )
+        else:
+            status["next_action"] = (
+                f"Investigar causa raiz do alerta '{alert_id}' em '{service_name}' e iniciar a implementação do bugfix."
+            )
         status["status_note"] = f"target_service={service_name}; alert_source={alert_id}"
         write_yaml(status_path, status)
 
@@ -79,6 +87,7 @@ class SREIncidentLoop:
 - **Origem do Alerta**: `{alert_id}`
 - **Serviço Afetado**: `{service_name}`
 - **Gravidade**: `{severity}`
+- **Tipo**: `{item_type}`
 - **Data/Hora**: `{time.strftime('%Y-%m-%d %H:%M:%S UTC')}`
 
 ## Evidência e Traces Coletados
@@ -96,12 +105,28 @@ class SREIncidentLoop:
         ledger_path = work_dir / "documentation" / "delivery-ledger.md"
         ledger_line = (
             f"| {time.strftime('%Y-%m-%d')} | sre-observability-engineer | epic.md | "
-            "Incidente registrado automaticamente por telemetria | N/A | Investigar causa raiz |\n"
+            f"Incidente ({item_type}) registrado automaticamente por telemetria | N/A | Investigar causa raiz |\n"
         )
         with ledger_path.open("a", encoding="utf-8") as fh:
             fh.write(ledger_line)
 
-        return bug_id
+        return work_id
+
+    def create_incident_bug(
+        self,
+        alert_id: str,
+        service_name: str,
+        error_details: str,
+        severity: str = "high",
+    ) -> str:
+        """Cria automaticamente um work item de bug governado (compatibilidade retroativa)."""
+        return self.create_incident(
+            alert_id=alert_id,
+            service_name=service_name,
+            error_details=error_details,
+            severity=severity,
+            item_type="bug",
+        )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -111,23 +136,31 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--service", required=True, help="Nome do serviço afetado")
     parser.add_argument("--details", default="Trigger de SLO violado em produção.", help="Detalhes ou logs do erro")
     parser.add_argument("--severity", default="high", help="Nível de risco (critical, high, medium, low)")
-    parser.add_argument("--project-name", default=None, help="Projeto consumidor (work/<projeto>/<BUG-ID>)")
+    parser.add_argument(
+        "--type",
+        dest="item_type",
+        choices=["incident", "bug"],
+        default="incident",
+        help="Tipo do work item gerado (padrão: incident; use 'bug' para ciclo bugfix legado)",
+    )
+    parser.add_argument("--project-name", default=None, help="Projeto consumidor (work/<projeto>/<WORK-ID>)")
     args = parser.parse_args(argv or sys.argv[1:])
 
     loop = SREIncidentLoop(project_name=args.project_name)
     try:
-        bug_id = loop.create_incident_bug(
+        work_id = loop.create_incident(
             alert_id=args.alert,
             service_name=args.service,
             error_details=args.details,
             severity=args.severity,
+            item_type=args.item_type,
         )
     except SquadError as exc:
         print(f"INCIDENT_WORK_ITEM_FAILED: {exc}", file=sys.stderr)
         logger.error("INCIDENT_WORK_ITEM_FAILED: %s", exc)
         return 1
-    print(f"INCIDENT_WORK_ITEM_CREATED: Work item '{bug_id}' gerado com sucesso.")
-    logger.info("INCIDENT_WORK_ITEM_CREATED: %s", bug_id)
+    print(f"INCIDENT_WORK_ITEM_CREATED: Work item '{work_id}' gerado com sucesso.")
+    logger.info("INCIDENT_WORK_ITEM_CREATED: %s", work_id)
     return 0
 
 

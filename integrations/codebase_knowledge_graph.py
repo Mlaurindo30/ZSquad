@@ -68,6 +68,88 @@ class CodebaseKnowledgeGraph:
             "top_depended_modules": [{"module": mod, "dependents_count": count} for mod, count in top_dependencies],
         }
 
+    def to_graphify_extraction(
+        self,
+        symbols: list[dict[str, Any]],
+        dependencies: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Converte símbolos e dependências no formato de extração aceito pelo Graphify.
+
+        Mapeia nós para o esquema canônico do Graphify (id, label, file_type, source_file)
+        e arestas para (source, target, relation, confidence, source_file).
+        Executa validação opcional contra graphify.validate.validate_extraction se o
+        repositório upstream estiver acessível.
+
+        Args:
+            symbols: Lista de símbolos do squad.db.
+            dependencies: Lista de dependências do squad.db.
+
+        Returns:
+            dict[str, Any]: Dicionário com chaves 'nodes' e 'edges' compatível com Graphify.
+        """
+        nodes: list[dict[str, Any]] = []
+        node_ids: set[str] = set()
+
+        for s in symbols:
+            name = s.get("name") or s.get("id") or "unnamed"
+            file_path = s.get("file_path") or s.get("file") or ""
+            node_id = f"{file_path}:{name}" if file_path else name
+            if node_id not in node_ids:
+                node_ids.add(node_id)
+                nodes.append({
+                    "id": node_id,
+                    "label": name,
+                    "file_type": "code",
+                    "source_file": file_path,
+                })
+
+        for d in dependencies:
+            src = d.get("source_file", "")
+            tgt = d.get("target_module", "")
+            for fpath in (src, tgt):
+                if fpath and fpath not in node_ids:
+                    node_ids.add(fpath)
+                    nodes.append({
+                        "id": fpath,
+                        "label": Path(fpath).name or fpath,
+                        "file_type": "code",
+                        "source_file": fpath,
+                    })
+
+        edges: list[dict[str, Any]] = []
+        for d in dependencies:
+            src = d.get("source_file", "")
+            tgt = d.get("target_module", "")
+            src_id = next((nid for nid in node_ids if nid == src or nid.startswith(f"{src}:")), src)
+            tgt_id = next((nid for nid in node_ids if nid == tgt or nid.startswith(f"{tgt}:")), tgt)
+            if src_id in node_ids and tgt_id in node_ids:
+                rel = d.get("kind") or "imports"
+                if rel not in ("imports", "calls", "contains", "inherits", "references"):
+                    rel = "imports"
+                edges.append({
+                    "source": src_id,
+                    "target": tgt_id,
+                    "relation": rel,
+                    "confidence": "EXTRACTED",
+                    "source_file": src,
+                })
+
+        extraction = {"nodes": nodes, "edges": edges}
+
+        # Validação automática com upstream Graphify se presente
+        try:
+            vendor_graphify = ROOT / "integrations" / "vendor" / "graphify"
+            if vendor_graphify.exists() and str(vendor_graphify) not in sys.path:
+                sys.path.insert(0, str(vendor_graphify))
+            from graphify.validate import validate_extraction
+            errors = validate_extraction(extraction)
+            if errors:
+                logger.warning("Graphify schema validation warnings: %s", errors)
+        except Exception:
+            pass
+
+        return extraction
+
 
 def main(argv: list[str] | None = None) -> int:
     """Interface CLI para consultar squad.db e emitir o grafo de conhecimento estruturado."""
@@ -94,6 +176,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Filtro opcional por caminho de arquivo.",
     )
     parser.add_argument(
+        "--format",
+        choices=["canonical", "graphify"],
+        default="canonical",
+        help="Formato de saída: 'canonical' (Squad DB padrão) ou 'graphify' (esquema Graphify).",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         type=Path,
@@ -115,8 +203,11 @@ def main(argv: list[str] | None = None) -> int:
         dependencies = db.get_project_dependencies(source_file=args.file_filter)
 
         ckg = CodebaseKnowledgeGraph()
-        graph = ckg.build_graph_representation(symbols, dependencies)
-        graph["project_id"] = args.project_id
+        if args.format == "graphify":
+            graph = ckg.to_graphify_extraction(symbols, dependencies)
+        else:
+            graph = ckg.build_graph_representation(symbols, dependencies)
+            graph["project_id"] = args.project_id
 
         output_json = json.dumps(graph, indent=2, ensure_ascii=False)
         if args.output:

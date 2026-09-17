@@ -169,3 +169,17 @@ def test_clean_architecture_roots_and_canonical_provenance_are_distribution():
         assert MODULE.classify(relative)["destination"] == "distribution"
     with pytest.raises(MODULE.ManifestError, match="unclassified"):
         MODULE.classify("PROVENANCE-2.0.yaml")
+
+
+def test_runtime_and_transient_artifacts_are_excluded():
+    for relative in (
+        "banco/squad.db",
+        "banco/squad.db-wal",
+        "banco/squad.db-shm",
+        "agent_squad.zip",
+        "NUL",
+    ):
+        policy = MODULE.classify(relative)
+        assert policy["destination"] == "excluded", f"{relative} must be excluded"
+        assert policy["lifecycle"] == "transient", f"{relative} must be transient"
+

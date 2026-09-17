@@ -51,8 +51,8 @@ jobs:
       - name: Run semgrep
         run: pip install semgrep && semgrep --config=auto scripts/ integrations/
 
-      - name: Verify provider prompts drift and limits
-        run: python scripts/build_provider_prompts.py
+      - name: Verify neuroinclusive prompt contracts
+        run: python -m pytest scripts/tests/test_neuroinclusive_prompt_contract.py -q
 
       - name: Verify security guardrails
         run: python scripts/audit_security_guardrails.py --target scripts

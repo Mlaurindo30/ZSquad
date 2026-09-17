@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
 import importlib.util
+import io
 import json
 import runpy
 import subprocess
 import sys
 import types
+import zipfile
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -183,10 +186,115 @@ def test_setup_environment_all_paths(tmp_path, monkeypatch, capsys):
     schema = tmp_path/"banco"/"schema.sql"; schema.write_text("create table if not exists x(id integer);")
     se.init_database()
 
-    vendor = tmp_path/"integrations"/"vendor"/"codebase-memory-mcp"/"pkg"/"pypi"
-    se.install_vendor_mcp_packages(Path("python")); vendor.mkdir(parents=True)
-    for result in [Result(), Result(1), Result(1, stdout="fallback", stderr="")]:
-        monkeypatch.setattr(se.subprocess, "run", lambda *a, _r=result, **k: _r); se.install_vendor_mcp_packages(Path("python"))
+    v_root = tmp_path / "integrations" / "vendor"
+    monkeypatch.setattr(se.urllib.request, "urlopen", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("net err")))
+    assert se.provision_codebase_memory(v_root) is False
+
+    bad_zip = io.BytesIO()
+    with zipfile.ZipFile(bad_zip, "w") as zf: zf.writestr("other.txt", b"abc")
+    bad_bytes = bad_zip.getvalue()
+    monkeypatch.setattr(se.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(bad_bytes))
+    assert se.provision_codebase_memory(v_root) is False
+    monkeypatch.setattr(se, "CODEBASE_MEMORY_ARCHIVE_SHA256", hashlib.sha256(bad_bytes).hexdigest())
+    assert se.provision_codebase_memory(v_root) is False
+
+    good_zip = io.BytesIO()
+    with zipfile.ZipFile(good_zip, "w") as zf: zf.writestr("codebase-memory-mcp.exe", b"MZ")
+    good_bytes = good_zip.getvalue()
+    monkeypatch.setattr(se, "CODEBASE_MEMORY_ARCHIVE_SHA256", hashlib.sha256(good_bytes).hexdigest())
+    monkeypatch.setattr(se.urllib.request, "urlopen", lambda *a, **k: io.BytesIO(good_bytes))
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_codebase_memory(v_root) is True
+    assert (v_root / "codebase-memory-mcp" / "build" / "c" / "codebase-memory-mcp.exe").is_file()
+
+    assert se.provision_codebase_memory(v_root) is True
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_codebase_memory(v_root) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_codebase_memory(v_root) is False
+
+    assert se.provision_boostprompt(v_root, Path("python")) is False
+    bp_dir = v_root / "boostprompt" / "src" / "boostprompt"
+    bp_dir.mkdir(parents=True)
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_boostprompt(v_root, Path("python")) is True
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_boostprompt(v_root, Path("python")) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_boostprompt(v_root, Path("python")) is False
+
+    assert se.provision_sdlc_agents(v_root) is False
+    sdlc_dir = v_root / "sdlc-agents" / "agents"
+    sdlc_dir.mkdir(parents=True)
+    assert se.provision_sdlc_agents(v_root) is False
+    for a in ["design", "execution", "governance", "product", "qa", "research", "vision"]:
+        (sdlc_dir / f"{a}.agent.md").write_text("")
+    assert se.provision_sdlc_agents(v_root) is True
+
+    assert se.provision_graphify(v_root, Path("python")) is False
+    graph_dir = v_root / "graphify" / "graphify"
+    graph_dir.mkdir(parents=True)
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_graphify(v_root, Path("python")) is True
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_graphify(v_root, Path("python")) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_graphify(v_root, Path("python")) is False
+
+    assert se.provision_trace_mcp(v_root) is False
+    trace_dir = v_root / "trace-mcp"
+    trace_dir.mkdir(parents=True)
+    (trace_dir / "package.json").write_text("bad json")
+    assert se.provision_trace_mcp(v_root) is False
+    (trace_dir / "package.json").write_text(json.dumps({}))
+    assert se.provision_trace_mcp(v_root) is False
+    (trace_dir / "package.json").write_text(json.dumps({"name": "trace-mcp", "version": "1.0.0"}))
+
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_trace_mcp(v_root) is False
+
+    def fake_trace_build(*a, **k):
+        cmd = a[0] if a else []
+        if "install" in cmd:
+            assert "--frozen-lockfile" in cmd
+        if "build" in cmd or (len(cmd) > 2 and cmd[2] == "build"):
+            (trace_dir / "dist").mkdir(parents=True, exist_ok=True)
+            (trace_dir / "dist" / "cli.js").write_text("// cli")
+        return Result()
+
+    monkeypatch.setattr(se.subprocess, "run", fake_trace_build)
+    assert se.provision_trace_mcp(v_root) is True
+
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_trace_mcp(v_root) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_trace_mcp(v_root) is False
+
+    assert se.provision_chunkhound(v_root, Path("python")) is False
+    chunk_dir = v_root / "chunkhound" / "chunkhound"
+    chunk_dir.mkdir(parents=True)
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_chunkhound(v_root, Path("python")) is True
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_chunkhound(v_root, Path("python")) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_chunkhound(v_root, Path("python")) is False
+
+    assert se.provision_repowise(v_root, Path("python")) is False
+    repo_dir = v_root / "repowise" / "packages" / "core" / "src"
+    repo_dir.mkdir(parents=True)
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_repowise(v_root, Path("python")) is True
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result(1))
+    assert se.provision_repowise(v_root, Path("python")) is False
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
+    assert se.provision_repowise(v_root, Path("python")) is False
+
+    monkeypatch.setattr(se.subprocess, "run", lambda *a, **k: Result())
+    assert se.provision_vendor_integrations(Path("python")) is True
+    assert se.install_vendor_mcp_packages(Path("python")) is True
+    monkeypatch.setattr(se, "provision_codebase_memory", lambda *a: False)
+    assert se.provision_vendor_integrations(Path("python")) is False
 
     monkeypatch.setattr(se.shutil, "which", lambda x: None); se.provision_docker_stack()
     monkeypatch.setattr(se.shutil, "which", lambda x: "docker")
@@ -201,8 +309,9 @@ def test_setup_environment_all_paths(tmp_path, monkeypatch, capsys):
         else: se.validate_suite()
 
     calls=[]
-    for name in ["sync_vendor_repositories","init_database","sync_mcps","provision_docker_stack","validate_suite"]: monkeypatch.setattr(se,name,lambda n=name:calls.append(n))
-    monkeypatch.setattr(se,"ensure_virtualenv",lambda:Path("py")); monkeypatch.setattr(se,"install_vendor_mcp_packages",lambda p:calls.append(str(p)))
+    for name in ["sync_vendor_repositories","init_database","provision_vendor_integrations","sync_mcps","provision_docker_stack","validate_suite"]: monkeypatch.setattr(se,name,lambda *a,n=name,**k:calls.append(n))
+    monkeypatch.setattr(se,"ensure_virtualenv",lambda:Path("py"))
+    monkeypatch.setattr(sys, "argv", ["setup_environment.py"])
     se.main(); assert len(calls)==6
     assert capsys.readouterr().out
 

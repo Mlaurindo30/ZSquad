@@ -579,23 +579,27 @@ def test_prompt_extract_sections_and_engines(tmp_path: Path, monkeypatch):
     (item / "status.yaml").write_text("title: ''\ndescription: ''", encoding="utf-8")
     assert prompt._extract_work_item_text(item).startswith("E")
     real_read_text = Path.read_text
+    real_safe_load = prompt.yaml.safe_load
     monkeypatch.setattr(prompt.yaml, "safe_load", lambda x: (_ for _ in ()).throw(yaml.YAMLError()))
     monkeypatch.setattr(Path, "read_text", lambda self, **k: (_ for _ in ()).throw(OSError()))
     assert prompt._extract_work_item_text(item) == ""
     monkeypatch.setattr(Path, "read_text", real_read_text)
+    monkeypatch.setattr(prompt.yaml, "safe_load", real_safe_load)
 
-    squad = SimpleNamespace(root=tmp_path, _work_base=lambda: tmp_path / "work", skills_catalog={"catalog": []})
+    squad = SimpleNamespace(root=tmp_path, _work_base=lambda: tmp_path / "work", skills_catalog={"catalog": []}, agents={})
     with pytest.raises(prompt.SquadError, match="prompt ausente"):
         prompt._build_prompt_section("a", {"prompt": "missing"}, squad)
     assert prompt._build_work_item_context({}, squad) is None
     assert prompt._build_work_item_context({"work_item": "x"}, squad) is None
-    assert prompt._build_engines_section(squad) is None
+    assert prompt._build_engines_section("a", squad) is None
     bare_packet = {"load_order": ["skills/a/SKILL.md"]}
     put(tmp_path, "skills/a/SKILL.md", b"skill")
     skills = prompt._build_skills_section(bare_packet, squad)
     assert "SKILL" in skills and "METADADOS" not in skills
+    put(tmp_path, "agents/a/manifest.yaml", b"assigned:\n  - path: eng/a\n  - eng/b\n")
+    squad.agents = {"a": {"manifest": "agents/a/manifest.yaml"}}
     squad.skills_catalog = {"catalog": [{"domain": "other"}, {"domain": "integration-engines", "path": "eng/a", "description": "line1\nline2"}, {"domain": "integration-engines", "path": "eng/b"}]}
-    engines = prompt._build_engines_section(squad)
+    engines = prompt._build_engines_section("a", squad)
     assert "line1" in engines and "`b` | b" in engines
 
 
@@ -610,7 +614,7 @@ def test_prompt_render_all_paths(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(prompt, "AgentSquad", Fake)
     monkeypatch.setattr(prompt, "__file__", str(root / "scripts/render_agent_prompt.py"))
     output = root / "out/prompt.txt"
-    monkeypatch.setattr(prompt, "_build_engines_section", lambda squad: "\n---\nENGINES")
+    monkeypatch.setattr(prompt, "_build_engines_section", lambda agent, squad: "\n---\nENGINES")
     rendered = prompt.render_agent_prompt("agent", work_item="W", discovered=[], output_path=str(output), auto_select_skills=True)
     assert "environment_details" in rendered and "METADADOS" in rendered and "STATUS" in rendered
     assert "ENGINES" in rendered
@@ -684,9 +688,11 @@ def test_sync_mcp_build_save_and_validation(tmp_path: Path):
     assert config["mcpServers"]["sinapse-hivemind"]["args"] == [
         "D:/Hive-Mind/scripts/services/sinapse-mcp.py"
     ]
-    assert config["mcpServers"]["codebase-memory"]["env"]["PYTHONPATH"] == (
-        "C:/squad/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
+    assert config["mcpServers"]["codebase-memory"]["command"] == (
+        "C:/squad/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"
     )
+    assert config["mcpServers"]["codebase-memory"]["args"] == []
+    assert "env" not in config["mcpServers"]["codebase-memory"]
 
     default_output = manager.generate_and_save()
     assert default_output == tmp_path / "config/mcp_config.json"

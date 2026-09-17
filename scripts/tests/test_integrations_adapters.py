@@ -77,6 +77,17 @@ class FunctionalEnginesTests(unittest.TestCase):
         self.assertEqual(graph["nodes_count"], 1)
         self.assertEqual(graph["edges_count"], 1)
 
+    def test_codebase_knowledge_graph_graphify_adapter(self):
+        graph_builder = CodebaseKnowledgeGraph()
+        symbols = [{"name": "UserService", "kind": "class", "file_path": "src/user.py"}]
+        deps = [{"source_file": "src/app.py", "target_module": "src/user.py", "kind": "imports"}]
+        extraction = graph_builder.to_graphify_extraction(symbols, deps)
+        self.assertIn("nodes", extraction)
+        self.assertIn("edges", extraction)
+        self.assertTrue(any(n["id"] == "src/user.py:UserService" for n in extraction["nodes"]))
+        self.assertTrue(any(e["relation"] == "imports" for e in extraction["edges"]))
+        self.assertEqual(extraction["edges"][0]["confidence"], "EXTRACTED")
+
     def test_code_health_analyzer(self):
         analyzer = CodeHealthAnalyzer()
         score_high = analyzer.compute_health_score(total_lines=50, max_complexity=3, docstring_cov=1.0, has_contract=True)
@@ -124,6 +135,15 @@ Read-only paths: src/core. Writable: src/api.
         self.assertEqual(roles[0]["sdlc_role"], "analyst")
         self.assertEqual(roles[1]["sdlc_role"], "developer")
 
+    def test_sdlc_role_mapper_canonical_discovery(self):
+        mapper = SDLCRoleMapper()
+        agents = mapper.get_canonical_sdlc_agents()
+        self.assertIn("design", agents)
+        self.assertIn("execution", agents)
+        self.assertIn("qa", agents)
+        self.assertEqual(len(agents), 7)
+
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -8,9 +8,10 @@ ou conversa. Nenhum agente trabalha apenas com contexto oral.
 
 ## Sequência de execução
 
-0. **[Passo 0 — Memória: Projeto (Primária) + Segundo Cérebro (Hive-Mind)]**:
-   - **Memória Primária do Projeto (Obrigatória)**: Consultar prioritariamente a memória e o banco de conhecimento do próprio projeto: banco local (`banco/squad.db` com AST symbols, dependencies, quóruns), o grafo de código / Graphify local (`integrations/codebase_knowledge_graph.py`), a memória de trabalho do projeto (`work/<project_id>/memory/shared/summary.md`) e os checkpoints dos agentes.
-   - **Segundo Cérebro Global (Hive-Mind / Sinapse)**: Como segundo cérebro cross-projeto (`D:/Hive-Mind`), consultar decisões arquiteturais e padrões corporativos já consolidados via `sinapse_query`. Ao aprender novos padrões ou tomar decisões estruturais, persistir deltas locais no projeto e promover aprendizados ao Hive-Mind (`sinapse_save_decision`).
+0. **[Passo 0 — Memória Canônica em 3 Pilares]**:
+   - **Pilar 1 — Memória Primária do Projeto (Local / Canônica)**: Consultar prioritariamente a memória estruturada em SQLite (`banco/squad.db` via `squad query-memory` / `query_memory`, com tabelas `memory_facts`, `symbols`, `dependencies`, `workflow_metrics`) e o grafo de código / Graphify local (`integrations/codebase_knowledge_graph.py`). Fatos locais autoritativos residem no `banco/squad.db`. O arquivo `memory/shared/summary.md` possui status `DERIVED_COMPATIBILITY` (projeção de compatibilidade gerada a partir do SQLite, não fonte autoritativa).
+   - **Pilar 2 — Colaboração e Rastreabilidade do Projeto (Azure DevOps)**: Consultar e atualizar discussões de Work Items no Azure Boards, threads de revisão em Pull Requests e documentação viva na Project Wiki.
+   - **Pilar 3 — Segundo Cérebro Global (Hive-Mind / Sinapse)**: Memória corporativa permanente cross-projeto para padrões e decisões arquiteturais duradouras via `sinapse-mcp`. Consultar decisões prévias via `sinapse_query('<tema>')`. Ao validar novos padrões duradouros, persistir fatos locais no `banco/squad.db` e promover ao Hive-Mind via `sinapse_save_decision`. Degrada graciosamente quando indisponível.
 1. O orquestrador classifica tipo, risco e domínios.
 2. O agente lê seu prompt, skill nativa, manifesto e artefatos referenciados.
 3. O agente carrega apenas as skills atribuídas necessárias.
@@ -43,8 +44,9 @@ Artefatos locais permitidos quando ADO está ativo:
 
 - Um artefato tem um único papel editor por estado; demais papéis comentam em
   `reviews/` ou `findings/`.
-- `status.yaml` e `memory/shared/summary.md` são atualizados somente pelo
-  Delivery Orchestrator após handoff válido.
+- `status.yaml` é atualizado pelo Delivery Orchestrator e pelos gates do workflow
+  após handoff válido. Fatos de memória são gravados no SQLite `banco/squad.db`
+  (sendo `summary.md` gerado apenas como projeção de compatibilidade DERIVED_COMPATIBILITY).
 - Decisões de produto pertencem ao Product Owner; decisões técnicas têm ADR;
   aceite de risco exige o aprovador indicado no workflow.
 

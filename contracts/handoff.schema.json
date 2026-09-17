@@ -8,7 +8,7 @@
   "properties": {
     "schema_version": {"const": 2},
     "id": {"type": "string", "pattern": "^HANDOFF-[A-Z0-9-]+$"},
-    "work_item_id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
+    "work_item_id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE|INCIDENT)-[A-Z0-9-]+$"},
     "from": {"type": "string", "minLength": 2},
     "to": {"type": "string", "minLength": 2},
     "created_at": {"type": "string", "format": "date-time"},

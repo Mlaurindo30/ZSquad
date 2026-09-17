@@ -66,7 +66,7 @@ class SquadError(RuntimeError):
     pass
 
 
-ID_RE = re.compile(r"^(EPIC|FEAT|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$")
+ID_RE = re.compile(r"^(EPIC|FEAT|US|TASK|BUG|REL|EVOL|STUDY|SPIKE|INCIDENT)-[A-Z0-9-]+$")
 AGENT_RE = re.compile(r"^[a-z0-9-]+$")
 
 WORK_ITEM_DIRS: list[str] = [
@@ -626,13 +626,13 @@ class AgentSquad:
         resolved_type = (item_type if item_type is not None else self._legacy_type_for_id(work_id)).lower()
         
         # 4-Tier Hierarchy Parent Validation
-        hierarchy_levels = {"epic": 1, "feature": 2, "story": 3, "pbi": 3, "task": 4, "bug": 3}
+        hierarchy_levels = {"epic": 1, "feature": 2, "story": 3, "pbi": 3, "task": 4, "bug": 3, "incident": 3}
         level = hierarchy_levels.get(resolved_type, 3)
         
-        if resolved_type == "epic" and parent_id:
-            raise SquadError("Epics cannot have a parent_id")
-
         if is_explicit_type:
+            if resolved_type == "epic" and parent_id:
+                raise SquadError("Epics cannot have a parent_id")
+
             if resolved_type in {"feature"} and not parent_id:
                 raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'epic'")
             elif resolved_type in {"story", "pbi"} and not parent_id:
@@ -640,24 +640,24 @@ class AgentSquad:
             elif resolved_type in {"task"} and not parent_id:
                 raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'story'")
 
-        if parent_id:
-            parent_item_path = (parent / parent_id).resolve()
-            if not (parent_item_path / "status.yaml").exists():
-                raise SquadError(f"Parent work item '{parent_id}' does not exist at {parent_item_path}")
-            parent_status = read_yaml(parent_item_path / "status.yaml")
-            parent_type = str(parent_status.get("type", "")).lower()
-            
-            expected_parent_type = {
-                "feature": "epic",
-                "story": "feature",
-                "pbi": "feature",
-                "task": "story",
-            }.get(resolved_type)
-            
-            if expected_parent_type and parent_type != expected_parent_type:
-                raise SquadError(
-                    f"Parent work item '{parent_id}' type '{parent_type}' does not match required parent type '{expected_parent_type}'"
-                )
+            if parent_id:
+                parent_item_path = (parent / parent_id).resolve()
+                if not (parent_item_path / "status.yaml").exists():
+                    raise SquadError(f"Parent work item '{parent_id}' does not exist at {parent_item_path}")
+                parent_status = read_yaml(parent_item_path / "status.yaml")
+                parent_type = str(parent_status.get("type", "")).lower()
+
+                expected_parent_type = {
+                    "feature": "epic",
+                    "story": "feature",
+                    "pbi": "feature",
+                    "task": "story",
+                }.get(resolved_type)
+
+                if expected_parent_type and parent_type != expected_parent_type:
+                    raise SquadError(
+                        f"Parent work item '{parent_id}' type '{parent_type}' does not match required parent type '{expected_parent_type}'"
+                    )
 
         # Query Before Create (QBC) protocol for Epics and Features
         if resolved_type in {"epic", "feature"} and not force:
@@ -668,7 +668,7 @@ class AgentSquad:
                         cand_type = str(cand_status.get("type", "")).lower()
                         if cand_type == resolved_type:
                             cand_id = candidate_path.name
-                            if work_id.lower() == cand_id.lower() or work_id.lower().split('-')[0] == cand_id.lower().split('-')[0]:
+                            if work_id.lower() == cand_id.lower() or work_id.lower().split("-")[0] == cand_id.lower().split("-")[0]:
                                 raise SquadError(
                                     f"QBC Violation: Duplicate {resolved_type} detected ({cand_id}). Use --force to override."
                                 )
@@ -1061,8 +1061,9 @@ class AgentSquad:
     def _legacy_type_for_id(work_id: str) -> str:
         """Mantém a derivação histórica usada por callers sem ``--type``."""
         kind_map = {
-            "EPIC": "epic", "US": "story", "TASK": "task", "BUG": "bug",
+            "EPIC": "epic", "FEAT": "feature", "US": "story", "TASK": "task", "BUG": "bug",
             "REL": "release", "EVOL": "evolution", "STUDY": "study", "SPIKE": "spike",
+            "INCIDENT": "incident",
         }
         prefix = work_id.split("-", 1)[0]
         try:
@@ -3208,22 +3209,27 @@ class AgentSquad:
         }
         self._validate(value, "memory-delta.schema.json")
         write_yaml(deltas_dir / f"{value['id']}.yaml", value)
-        shared = item_path / "memory/shared/summary.md"
-        shared.parent.mkdir(parents=True, exist_ok=True)
-        if shared.exists():
-            shared_content = shared.read_text(encoding="utf-8")
-        else:
-            shared_content = f"# Memória compartilhada — {status['id']}\n"
-        shared_content += f"\n- [{value['id']}] {statement} (fonte: {source})\n"
-        atomic_write_text(shared, shared_content, encoding="utf-8")
 
-        # Persistência estruturada via _memory_delta_unlocked
+        # Persistência estruturada autoritativa no SQLite (banco/squad.db)
         try:
             fact_id = self._memory_delta_unlocked(item_path, author, statement, source=source, kind=kind)
             value["db_fact_id"] = fact_id
         except Exception as _db_err:
             print(f"WARN record_memory_db_failed: {_db_err}")
             logger.warning(f"Falha ao persistir memory_fact no SQLite: {_db_err}")
+
+        # Projeção determinística de compatibilidade (DERIVED_COMPATIBILITY)
+        compat_header = "<!-- DERIVED_COMPATIBILITY: Projected from SQLite squad.db. Do not edit manually. -->\n"
+        shared = item_path / "memory/shared/summary.md"
+        shared.parent.mkdir(parents=True, exist_ok=True)
+        if shared.exists():
+            shared_content = shared.read_text(encoding="utf-8")
+            if not shared_content.startswith("<!-- DERIVED_COMPATIBILITY"):
+                shared_content = f"{compat_header}\n{shared_content}"
+        else:
+            shared_content = f"{compat_header}# Memória compartilhada — {status['id']}\n"
+        shared_content += f"\n- [{value['id']}] {statement} (fonte: {source})\n"
+        atomic_write_text(shared, shared_content, encoding="utf-8")
 
         return value
 
@@ -3342,6 +3348,11 @@ class AgentSquad:
             packet["memory"] = {
                 key: value.replace("work/<WORK-ID>", memory_root)
                 for key, value in memory_manifest.items()
+            }
+            packet["memory_policy"] = {
+                "authoritative_store": str(self._db_path()),
+                "status": "DERIVED_COMPATIBILITY",
+                "notice": "SQLite squad.db is authoritative. summary.md is a derived compatibility projection.",
             }
             # T5: contexto de LEITURA do pacote SDD (quando existente). Nunca
             # concede autorização de escrita — ela pertence à state machine.
@@ -3771,7 +3782,7 @@ def _build_parser() -> argparse.ArgumentParser:
     init.add_argument("--risk", default="medium", choices=["low", "medium", "high", "critical"])
     init.add_argument(
         "--type", dest="item_type",
-        choices=["epic", "feature", "story", "task", "bug", "release", "evolution", "study", "spike"],
+        choices=["epic", "feature", "story", "task", "bug", "release", "evolution", "study", "spike", "incident"],
         default=None,
     )
     init.add_argument("--story-points", type=int, default=None)
