@@ -23,7 +23,9 @@ REQUIRED_FILES = [
     "docs/03-catalogo-de-agentes.md", "docs/04-catalogo-de-skills.md",
     "docs/05-memoria-handoffs-e-specs.md", "docs/06-roadmap-de-implantacao.md",
     "docs/07-operacao-e-integracoes.md", "docs/08-padroes-de-codigo.md",
-    "docs/09-governed-vibe-coding-framework.md", "work/README.md",
+    "docs/09-governed-vibe-coding-framework.md",
+    # NOTE: work/ is excluded from git via .gitignore (runtime state).
+    # Do NOT add work/README.md here — it will never exist in a fresh clone.
 ]
 
 
