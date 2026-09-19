@@ -106,7 +106,10 @@ def test_prompt_line_endings_are_fixed_to_lf():
 
 
 def test_upstream_project_has_attribution_notice():
-    notice = (ROOT / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8").lower()
+    notice_path = ROOT / "docs" / "THIRD_PARTY_NOTICES.md"
+    if not notice_path.exists():
+        notice_path = ROOT / "THIRD_PARTY_NOTICES.md"
+    notice = notice_path.read_text(encoding="utf-8").lower()
 
     assert "ayghri/i-have-adhd" in notice
     assert "ayoub ghriss" in notice
