@@ -10,15 +10,13 @@ function Require-File([string]$relative) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { $errors.Add("missing file: $relative") }
 }
 
-@('AGENTS.md','CLAUDE.md','CODEX.md','GEMINI.md','README.md','config/agent-registry.yaml','config/workflow.yaml','config/memory.yaml','config/discovery-policy.yaml','config/skills-catalog.yaml','contracts/handoff.schema.json','contracts/gate-decision.schema.json','contracts/memory-delta.schema.json','contracts/work-item.schema.json','docs/01-proposta-arquitetura.md','docs/02-metodologia-e-fluxo.md','docs/03-catalogo-de-agentes.md','docs/04-catalogo-de-skills.md','docs/05-memoria-handoffs-e-specs.md','docs/06-roadmap-de-implantacao.md','docs/07-operacao-e-integracoes.md','docs/08-padroes-de-codigo.md','work/README.md') | ForEach-Object { Require-File $_ }
+@('AGENTS.md','CLAUDE.md','GEMINI.md','README.md','config/agent-registry.yaml','config/workflow.yaml','config/memory.yaml','config/discovery-policy.yaml','config/skills-catalog.yaml','contracts/handoff.schema.json','contracts/gate-decision.schema.json','contracts/memory-delta.schema.json','contracts/work-item.schema.json','docs/01-proposta-arquitetura.md','docs/02-metodologia-e-fluxo.md','docs/03-catalogo-de-agentes.md','docs/04-catalogo-de-skills.md','docs/05-memoria-handoffs-e-specs.md','docs/06-roadmap-de-implantacao.md','docs/07-operacao-e-integracoes.md','docs/08-padroes-de-codigo.md','work/README.md') | ForEach-Object { Require-File $_ }
 
 $agentsContent = Get-Content -LiteralPath (Join-Path $root 'AGENTS.md') -Raw
 $claudeContent = Get-Content -LiteralPath (Join-Path $root 'CLAUDE.md') -Raw -ErrorAction SilentlyContinue
-$codexContent = Get-Content -LiteralPath (Join-Path $root 'CODEX.md') -Raw -ErrorAction SilentlyContinue
 $geminiContent = Get-Content -LiteralPath (Join-Path $root 'GEMINI.md') -Raw -ErrorAction SilentlyContinue
 if ($agentsContent -and $agentsContent.Length -gt 12000) { $errors.Add("AGENTS.md exceeds 12,000 character budget") }
 if ($claudeContent -and $claudeContent.Length -gt 40000) { $errors.Add("CLAUDE.md exceeds 40,000 character budget") }
-if ($codexContent -and $codexContent.Length -gt 32768) { $errors.Add("CODEX.md exceeds 32 KiB character budget") }
 if ($geminiContent -and $geminiContent.Length -gt 12000) { $errors.Add("GEMINI.md exceeds 12,000 character budget") }
 
 foreach ($schema in @('contracts/handoff.schema.json','contracts/gate-decision.schema.json','contracts/memory-delta.schema.json','contracts/work-item.schema.json')) {

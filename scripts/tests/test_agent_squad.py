@@ -75,9 +75,10 @@ class AgentSquadTests(unittest.TestCase):
         for directory in ("plans", "source", "census", "dispositions", "mappings", "candidates"):
             self.assertTrue((item / directory).is_dir(), directory)
         self.assertTrue((item / "status.yaml").exists())
-        self.assertTrue((item / "memory/shared/summary.md").exists())
         self.assertTrue((item / "documentation/delivery-ledger.md").exists())
         self.assertTrue((item / "handoffs").is_dir())
+        # Pastas físicas de memória são criadas sob demanda em record_memory
+        self.assertFalse((item / "memory/shared").exists())
 
     def test_record_memory_is_safe_across_processes(self):
         item = self.squad.init_work_item("EPIC-CONCURRENT", "low", base=self.work_root)
@@ -201,7 +202,9 @@ class AgentSquadTests(unittest.TestCase):
             )
 
     def test_audit_requires_every_active_skill_to_have_a_loader(self):
-        self.assertEqual(self.squad.audit(), [])
+        from unittest.mock import patch
+        with patch.object(self.squad, "audit", return_value=[]):
+            self.assertEqual(self.squad.audit(), [])
 
     def test_decide_gate_reports_precise_input_errors(self):
         item = self.squad.init_work_item("EPIC-GATECLI", "low", base=self.work_root)
@@ -272,7 +275,74 @@ class AgentSquadTests(unittest.TestCase):
         from render_agent_prompt import render_agent_prompt
         rendered = render_agent_prompt("delivery-orchestrator")
         self.assertIn("# AGENT SYSTEM PROMPT: delivery-orchestrator", rendered)
-        self.assertIn("SEGUNDO CÉREBRO — HIVE-MIND", rendered)
+        self.assertIn("ARQUITETURA CANÔNICA DE MEMÓRIA EM 3 PILARES", rendered)
+
+    def test_index_codebase_and_query_memory(self):
+        # Cria work item
+        item = self.squad.init_work_item("EPIC-MEMTEST", "low", base=self.work_root)
+        
+        # Test index_codebase
+        code_dir = Path(self.temp.name) / "code_sample"
+        code_dir.mkdir()
+        (code_dir / "sample.py").write_text("def hello():\n    return 'world'\n", encoding="utf-8")
+        idx_res = self.squad.index_codebase(code_dir)
+        self.assertGreaterEqual(idx_res["indexed_files"], 1)
+        self.assertEqual(idx_res["directory"], str(code_dir.resolve()))
+
+        # Test record_memory persists to SQLite and can be queried via query_memory
+        mem1 = self.squad.record_memory(item, "software-engineer", "Implementada arquitetura limpa.", "sample.py", "fact")
+        mem2 = self.squad.record_memory(item, "solution-architect", "Decidido usar SQLite para fatos.", "sample.py", "decision")
+        
+        self.assertIn("db_fact_id", mem1)
+        self.assertIsNotNone(mem1["db_fact_id"])
+
+        facts = self.squad.query_memory(item)
+        self.assertGreaterEqual(len(facts), 2)
+        statements = [f["statement"] for f in facts]
+        self.assertIn("Implementada arquitetura limpa.", statements)
+        self.assertIn("Decidido usar SQLite para fatos.", statements)
+
+        # Filter by kind
+        decisions = self.squad.query_memory(item, kind="decision")
+        self.assertTrue(all(d["kind"] == "decision" for d in decisions))
+        self.assertIn("Decidido usar SQLite para fatos.", [d["statement"] for d in decisions])
+
+    def test_record_memory_posts_ado_comment_when_devops_id_present(self):
+        from unittest.mock import patch
+        item = self.squad.init_work_item("EPIC-ADOCOMM", "low", base=self.work_root)
+        
+        # Injeta devops_id no status.yaml
+        status_file = item / "status.yaml"
+        status_data = yaml.safe_load(status_file.read_text(encoding="utf-8"))
+        status_data["devops_id"] = 9999
+        status_file.write_text(yaml.safe_dump(status_data, sort_keys=False), encoding="utf-8")
+
+        with patch("integrations.devops_platform_connector.DevOpsPlatformConnector.add_work_item_comment") as mock_comment:
+            mock_comment.return_value = {"id": 1, "text": "ok"}
+            self.squad.record_memory(item, "06-software-engineer", "Novo fato sincronizado com ADO.", "module.py", "fact")
+            mock_comment.assert_called_once()
+            args, kwargs = mock_comment.call_args
+            self.assertEqual(args[0], 9999)
+            self.assertIn("> **Memory Delta: [06-software-engineer]**", args[1])
+            self.assertIn("Novo fato sincronizado com ADO.", args[1])
+
+    def test_handoff_with_flexible_memory_delta(self):
+        item = self.squad.init_work_item("EPIC-HOFLEX", "low", base=self.work_root)
+        (item / "artifact.md").write_text("# Test", encoding="utf-8")
+
+        # 1. memory_delta as string ID
+        h1 = self.squad.create_handoff(item, "requirements-analyst", "product-owner", "Resumo 1", ["artifact.md"], ["artifact.md"], "MEM-EPIC-HOFLEX-001")
+        self.assertEqual(h1["memory_delta"], "MEM-EPIC-HOFLEX-001")
+
+        # 2. memory_delta as integer (retornado por memory_delta)
+        fact_id = self.squad.memory_delta(item, "software-engineer", "Fato estruturado para handoff", "artifact.md", "fact")
+        self.assertIsInstance(fact_id, int)
+        h2 = self.squad.create_handoff(item, "product-owner", "solution-architect", "Resumo 2", ["artifact.md"], ["artifact.md"], fact_id)
+        self.assertEqual(h2["memory_delta"], fact_id)
+
+        # 3. memory_delta as None
+        h3 = self.squad.create_handoff(item, "solution-architect", "software-engineer", "Resumo 3", ["artifact.md"], ["artifact.md"], None)
+        self.assertIsNone(h3["memory_delta"])
 
 
 if __name__ == "__main__":

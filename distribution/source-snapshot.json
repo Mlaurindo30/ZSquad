@@ -1,22 +1,22 @@
 {
   "algorithm": "sha256(canonical-jsonl-records)",
   "counts": {
-    "archive": 244,
-    "distribution": 11866,
-    "excluded": 37766
+    "archive": 9951,
+    "distribution": 74439,
+    "excluded": 18575
   },
   "git_revision": "UNVERIFIED",
   "reconciliation": {
-    "captured": 49876,
-    "classified": 49876,
+    "captured": 102965,
+    "classified": 102965,
     "complete": true
   },
-  "records": 49876,
+  "records": 102965,
   "schema_version": 1,
   "self_outputs_excluded": [
     "archive/archive-manifest.jsonl",
     "distribution/files.manifest.jsonl",
     "distribution/source-snapshot.json"
   ],
-  "snapshot_digest": "c92bac2218639e56cdfb310bfa3d095bdf9bb128bef31bb0390595a092a08f0d"
+  "snapshot_digest": "d57b6156959ef12956277136dcf5182159848461aed8034f6506e3a3191bc645"
 }

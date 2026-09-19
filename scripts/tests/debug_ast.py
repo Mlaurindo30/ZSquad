@@ -1,5 +1,6 @@
 import ast
 from pathlib import Path
+import tempfile
 
 def _is_registry_register_call(node):
     if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
@@ -12,7 +13,7 @@ def _is_registry_register_call(node):
         and func.value.id == "registry"
     )
 
-p = Path("C:/Users/miche/AppData/Local/Temp/test_reg.py")
+p = Path(tempfile.gettempdir()) / "test_reg.py"
 p.write_text("registry.register(name='x', ...)\n", encoding="utf-8")
 source = p.read_text(encoding="utf-8")
 print("source:", repr(source))

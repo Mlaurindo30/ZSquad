@@ -21,15 +21,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app/
 
 ENV PYTHONUNBUFFERED=1
+ENV SQUAD_RUNTIME=/app
 ENV SQUAD_DB_PATH=/app/banco/squad.db
-
-# Inicializa banco de dados na construção
-RUN python -c "from scripts.setup_environment import init_database; init_database()"
 
 # Usuário não-privilegiado para execução segura do container
 RUN useradd -m -u 1000 squaduser && chown -R squaduser:squaduser /app
 USER squaduser
 
-EXPOSE 8080
-
-CMD ["python", "-c", "import time; print('Agents Squad Core running'); time.sleep(31536000)"]
+CMD ["python", "scripts/agent_squad.py", "audit"]

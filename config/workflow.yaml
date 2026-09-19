@@ -5,9 +5,9 @@ cadence:
   ceremonies: [refinement, planning, daily-flow-review, review, retrospective]
 flow:
   pull_system: true
-  # US-10 (2026-09-02): removido `review-qa` — estado órfão, não usado em cycles.yaml.
-  columns: [blueprint, scaffolding, implementation, code-security-review, quality-validation, governance-release, done]
+  columns: [discovery, blueprint, scaffolding, implementation, code-security-review, quality-validation, governance-release, done]
   wip_limits:
+    discovery: 3
     blueprint: 2
     scaffolding: 2
     implementation: 3
@@ -17,6 +17,7 @@ flow:
     high_or_critical_risk_total: 1
   required_metrics: [wip, throughput, work-item-age, cycle-time, blocked-time]
   phase_timeboxes:
+    discovery: 45
     blueprint: 45
     scaffolding: 30
     implementation: 90
@@ -28,6 +29,13 @@ flow:
     # retry = 1 re-execucao do mesmo criterio de gate apos `fail` (gate-decidido rejected/changes_requested)
     max_cycles_per_target: 3
     max_retries_per_check: 2
+continuous_engine:
+  enabled: true
+  max_retries_per_check: 2
+  circuit_breaker_timeout_sec: 1800
+  injection_points:
+    g1_product_human_required_from_risk: medium
+    max_story_points_cognitive_protection: 8
 work_item:
   root: work/<project>/<WORK-ID>
   status_schema: contracts/work-item.schema.json
@@ -36,6 +44,11 @@ work_item:
   ledger: documentation/delivery-ledger.md
   light_artifact: work/<project>/light/<WORK-ID>.md
 states:
+  - id: discovery
+    owner: requirements-analyst
+    collaborators: [solution-architect, agile-coach]
+    outputs: [discovery-notes.md]
+    next: blueprint
   - id: blueprint
     owner: solution-architect
     collaborators: [requirements-analyst, product-owner, ux-researcher, ui-designer, agile-coach, security-reviewer, test-engineer]
@@ -43,11 +56,12 @@ states:
     next: scaffolding
   - id: scaffolding
     owner: delivery-orchestrator
+    collaborators: [scrum-master]
     outputs: [stubs, red-tests, interface-contracts]
     next: implementation
   - id: implementation
     owner: delivery-orchestrator
-    selectable_agents: [software-engineer, fullstack-engineer, mobile-engineer, cloud-architect, frontend-engineer, backend-engineer, integration-engineer, data-engineer, dba-databricks-engineer, ai-engineer, ml-engineer, agent-rag-engineer, mlops-llmops-engineer, platform-engineer, direct-response-copywriter, offensive-cyber-operator]
+    selectable_agents: [software-engineer, fullstack-engineer, mobile-engineer, cloud-architect, frontend-engineer, backend-engineer, integration-engineer, data-engineer, dba-databricks-engineer, ai-engineer, ml-engineer, agent-rag-engineer, mlops-llmops-engineer, platform-engineer, direct-response-copywriter, offensive-cyber-operator, devops-release-engineer]
     outputs: [code, tests, implementation-logs, evidence]
     next: code-security-review
   - id: code-security-review
@@ -62,7 +76,7 @@ states:
     next: governance-release
   - id: governance-release
     owner: governance-auditor
-    collaborators: [technical-writer]
+    collaborators: [technical-writer, devops-release-engineer]
     outputs: [updated-docs, delivery-ledger, traceability, rollout-rollback-plan]
     next: done
   - id: done
@@ -87,6 +101,11 @@ gates:
     owner: delivery-orchestrator
     criteria: [definition-of-ready, tests-red-exist-and-fail, owners-assigned, dependencies-resolved]
     human_required_when: risk-high-critical
+  G3-readiness:
+    owner: delivery-orchestrator
+    collaborators: [scrum-master]
+    criteria: [definition-of-ready, tests-red-exist-and-fail, owners-assigned, dependencies-resolved]
+    human_required_when: risk-high-critical
   GT-done:
     owners: [code-reviewer, security-reviewer, qa-engineer, governance-auditor]
     criteria: [spec-conformance, tests-green, tdd-cycle-valid, security-executed, acceptance-bdd-executed, regression-executed, coverage-executed, traceability-complete, ledger-current, rollout-rollback-ready]
@@ -94,7 +113,10 @@ gates:
     deprecated: true
   G4-code-security:
     owner: code-reviewer
-    criteria: [spec-conformance, tests-green, tdd-cycle-valid, security-executed]
+    # T5 (alinhamento executável): clean-code-executed e tests-executed já são
+    # calculados por validate_G4_code_security (gate_validators.py) e agora são
+    # exigidos como verificação executável no decide-gate (plano §7-T5).
+    criteria: [spec-conformance, tests-green, tdd-cycle-valid, security-executed, clean-code-executed, tests-executed]
   G5-quality:
     owner: qa-engineer
     criteria: [acceptance-bdd-executed, regression-executed, coverage-executed]
@@ -108,11 +130,24 @@ gate_state_mapping:
   G1-product: blueprint
   G2-design: blueprint
   GT-design-review: scaffolding
+  G3-readiness: scaffolding
   G4-code-security: quality-validation
   G5-quality: governance-release
   G6-governance-release: done
 gate_aliases:
   G3-readiness: GT-design-review
+# T5 (Spec Kit): estágios SDD do adapter (integrations/spec-kit/adapter/policy.py)
+# autorizados antes de avanço de estado e dispatch gerenciado quando o work item
+# tem pacote SDD (sdd/package.json) e o projeto ativou a política
+# (.agents_squad/config/sdd-policy.yaml). Espelho declarativo do contrato T4;
+# o código usa este mapeamento com fallback para constantes equivalentes.
+sdd_integration:
+  stages:
+    planning: [G1-product]
+    tasking: [G2-design]
+    readiness: [G3-readiness]
+    implementation: [G1-product, G2-design, G3-readiness]
+  error_codes: [SDD_MISSING_INPUT, SDD_OPEN_QUESTION, SDD_STALE_GATE, SDD_COVERAGE_GAP, SDD_DEPENDENCY_CYCLE, SDD_POLICY_INVALID, SDD_MALFORMED]
 segregation_of_duties:
   enforced_from_risk: medium
   conflicts:

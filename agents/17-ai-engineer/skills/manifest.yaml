@@ -2,6 +2,12 @@ agent: ai-engineer
 native:
 - path: agents/17-ai-engineer/skills/native/ai-engineer-native
 assigned:
+- path: integrations/codebase_knowledge_graph.py
+- path: integrations/experimental/contextual_ast_chunker.py
+- path: integrations/experimental/gitingest.py
+- path: integrations/experimental/prompt_quality_optimizer.py
+- path: integrations/experimental/toon.py
+- path: integrations/experimental/trajectory_refinement_engine.py
 - path: skills/ai/agent-development/ai-agent-development
 - path: skills/ai/agent-development/langgraph
 - path: skills/ai/agent-development/prompt-engineering
@@ -11,19 +17,9 @@ assigned:
 - path: skills/ai/model-evaluation/agent-evaluation
 - path: skills/data/databricks/databricks-ai-functions
 - path: skills/data/mlflow/mlflow-agent
-- path: integrations/experimental/codebase_knowledge_graph.py
-- path: integrations/experimental/prompt_quality_optimizer.py
-- path: integrations/experimental/trajectory_refinement_engine.py
-- path: integrations/experimental/contextual_ast_chunker.py
-- path: integrations/experimental/gitingest.py
-- path: integrations/experimental/toon.py
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/ai-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

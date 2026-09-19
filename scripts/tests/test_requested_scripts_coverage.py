@@ -5,6 +5,7 @@ import errno
 import json
 import os
 import runpy
+import shutil
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +16,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 import sys
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import scripts.agent_squad as agent
@@ -23,6 +25,37 @@ import scripts.governed_io as gio
 import scripts.local_agent_db as dbmod
 import scripts.project_context as context
 import scripts.quality_gate_runner as quality
+
+
+def _link_or_copy(src: Path, dst: Path) -> None:
+    if not src.exists() or dst.exists():
+        return
+    if sys.platform == "win32":
+        try:
+            import _winapi
+
+            _winapi.CreateJunction(str(src), str(dst))
+            return
+        except Exception:
+            pass
+    try:
+        os.symlink(src, dst, target_is_directory=src.is_dir())
+    except Exception:
+        if src.is_dir():
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
+
+
+def make_authorized_runtime(tmp_path: Path, project_id: str = "coverage-project") -> tuple[agent.AgentSquad, Path]:
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("agents", "config", "contracts", "templates", "skills", "integrations"):
+        _link_or_copy(ROOT / name, runtime_dir / name)
+    work_dir = runtime_dir / "work" / project_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+    squad = agent.AgentSquad(runtime_dir, project_name=project_id)
+    return squad, work_dir
 
 
 def _runtime(tmp_path: Path) -> Path:
@@ -338,10 +371,10 @@ def test_agent_helpers_hive_integration_and_cli_dispatch(tmp_path: Path, monkeyp
     with pytest.raises(agent.SquadError): agent._parse_criteria(["bad"])
     assert agent._parse_criteria([" a = pass "]) == [("a", "pass")]
 
-    squad = agent.AgentSquad(ROOT, "coverage-project")
+    squad, work_dir = make_authorized_runtime(tmp_path, "coverage-project")
     with pytest.raises(agent.SquadError): squad._validate({}, "handoff.schema.json")
-    with pytest.raises(agent.SquadError): squad.init_work_item("bad", "low", base=tmp_path)
-    item = squad.init_work_item("EPIC-COV", "low", base=tmp_path)
+    with pytest.raises(agent.SquadError): squad.init_work_item("bad", "low", base=work_dir)
+    item = squad.init_work_item("EPIC-COV", "low", base=work_dir)
     with pytest.raises(agent.SquadError): squad._item(tmp_path / "missing")
     with pytest.raises(agent.SquadError): squad._item_reference(item, "../x", "ref")
     with pytest.raises(agent.SquadError): squad._item_reference(item, "missing.md", "ref")
@@ -349,7 +382,7 @@ def test_agent_helpers_hive_integration_and_cli_dispatch(tmp_path: Path, monkeyp
     with pytest.raises(agent.SquadError, match="catálogo aprovado"):
         squad.activation_packet("requirements-analyst", item=item, discovered=["unknown"])
     assert squad.discover("", 2) == []
-    monkeypatch.setattr(agent, "LocalAgentDB", Mock(side_effect=ValueError("db")))
+    monkeypatch.setattr(agent, "LocalAgentDB", Mock(side_effect=[ValueError("db"), Mock()]))
     assert squad.track_tokens(item, "requirements-analyst", "x", -1, 0, 0)["total_prompt_tokens"] == -1
 
     assert squad.run_integration_engine("fake_engine", work_item=item)["status"] == "error"
@@ -393,22 +426,20 @@ def test_agent_defensive_branches_and_custom_iterables(tmp_path: Path, monkeypat
     scalar = tmp_path / "scalar.yaml"; scalar.write_text("- x", encoding="utf-8")
     with pytest.raises(agent.SquadError, match="Esperado objeto"): agent.read_yaml(scalar)
 
-    squad = agent.AgentSquad(ROOT, "coverage-project")
-    item = squad.init_work_item("TASK-DEFENSIVE", "low", base=tmp_path)
-    assert squad._work_base() == ROOT / "work/coverage-project"
-    rooted = tmp_path / "runtime/work/coverage-project/TASK-ROOTED"
-    (rooted).mkdir(parents=True)
+    squad, work_dir = make_authorized_runtime(tmp_path, "coverage-project")
+    item = squad.init_work_item("TASK-DEFENSIVE", "low", base=work_dir)
+    assert squad._work_base() == squad.root / "work/coverage-project"
+    rooted = squad.root / "work/coverage-project/TASK-ROOTED"
+    (rooted).mkdir(parents=True, exist_ok=True)
     (rooted / "status.yaml").write_text("id: TASK-ROOTED", encoding="utf-8")
-    squad.root = tmp_path / "runtime"
     assert squad._item("work/coverage-project/TASK-ROOTED") == rooted.resolve()
-    generic = tmp_path / "runtime/work/TASK-GENERIC"; generic.mkdir()
+    generic = squad.root / "work/TASK-GENERIC"; generic.mkdir(parents=True, exist_ok=True)
     (generic / "status.yaml").write_text("id: TASK-GENERIC", encoding="utf-8")
     assert squad._item("work/TASK-GENERIC") == generic.resolve()
-    squad.root = ROOT
     with pytest.raises(agent.SquadError, match="caminho relativo"):
         squad._item_reference(item, str((tmp_path / "absolute").resolve()), "ref")
     with pytest.raises(agent.SquadError, match="Risco inválido"):
-        squad._init_work_item_unlocked("TASK-RISK", "impossible", tmp_path)
+        squad._init_work_item_unlocked("TASK-RISK", "impossible", work_dir)
     real_file_lock = agent.file_lock
     monkeypatch.setattr(agent, "file_lock", Mock(side_effect=agent.LockTimeoutError("busy")))
     with pytest.raises(agent.SquadError, match="busy"):
@@ -430,8 +461,8 @@ def test_agent_defensive_branches_and_custom_iterables(tmp_path: Path, monkeypat
         squad.decide_gate(item, "GX", owner, [], ["evidence.txt"])
     squad.workflow = original_workflow
 
-    engine = ROOT / "integrations/fake.py"
-    monkeypatch.setattr(Path, "is_file", lambda p: True if p == engine else Path.exists(p))
+    engine = squad.root / "integrations/fake.py"
+    monkeypatch.setattr(Path, "is_file", lambda p: True if p.name == "fake.py" else Path.exists(p))
     monkeypatch.setattr(agent.subprocess, "run", Mock(return_value=SimpleNamespace(returncode=1, stdout="o", stderr="e")))
     assert squad.run_integration_engine("fake", work_item=item)["status"] == "error"
     monkeypatch.setattr(agent.subprocess, "run", Mock(side_effect=OSError("offline")))
@@ -439,8 +470,8 @@ def test_agent_defensive_branches_and_custom_iterables(tmp_path: Path, monkeypat
 
 
 def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, monkeypatch):
-    squad = agent.AgentSquad(ROOT, "coverage-project")
-    item = squad.init_work_item("TASK-REMAINING", "medium", base=tmp_path)
+    squad, work_dir = make_authorized_runtime(tmp_path, "coverage-project")
+    item = squad.init_work_item("TASK-REMAINING", "medium", base=work_dir)
     assert squad._item(item) == item
 
     legacy = agent.AgentSquad(ROOT, allow_legacy=True)
@@ -454,6 +485,7 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     sender, recipient = list(squad.agent_ids)[:2]
     (item / "e.txt").write_text("e", encoding="utf-8")
     delta_ref = "memory/deltas/MEM-TASK-REMAINING-000.yaml"
+    (item / delta_ref).parent.mkdir(parents=True, exist_ok=True)
     (item / delta_ref).write_text("kind: fact\nstatement: seed", encoding="utf-8")
     handoff = squad.create_handoff(item, sender, recipient, "summary", ["e.txt"], ["e.txt"], delta_ref)
     with pytest.raises(agent.SquadError, match="destinatário"):
@@ -476,29 +508,31 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
                 squad.decide_gate(item, gate_id, owner, [(n, "pass") for n in expected], ["e.txt"])
     monkeypatch.setattr(gates, "validate_gate", original_validate)
 
-    missing_summary = squad.init_work_item("TASK-NOSUMMARY", "low", base=tmp_path)
-    (missing_summary / "memory/shared/summary.md").unlink()
+    missing_summary = squad.init_work_item("TASK-NOSUMMARY", "low", base=work_dir)
+    (missing_summary / "memory/shared/summary.md").unlink(missing_ok=True)
     with pytest.raises(agent.SquadError, match="summary.md ausente"): squad.compact_memory(missing_summary)
     (item / "memory/deltas/MEM-BAD.yaml").write_text("- bad", encoding="utf-8")
     for index, kind in enumerate(("fact", "decision", "risk")):
         (item / f"memory/deltas/MEM-{index}.yaml").write_text(yaml.safe_dump({"kind": kind, "statement": kind}))
+    (item / "memory/shared/summary.md").parent.mkdir(parents=True, exist_ok=True)
+    (item / "memory/shared/summary.md").write_text("# Summary\n- Seed line 1\n- Seed line 2\n", encoding="utf-8")
     compacted = squad.compact_memory(item)
     assert compacted["compacted_lines"] > 0
 
     chosen = next(iter(squad.agents))
-    manifest_path = ROOT / squad.agents[chosen]["manifest"]
+    manifest_path = (squad.root / squad.agents[chosen]["manifest"]).resolve()
     real_read_yaml = agent.read_yaml
     def manifest_with_selected(path):
-        if path == manifest_path:
+        if Path(path).resolve() == manifest_path:
             return {"native": [{"path": "missing-skill"}], "assigned": [],
                     "discovery": {"maximum_loaded": 10}, "handoff": {"schema": "x"}}
         return real_read_yaml(path)
     monkeypatch.setattr(agent, "read_yaml", manifest_with_selected)
     with pytest.raises(agent.SquadError, match="skill inválida"):
         squad.activation_packet(chosen)
-    skill_dir = ROOT / "missing-skill"
+    skill_dir = (squad.root / "missing-skill").resolve()
     real_is_dir = Path.is_dir
-    monkeypatch.setattr(Path, "is_dir", lambda p: p == skill_dir or real_is_dir(p))
+    monkeypatch.setattr(Path, "is_dir", lambda p: Path(p).resolve() == skill_dir or real_is_dir(p))
     with pytest.raises(agent.SquadError, match="SKILL.md ausente"):
         squad.activation_packet(chosen)
     monkeypatch.setattr(Path, "is_dir", real_is_dir)
@@ -508,17 +542,17 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
     monkeypatch.setattr(agent, "read_yaml", lambda p: {
         "native": [{"path": value} for value in many], "assigned": [],
         "discovery": {"maximum_loaded": 10}, "handoff": {"schema": "x"},
-    } if p == manifest_path else real_read_yaml(p))
+    } if Path(p).resolve() == manifest_path else real_read_yaml(p))
     with pytest.raises(agent.SquadError, match="limite de skills"):
         squad.activation_packet(chosen)
     monkeypatch.setattr(agent, "read_yaml", real_read_yaml)
 
     monkeypatch.setattr(squad, "_item", Mock(return_value=item))
-    monkeypatch.setattr(squad, "_work_base", Mock(return_value=tmp_path))
+    monkeypatch.setattr(squad, "_work_base", Mock(return_value=work_dir))
     packet = squad.activation_packet(chosen, item=item)
     assert packet["work_item"] == "TASK-REMAINING"
 
-    (item / "bad.bin").write_bytes(b"x\0")
+    (item / "bad.txt").write_bytes(b"x\0")
     (item / "handoffs" / f"{handoff['id']}.yaml").write_text(yaml.safe_dump(handoff), encoding="utf-8")
     (item / "gate-decisions/x.yaml").write_text("decision: pass", encoding="utf-8")
     monkeypatch.setattr(squad, "_validate", Mock())
@@ -538,11 +572,11 @@ def test_agent_remaining_validation_activation_memory_and_audit(tmp_path: Path, 
         with pytest.raises(agent.SquadError, match="aprovação humana"):
             squad.decide_gate(item, human_gate, owner, [("plain", "pass")], ["e.txt"])
     monkeypatch.setattr(gates, "validate_gate", lambda *_: {"findings": []})
-    approved = squad.decide_gate(item, "GM", owner, [("plain", "pass")], ["e.txt"], owner, "e.txt")
+    approved = squad.decide_gate(item, "GM", owner, [("plain", "pass")], ["e.txt"], "human-approver", "e.txt")
     assert approved["human_approval"]["required"]
     squad.workflow["gates"]["GL"] = {"owners": [owner], "criteria": ["plain"]}
     squad.gate_ids.add("GL")
-    low_item = squad.init_work_item("TASK-LOW-GATE", "low", base=tmp_path)
+    low_item = squad.init_work_item("TASK-LOW-GATE", "low", base=work_dir)
     (low_item / "e.txt").write_text("e", encoding="utf-8")
     low_decision = squad.decide_gate(low_item, "GL", owner, [("plain", "pass")], ["e.txt"])
     assert not low_decision["human_approval"]["required"]

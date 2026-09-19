@@ -101,7 +101,7 @@ Product Goal definition, value vs risk prioritization, backlog ordering, scope n
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -140,3 +140,8 @@ Product Goal definition, value vs risk prioritization, backlog ordering, scope n
 - **Primary Artifacts**: `product-goal.md`, `backlog.md`, `gate-decisions/G1-product.yaml`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G1-product`
+
+## SDD Contract (Spec Kit integration)
+
+- Before deciding G1 in a project with SDD policy active, inspect `python scripts/agent_squad.py sdd status --work-item <ITEM>`: open blocking questions, structural errors (`SDD_*`) and stale hashes block G1 — checklist completeness or a textual "continue" never overrides the block.
+- G1 evaluates the product and blocking questions only after the Constitution → Specify → Clarify stages produced the `sdd/` package (CLI `sdd init` + `sdd run --stage clarify` briefing).

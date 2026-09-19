@@ -32,15 +32,23 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
     python_exe = sys.executable
     root_str = str(squad_root).replace("\\", "/")
 
+    if squad_root.resolve() == ROOT.resolve():
+        cmd_python = "python"
+        codebase_cmd = "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"
+    else:
+        cmd_python = python_exe
+        codebase_cmd = f"{root_str}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe"
+
     return {
         "mcpServers": {
             "azure-devops": {
                 "command": "npx",
-                "args": ["-y", "@azure-devops/mcp"],
+                # MCP Auth Fix (Lote 5.1): MCP v2.x usa PAT via env var
+                # ADO_MCP_AUTH_TOKEN + --authentication envvar (headless/CI);
+                # a organização é passada como NOME (não URL) como argumento.
+                "args": ["-y", "@azure-devops/mcp@latest", "${AZURE_DEVOPS_ORG}", "--authentication", "envvar"],
                 "env": {
-                    "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}",
-                    "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
-                    "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+                    "ADO_MCP_AUTH_TOKEN": "${AZURE_DEVOPS_PAT}"
                 },
                 "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
             },
@@ -48,16 +56,13 @@ def build_default_mcp_config(squad_root: Path) -> dict[str, Any]:
             # Um wrapper MCP real para o banco do squad entra como fase futura do
             # EVOL-LIVING-MEMORY-20260822 (ver plans/delivery-plan.md).
             "codebase-memory": {
-                "command": python_exe,
-                "args": ["-m", "codebase_memory_mcp"],
-                "env": {
-                    "PYTHONPATH": f"{root_str}/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
-                },
+                "command": codebase_cmd,
+                "args": [],
                 "description": "High-performance persistent structural symbol knowledge graph.",
                 "tools": ["query_symbol", "find_callers", "find_dependencies"],
             },
             "sinapse-hivemind": {
-                "command": python_exe,
+                "command": cmd_python,
                 "args": ["D:/Hive-Mind/scripts/services/sinapse-mcp.py"],
                 "description": "Global durable semantic memory bridge for Hive-Mind vault.",
                 "tools": [

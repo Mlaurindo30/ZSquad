@@ -10,8 +10,6 @@ Este diretório contém a infraestrutura de persistência, schemas relacionais/A
 banco/
 ├── squad.db            # Banco SQLite local embedded (WAL mode)
 ├── schema.sql          # Schema SQL canônico para símbolos AST, tokens e quórum
-├── Dockerfile          # Imagem Docker para o serviço de banco e APIs locais
-├── docker-compose.yml  # Orquestração de containers (SQLite, FalkorDB, MCP Bridge)
 └── README.md           # Este guia de operação
 ```
 
@@ -25,10 +23,10 @@ O banco SQLite opera de forma totalmente embedded através de `scripts/local_age
 python scripts/local_agent_db.py
 ```
 
-### 2. Execução Containerizada via Docker Compose
-Para rodar a pilha completa de persistência e grafos em containers isolados:
+### 2. Execução Containerizada via Docker Compose Canônico
+A orquestração de containers unificada (Agents Squad Core + FalkorDB) é gerenciada a partir da raiz do projeto através de `docker-compose.yml`:
 ```powershell
-docker compose -f banco/docker-compose.yml up -d
+docker compose up -d
 ```
 
 ### 3. Migração do Schema

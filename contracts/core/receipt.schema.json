@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/receipt.schema.json",
+  "title": "SpecialistReceipts",
+  "description": "Cryptographic execution evidence receipts for specialist agents enforcing Segregation of Duties.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/ExecutionReceipt"},
+    {"$ref": "#/$defs/ReviewReceipt"},
+    {"$ref": "#/$defs/SecurityReceipt"},
+    {"$ref": "#/$defs/TestReceipt"},
+    {"$ref": "#/$defs/QAReceipt"},
+    {"$ref": "#/$defs/GovernanceReceipt"},
+    {"$ref": "#/$defs/DispatchReceipt"}
+  ],
+  "$defs": {
+    "BaseReceiptProperties": {
+      "type": "object",
+      "required": [
+        "receipt_id",
+        "receipt_type",
+        "work_item_id",
+        "agent_id",
+        "instruction_hash",
+        "evidence_hash",
+        "created_at"
+      ],
+      "properties": {
+        "receipt_id": {"type": "string", "minLength": 1},
+        "receipt_type": {"type": "string", "minLength": 1},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "agent_id": {"type": "string", "minLength": 1},
+        "instruction_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "evidence_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "ExecutionReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["diff_summary"],
+          "properties": {
+            "files_modified": {"type": "array", "items": {"type": "string"}},
+            "tests_executed": {"type": "array", "items": {"type": "string"}},
+            "test_exit_code": {"type": "integer"},
+            "diff_summary": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "ReviewReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["reviewer_role", "verdict"],
+          "properties": {
+            "reviewer_role": {"type": "string", "minLength": 1},
+            "verdict": {"type": "string", "enum": ["APPROVED", "CHANGES_REQUESTED"]},
+            "comments": {"type": "array", "items": {"type": "string"}},
+            "reviewed_files": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      ]
+    },
+    "SecurityReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["security_role", "verdict", "critical_count"],
+          "properties": {
+            "security_role": {"type": "string", "minLength": 1},
+            "vulnerabilities_detected": {"type": "integer", "minimum": 0},
+            "critical_count": {"type": "integer", "minimum": 0},
+            "sast_tool_output": {"type": "string"},
+            "verdict": {"type": "string", "enum": ["APPROVED", "REJECTED"]}
+          }
+        }
+      ]
+    },
+    "TestReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["tester_role", "total_tests", "passed_tests", "failed_tests"],
+          "properties": {
+            "tester_role": {"type": "string", "minLength": 1},
+            "total_tests": {"type": "integer", "minimum": 0},
+            "passed_tests": {"type": "integer", "minimum": 0},
+            "failed_tests": {"type": "integer", "minimum": 0},
+            "coverage_percentage": {"type": "number", "minimum": 0, "maximum": 100}
+          }
+        }
+      ]
+    },
+    "QAReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["qa_role", "verdict"],
+          "properties": {
+            "qa_role": {"type": "string", "minLength": 1},
+            "scenarios_verified": {"type": "integer", "minimum": 0},
+            "bdd_exit_code": {"type": "integer"},
+            "verdict": {"type": "string", "enum": ["APPROVED", "REJECTED"]}
+          }
+        }
+      ]
+    },
+    "GovernanceReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["auditor_role", "ledger_entry_id", "compliance_verdict"],
+          "properties": {
+            "auditor_role": {"type": "string", "minLength": 1},
+            "gate_approvals": {"type": "array", "items": {"type": "string"}},
+            "ledger_entry_id": {"type": "string", "minLength": 1},
+            "compliance_verdict": {"type": "string", "enum": ["COMPLIANT", "NON_COMPLIANT"]}
+          }
+        }
+      ]
+    },
+    "DispatchReceipt": {
+      "allOf": [
+        {"$ref": "#/$defs/BaseReceiptProperties"},
+        {
+          "type": "object",
+          "required": ["target_agent_id", "delegation_id"],
+          "properties": {
+            "target_agent_id": {"type": "string", "minLength": 1},
+            "delegation_id": {"type": "string", "minLength": 1},
+            "dispatched_at": {"type": "string", "format": "date-time"}
+          }
+        }
+      ]
+    }
+  }
+}

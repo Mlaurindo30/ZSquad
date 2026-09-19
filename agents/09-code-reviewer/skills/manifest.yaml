@@ -2,6 +2,7 @@ agent: code-reviewer
 native:
 - path: agents/09-code-reviewer/skills/native/code-reviewer-native
 assigned:
+- path: skills/agent-squad-mcp
 - path: skills/engineering/clean-code/clean-code-guard
 - path: skills/engineering/clean-code/verification-before-completion
 - path: skills/engineering/code-documentation/clean-code-contract
@@ -15,6 +16,3 @@ discovery:
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/code-reviewer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md

@@ -68,8 +68,8 @@ __OUTPUTS__
 
 1. Leia `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md` e o `status.yaml` do work item.
 2. Carregue a skill nativa deste perfil. Carregue skills `assigned` apenas quando a tarefa exigir. Se houver lacuna, abra uma solicitação ao Skill Curator; não importe nada diretamente.
-3. Recupere `memory/shared/summary.md` e o checkpoint privado deste agente. Trate memória como pista: confirme fatos mutáveis nos artefatos.
-4. Atualize primeiro o artefato sob sua responsabilidade; depois registre evidência, decisão, pendência e delta de memória.
+3. Recupere a memória primária em SQLite (`banco/squad.db` via `squad query-memory`) e a projeção de compatibilidade (`memory/shared/summary.md`). Trate memória como pista: confirme fatos mutáveis nos artefatos.
+4. Atualize primeiro o artefato sob sua responsabilidade; depois registre evidência, decisão, pendência e delta de memória no SQLite.
 5. Entregue `handoffs/HANDOFF-*.yaml`. O orquestrador valida o schema, atualiza estado/memória e somente então aciona o próximo agente.
 
 ## Limites
@@ -112,8 +112,8 @@ __DUTIES__
 
 ## Memória
 
-- Privada: mantenha `memory/agents/__PROFILE_ID__.md` com checkpoint e hipóteses do papel.
-- Compartilhada: publique apenas decisões, fatos confirmados, dependências e pendências úteis ao próximo agente.
+- Local/Canônica: consulte e registre fatos autoritativos via SQLite (`banco/squad.db`).
+- Compartilhada: publique apenas decisões, fatos confirmados, dependências e pendências úteis ao próximo agente (projetados em `summary.md`).
 - Nunca grave segredos, credenciais ou dados sensíveis desnecessários.
 
 ## Saída mínima
@@ -147,6 +147,8 @@ discovery:
   maximum_loaded: 3
   policy: config/discovery-policy.yaml
 memory:
+  primary: banco/squad.db
+  status: DERIVED_COMPATIBILITY
   private: work/<WORK-ID>/memory/agents/__PROFILE_ID__.md
   shared: work/<WORK-ID>/memory/shared/summary.md
 handoff:

@@ -1,19 +1,32 @@
-# EPIC-000 — Título
+# <EPIC-ID> — <Title>
 
-## Problema e público
+## Objective
+<!-- High-level strategic objective and business rationale -->
 
-## Resultado e métricas
+## Problem & Context
+<!-- Observed problem, user segment, market context and background -->
 
-## Escopo
+## Scope
+### In Scope
+<!-- Explicit capabilities, deliverables and boundaries -->
 
-### Dentro
+### Out of Scope
+<!-- What will NOT be addressed in this epic -->
 
-### Fora
+## Outcomes & Key Metrics
+<!-- Measurable success indicators and business value drivers -->
 
-## Restrições, dados e riscos
+## Criteria & Invariants
+<!-- System invariants, non-functional requirements and constraints -->
 
-## Histórias
+## Dependencies
+<!-- Internal and external service, team, or milestone dependencies -->
+
+## Risks & Mitigations
+<!-- Identified architectural, security, compliance, or delivery risks -->
+
+## Features
+<!-- Breakdown into functional/architectural capabilities (FEATURE-*) -->
 
 ## Definition of Done
-
-## Decisões e pendências
+<!-- Epic-level completion criteria, operational readiness and release requirements -->

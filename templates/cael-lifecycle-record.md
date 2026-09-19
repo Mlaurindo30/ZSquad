@@ -32,4 +32,4 @@
 ## 5. Feedback Loop & Refinamento de Regras (Rule Refinement)
 - **Deltas de Memória Registrados**: `memory/deltas/MEM-*.yaml`
 - **Padrões ou Regras Promovidos**: [Descrever se houve promoção para regras canônicas ou 'Nenhum neste ciclo']
-- **Registro no Delivery Ledger**: `documentation/delivery-ledger.md` atualizado.
+- **Registro no Delivery Ledger**: `docs/delivery-ledger.md` atualizado.

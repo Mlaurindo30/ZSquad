@@ -2,6 +2,7 @@ agent: skill-curator
 native:
 - path: agents/18-skill-curator/skills/native/skill-curator-native
 assigned:
+- path: integrations/resolvers/skill_manager.py
 - path: skills/delivery/orchestration/govern-agent-handoffs
 - path: skills/delivery/orchestration/orchestrate-sdlc-gates
 - path: skills/delivery/planning/concise-planning
@@ -14,6 +15,3 @@ discovery:
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/skill-curator.md
-  shared: work/<WORK-ID>/memory/shared/summary.md

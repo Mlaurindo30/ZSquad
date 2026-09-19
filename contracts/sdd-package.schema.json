@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-squad.local/contracts/sdd-package.schema.json",
+  "title": "Pacote SDD (package.json do work item)",
+  "description": "Contrato estrutural do package.json SDD em work/<project_id>/<work_id>/sdd/package.json. As chaves 'work_dir' e 'documents' sao preenchidas em runtime por load_package e nao fazem parte do arquivo em disco.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "work_id",
+    "constitution_path",
+    "constitution_sha256",
+    "inputs",
+    "requirements"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "work_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "constitution_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Caminho relativo ao work_dir da constituicao do projeto."
+    },
+    "constitution_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spec", "clarifications", "plan", "tasks"],
+      "properties": {
+        "spec": {
+          "$ref": "#/$defs/input_entry"
+        },
+        "clarifications": {
+          "$ref": "#/$defs/input_entry"
+        },
+        "plan": {
+          "$ref": "#/$defs/input_entry"
+        },
+        "tasks": {
+          "$ref": "#/$defs/input_entry"
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "acceptance_ids", "classification"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^REQ-[0-9]{3,}$"
+          },
+          "acceptance_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "classification": {
+            "enum": ["code", "documentation"]
+          }
+        }
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "description": "Identidade do autor/revisor, resultado, evidencias e hashes revisados. Estrutura detalhada e governada por T4.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "work_dir": {
+      "type": "string",
+      "description": "Somente runtime: diretorio raiz do work item, resolvido por load_package."
+    },
+    "documents": {
+      "type": "object",
+      "description": "Somente runtime: resultado da leitura normalizada dos documentos de entrada."
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "input_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "revision", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Caminho relativo ao work_dir. Path traversal e rejeitado."
+        },
+        "revision": {
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

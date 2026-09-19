@@ -10,17 +10,20 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import subprocess
 import sys
 import threading
-import time
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote
 
 logger = logging.getLogger("McpDevOpsClient")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from integrations.devops_platform_connector import BaseDevOpsClient, DevOpsWorkItem
+from azure_devops_project_setup import AzureDevOpsProjectSetup
 
 
 class McpDevOpsClient(BaseDevOpsClient):
@@ -33,15 +36,18 @@ class McpDevOpsClient(BaseDevOpsClient):
     """
 
     TOOL_MAP = {
-        "pull_ready_items": "wit_query.wiql",
-        "update_item_state": "wit_work_item_write.update",
-        "create_work_item": "wit_work_item_write.create",
-        "create_pull_request": "repo_pull_request_write.create",
-        "get_team_settings": "work.get_team_settings",
-        "get_project_info": "work.get_project_info",
+        "pull_ready_items": "wit_query",
+        "update_item_state": "wit_work_item_write",
+        "create_work_item": "wit_work_item_write",
+        "create_pull_request": "repo_pull_request_write",
+        "get_team_settings": "work",
+        "get_project_info": "list_projects",
     }
 
     REST_ONLY = {"apply_iterations", "assign_iteration_to_team", "create_project", "import_repository"}
+    MCP_PROTOCOL_VERSION = "2025-06-18"
+    MCP_CLIENT_INFO = {"name": "agent-squad", "version": "1.0"}
+    MCP_TIMEOUT_SECONDS = 30
 
     def __init__(
         self,
@@ -59,12 +65,13 @@ class McpDevOpsClient(BaseDevOpsClient):
         self._process: Optional[subprocess.Popen] = None
         self._lock = threading.Lock()
         self._request_id = 0
+        self._available_tools: Optional[set[str]] = None
         self._start_mcp_server()
 
     def _mcp_binary_available(self) -> bool:
         try:
             result = subprocess.run(
-                ["npx", "--yes", "@azure-devops/mcp@1.0.0", "--help"],
+                ["npx", "--yes", "@azure-devops/mcp@latest", "--help"],
                 capture_output=True,
                 timeout=15,
             )
@@ -73,64 +80,133 @@ class McpDevOpsClient(BaseDevOpsClient):
             return False
 
     def _start_mcp_server(self) -> None:
-        org_url = self.config.get("org_url") or f"https://dev.azure.com/{self.organization}"
+        # MCP Auth Fix (Lote 5.1): MCP v2.x exige PAT via ADO_MCP_AUTH_TOKEN com
+        # --authentication envvar; a organização é passada como NOME, não URL.
         env = {
             **os.environ,
-            "AZURE_DEVOPS_ORG": self.organization,
-            "AZURE_DEVOPS_PROJECT": self.project,
-            "AZURE_DEVOPS_PAT": self.pat_token,
+            "ADO_MCP_AUTH_TOKEN": self.pat_token,
         }
         try:
             self._process = subprocess.Popen(
-                ["npx", "--yes", "@azure-devops/mcp@1.0.0", org_url],
+                ["npx", "--yes", "@azure-devops/mcp@latest", self.organization, "--authentication", "envvar"],
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
             )
             logger.info("[McpDevOpsClient] MCP server started (PID=%s)", self._process.pid)
+            if not self._initialize_mcp_session():
+                self._stop_mcp_server()
         except Exception as exc:
             logger.warning("[McpDevOpsClient] Falha ao iniciar MCP server: %s. Usando REST only.", exc)
             self._process = None
 
-    def _call_mcp_tool(self, tool_name: str, arguments: dict[str, Any]) -> Optional[dict[str, Any]]:
-        if self._process is None:
-            return None
-        
+    def _stop_mcp_server(self) -> None:
+        process, self._process = self._process, None
+        if process is None:
+            return
+        try:
+            process.terminate()
+            process.wait(timeout=5)
+        except Exception:
+            pass
+
+    def _next_request_id(self) -> int:
         with self._lock:
             self._request_id += 1
-            req_id = self._request_id
+            return self._request_id
 
+    def _read_response(self, request_id: int) -> Optional[dict[str, Any]]:
+        if self._process is None or self._process.stdout is None:
+            return None
+
+        response_queue: queue.Queue[Optional[bytes]] = queue.Queue(maxsize=1)
+
+        def read_line() -> None:
+            try:
+                response_queue.put(self._process.stdout.readline())
+            except Exception:
+                response_queue.put(None)
+
+        reader = threading.Thread(target=read_line, daemon=True)
+        reader.start()
+        try:
+            line = response_queue.get(timeout=self.MCP_TIMEOUT_SECONDS)
+        except queue.Empty:
+            logger.warning("[McpDevOpsClient] Timeout waiting for MCP response id=%s", request_id)
+            return None
+        if not line:
+            logger.warning("[McpDevOpsClient] MCP server closed stdout while waiting for id=%s", request_id)
+            return None
+        try:
+            response = json.loads(line.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return self._read_response(request_id)
+        if "id" not in response or response.get("id") != request_id:
+            return self._read_response(request_id)
+        if "error" in response:
+            logger.warning("[McpDevOpsClient] MCP error id=%s: %s", request_id, response["error"])
+            return None
+        return response.get("result")
+
+    def _send_request(self, method: str, params: dict[str, Any]) -> Optional[dict[str, Any]]:
+        if self._process is None:
+            return None
+        req_id = self._next_request_id()
         request = {
             "jsonrpc": "2.0",
             "id": req_id,
-            "method": tool_name,
-            "params": arguments,
+            "method": method,
+            "params": params,
         }
-        
         try:
+            if self._process.stdin is None:
+                return None
             self._process.stdin.write(json.dumps(request).encode("utf-8") + b"\n")
             self._process.stdin.flush()
-            
-            deadline = time.time() + 30
-            while time.time() < deadline:
-                line = self._process.stdout.readline()
-                if not line:
-                    break
-                try:
-                    resp = json.loads(line.decode("utf-8"))
-                    if resp.get("id") == req_id:
-                        if "error" in resp:
-                            logger.warning("[McpDevOpsClient] MCP error %s: %s", tool_name, resp["error"])
-                            return None
-                        return resp.get("result")
-                except json.JSONDecodeError:
-                    continue
-            logger.warning("[McpDevOpsClient] Timeout waiting for MCP response: %s", tool_name)
-            return None
+            return self._read_response(req_id)
         except Exception as exc:
-            logger.warning("[McpDevOpsClient] MCP call failed: %s → %s", tool_name, exc)
+            logger.warning("[McpDevOpsClient] MCP request failed: %s → %s", method, exc)
             return None
+
+    def _send_notification(self, method: str, params: dict[str, Any]) -> bool:
+        if self._process is None or self._process.stdin is None:
+            return False
+        try:
+            self._process.stdin.write(json.dumps({"jsonrpc": "2.0", "method": method, "params": params}).encode("utf-8") + b"\n")
+            self._process.stdin.flush()
+            return True
+        except Exception as exc:
+            logger.warning("[McpDevOpsClient] MCP notification failed: %s → %s", method, exc)
+            return False
+
+    def _initialize_mcp_session(self) -> bool:
+        initialized = self._send_request("initialize", {
+            "protocolVersion": self.MCP_PROTOCOL_VERSION,
+            "capabilities": {},
+            "clientInfo": self.MCP_CLIENT_INFO,
+        })
+        if initialized is None:
+            return False
+        if not self._send_notification("notifications/initialized", {}):
+            return False
+        tools_response = self._send_request("tools/list", {})
+        if tools_response is None:
+            return False
+        tools = tools_response.get("tools")
+        if not isinstance(tools, list):
+            return False
+        self._available_tools = {
+            tool["name"] for tool in tools
+            if isinstance(tool, dict) and isinstance(tool.get("name"), str)
+        }
+        return True
+
+    def _call_mcp_tool(self, operation: str, arguments: dict[str, Any]) -> Optional[dict[str, Any]]:
+        tool_name = self.TOOL_MAP.get(operation, operation)
+        if self._process is None or self._available_tools is None or tool_name not in self._available_tools:
+            return None
+        return self._send_request("tools/call", {"name": tool_name, "arguments": arguments})
 
     def _ensure_rest_client(self) -> Optional[Any]:
         if self.rest_client is not None:
@@ -145,8 +221,13 @@ class McpDevOpsClient(BaseDevOpsClient):
         return self.rest_client
 
     def pull_ready_items(self, squad_name: Optional[str] = None) -> list[DevOpsWorkItem]:
-        result = self._call_mcp_tool("wit_query.wiql", {
-            "query": f"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{self.project}' AND [System.State] IN ('New', 'Active')"
+        area_path = self.config.get("area_path")
+        area_clause = f" AND [System.AreaPath] UNDER '{area_path}'" if area_path else ""
+        wiql_query = f"SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{self.project}' AND [System.State] IN ('New', 'Active'){area_clause}"
+        result = self._call_mcp_tool("pull_ready_items", {
+            "action": "wiql",
+            "project": self.project,
+            "wiql": wiql_query,
         })
         if result is None:
             rc = self._ensure_rest_client()
@@ -162,7 +243,9 @@ class McpDevOpsClient(BaseDevOpsClient):
         return items
 
     def update_item_state(self, item_id: str, new_state: str, comment: Optional[str] = None) -> bool:
-        result = self._call_mcp_tool("wit_work_item_write.update", {
+        result = self._call_mcp_tool("update_item_state", {
+            "action": "update",
+            "project": self.project,
             "id": int(item_id),
             "fields": {"System.State": new_state},
         })
@@ -179,7 +262,9 @@ class McpDevOpsClient(BaseDevOpsClient):
             fields["Microsoft.VSTS.Scheduling.Effort"] = t_shirt_size
         if not fields:
             return True
-        result = self._call_mcp_tool("wit_work_item_write.update", {
+        result = self._call_mcp_tool("update_item_state", {
+            "action": "update",
+            "project": self.project,
             "id": int(item_id),
             "fields": fields,
         })
@@ -204,7 +289,9 @@ class McpDevOpsClient(BaseDevOpsClient):
 
     def create_pull_request(self, source_branch: str, target_branch: str, title: str,
                              description: str = "", work_item_ids: Optional[list[str]] = None) -> Optional[dict[str, Any]]:
-        result = self._call_mcp_tool("repo_pull_request_write.create", {
+        result = self._call_mcp_tool("create_pull_request", {
+            "action": "create",
+            "project": self.project,
             "sourceRefName": f"refs/heads/{source_branch}",
             "targetRefName": f"refs/heads/{target_branch}",
             "title": title,
@@ -219,27 +306,25 @@ class McpDevOpsClient(BaseDevOpsClient):
         rc = self._ensure_rest_client()
         if rc is None:
             return {"error": "No REST client available"}
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-        from azure_devops_project_setup import AzureDevOpsProjectSetup
-        setup = AzureDevOpsProjectSetup(rc)
-        return setup.apply_iterations(iterations)
+        setup = AzureDevOpsProjectSetup(rc, {**self.config, "iterations": iterations})
+        setup.apply_iterations()
+        return {"iterations": iterations, "results": setup.results}
 
     def assign_iteration_to_team(self, team_id: str, iteration_id: str) -> bool:
         rc = self._ensure_rest_client()
         if rc is None:
             return False
-        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-        from azure_devops_project_setup import AzureDevOpsProjectSetup
-        setup = AzureDevOpsProjectSetup(rc)
+        setup = AzureDevOpsProjectSetup(rc, self.config)
         return setup.assign_iteration_to_team(team_id, iteration_id)
 
     def get_project_info(self) -> dict[str, Any]:
-        result = self._call_mcp_tool("work.get_project_info", {"projectName": self.project})
+        result = self._call_mcp_tool("get_project_info", {})
         if result is None:
             rc = self._ensure_rest_client()
             if rc is None:
                 return {"error": "No client available"}
-            return rc._request("GET", f"{rc.base_url}?api-version=7.1") or {}
+            org = "https://" + rc.base_url.split("/")[2]
+            return rc._request("GET", f"{org}/_apis/projects/{quote(self.project)}?api-version=7.1") or {}
         return result
 
     def create_project(self, name: str, process_type: str) -> dict[str, Any]:
@@ -255,8 +340,10 @@ class McpDevOpsClient(BaseDevOpsClient):
 
     def create_work_item(self, item_type: str, title: str, description: str = "",
                          parent_id: Optional[str] = None, story_points: Optional[int] = None) -> Optional[DevOpsWorkItem]:
-        result = self._call_mcp_tool("wit_work_item_write.create", {
-            "type": item_type,
+        result = self._call_mcp_tool("create_work_item", {
+            "action": "create",
+            "project": self.project,
+            "workItemType": item_type,
             "title": title,
             "description": description,
             "parentId": parent_id,
@@ -275,9 +362,4 @@ class McpDevOpsClient(BaseDevOpsClient):
         )
 
     def __del__(self):
-        if self._process:
-            try:
-                self._process.terminate()
-                self._process.wait(timeout=5)
-            except Exception:
-                pass
+        self._stop_mcp_server()

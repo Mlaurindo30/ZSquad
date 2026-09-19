@@ -41,3 +41,7 @@ work/
 .temp-prior-user-requests.txt
 INTEGRATION_TEST_REPORT.md
 .env.local
+
+# Cache de descoberta de skills
+skills/.skill_discovery_cache.json
+

@@ -4,23 +4,19 @@ native:
 - path: skills/engineering/clean-code/test-driven-development
 - path: skills/engineering/clean-code/verification-before-completion
 assigned:
-- path: skills/delivery/superpowers/executing-plans
-- path: skills/engineering/clean-code/clean-code
-- path: skills/engineering/clean-code/lint-and-validate
-- path: skills/engineering/frontend/nextjs-best-practices
-- path: skills/engineering/frontend/react-best-practices
-- path: skills/engineering/backend/api-patterns
-- path: skills/engineering/backend/backend-dev-guidelines
-- path: skills/engineering/code-documentation/clean-code-contract
 - path: integrations/experimental/blast_radius_analyzer.py
 - path: integrations/experimental/code_health_analyzer.py
+- path: skills/delivery/superpowers/executing-plans
+- path: skills/engineering/backend/api-patterns
+- path: skills/engineering/backend/backend-dev-guidelines
+- path: skills/engineering/clean-code/clean-code
+- path: skills/engineering/clean-code/lint-and-validate
+- path: skills/engineering/code-documentation/clean-code-contract
+- path: skills/engineering/frontend/nextjs-best-practices
+- path: skills/engineering/frontend/react-best-practices
 - path: skills/memory/agent-memory
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/fullstack-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

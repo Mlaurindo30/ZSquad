@@ -11,15 +11,17 @@
     "org_url": {"type": "string", "pattern": "^https://(dev\\.azure\\.com/[^/]+|[^./]+\\.visualstudio\\.com)$"},
     "project": {"type": "string", "minLength": 1},
     "repo": {"type": "string", "minLength": 1},
+    "team": {"type": "string", "minLength": 1, "description": "Team dedicado do produto (não usar o team default do projeto container)"},
     "process_template": {"enum": ["Agile", "Scrum", "CMMI", "Basic"]},
     "area_path": {"type": "string"},
     "iteration_path": {"type": "string"},
     "work_item_type_map": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["epic", "story", "task", "bug"],
+      "required": ["epic", "feature", "story", "task", "bug"],
       "properties": {
         "epic": {"type": "string", "minLength": 1},
+        "feature": {"type": "string", "minLength": 1},
         "story": {"type": "string", "minLength": 1},
         "task": {"type": "string", "minLength": 1},
         "bug": {"type": "string", "minLength": 1},
@@ -124,6 +126,7 @@
       "properties": {
         "minimum_reviewers": {"type": "integer", "minimum": 0},
         "require_linked_work_item": {"type": "boolean"},
+        "require_comment_resolution": {"type": "boolean", "description": "Check for comment resolution branch policy"},
         "target_branch": {"type": "string"},
         "creator_vote_counts": {"type": "boolean"},
         "reset_on_source_push": {"type": "boolean"},
@@ -242,7 +245,11 @@
       "additionalProperties": false,
       "properties": {
         "enable_epic_backlog": {"type": "boolean"},
-        "bugs_behavior": {"enum": ["asTasks", "asRequirements", "off"]},
+        "bugs_behavior": {
+          "type": "string",
+          "enum": ["asTasks", "asRequirements", "off"],
+          "description": "Controla a visibilidade e nivel de backlog dos Bugs no Azure Boards: 'asRequirements' (exibe Bugs no Kanban/Stories Board nas colunas SDLC), 'asTasks' (exibe Bugs no Taskboard/Sprint Board sob colunas To Do/In Progress/Done), ou 'off'."
+        },
         "include_area_children": {"type": "boolean"},
         "apply_custom_card_rules": {"type": "boolean"},
         "wip": {

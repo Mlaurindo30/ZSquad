@@ -1,22 +1,18 @@
 agent: test-engineer
 native:
 - path: agents/11-test-engineer/skills/native/test-engineer-native
+assigned:
+- path: integrations/experimental/toon.py
+- path: skills/ai/model-evaluation/agent-evaluation
 - path: skills/engineering/clean-code/test-driven-development
 - path: skills/engineering/clean-code/verification-before-completion
-assigned:
-- path: skills/ai/model-evaluation/agent-evaluation
 - path: skills/memory/agent-memory
 - path: skills/platform/performance/performance-engineer
 - path: skills/testing/bdd/behavior-driven-development
 - path: skills/testing/e2e-testing-patterns
 - path: skills/testing/test-fixing
-- path: integrations/experimental/toon.py
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/test-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

@@ -18,7 +18,10 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from integrations.devops_platform_connector import AzureDevOpsClient  # noqa: E402
-from azure_devops_project_setup import AzureDevOpsProjectSetup  # noqa: E402
+from azure_devops_project_setup import (  # noqa: E402
+    POLICY_COMMENT_RESOLUTION,
+    AzureDevOpsProjectSetup,
+)
 
 
 TEMPLATE = ROOT / "templates" / "devops.yaml"
@@ -249,6 +252,8 @@ def test_apply_team_iterations():
         return {"id": "ok"}
 
     def fake_get(url):
+        if "classificationnodes/iterations?" in url or url.endswith("/classificationnodes/iterations"):
+            return {"identifier": "root-arthemis-id", "name": "Arthemis"}
         if "teamsettings/iterations" in url:
             return {"value": []}
         if "classificationnodes/iterations/Sprint%201" in url:
@@ -263,6 +268,9 @@ def test_apply_team_iterations():
 
     statuses = {r["step"]: r["status"] for r in setup.results}
     assert statuses["team.iterations"] == "ok", f"expected ok, got {statuses}"
+    assert statuses["teamsettings.backlog_iteration"] == "ok"
+    patch_call = next(c for c in captured if c[0] == "PATCH" and "teamsettings" in c[1])
+    assert patch_call[2] == {"backlogIteration": "root-arthemis-id"}
     # POST uma vez por iteração
     posts = [c for c in captured if c[0] == "POST" and "teamsettings/iterations" in c[1]]
     assert len(posts) == 2, f"expected 2 POSTs (one per iteration), got {len(posts)}"
@@ -275,6 +283,8 @@ def test_apply_team_iterations():
     setup2.team_id = "team-1"
 
     def fake_get2(url):
+        if "classificationnodes/iterations?" in url or url.endswith("/classificationnodes/iterations"):
+            return {"identifier": "root-arthemis-id", "name": "Arthemis"}
         if "teamsettings/iterations" in url:
             return {"value": [
                 {"identification": {"id": "node-1", "name": "Sprint 1"}},
@@ -297,6 +307,7 @@ def test_apply_team_iterations():
 
     statuses2 = {r["step"]: r["status"] for r in setup2.results}
     assert statuses2["team.iterations"] == "ok", f"idempotente deve retornar ok, got {statuses2}"
+    assert statuses2["teamsettings.backlog_iteration"] == "ok"
     assert statuses2["team.iterations.Sprint 1"] == "skip"
     assert statuses2["team.iterations.Sprint 2"] == "skip"
     assert not [c for c in captured2 if c[0] == "POST" and "teamsettings/iterations" in c[1]], "não deve POST quando já vinculado"
@@ -307,6 +318,8 @@ def test_apply_team_iterations():
     setup3.team_id = "team-1"
 
     def fake_get3(url):
+        if "classificationnodes/iterations?" in url or url.endswith("/classificationnodes/iterations"):
+            return {"identifier": "root-arthemis-id", "name": "Arthemis"}
         if "teamsettings/iterations" in url:
             return {"value": []}
         if "classificationnodes/iterations/Sprint%201" in url:
@@ -329,6 +342,7 @@ def test_apply_team_iterations():
     statuses3 = {r["step"]: r["status"] for r in setup3.results}
     assert statuses3["team.iterations.Sprint 1"] == "error"
     assert statuses3["team.iterations"] == "ok"
+    assert statuses3["teamsettings.backlog_iteration"] == "ok"
 
 
 def test_apply_queries():
@@ -763,6 +777,7 @@ def test_apply_swimlanes_not_found_then_wiql():
     ]
     setup = _build_setup(cfg)
     setup.project_id = "proj-1"
+    setup.team_id = "team-1"
     setup.results = []
     captured: list[tuple[str, str, object]] = []
 
@@ -804,6 +819,7 @@ def test_apply_swimlanes_not_found_then_wiql():
     # --- idempotente: query já existe
     setup2 = _build_setup(cfg)
     setup2.project_id = "proj-1"
+    setup2.team_id = "team-1"
     setup2.results = []
 
     def fake_get2(url):
@@ -949,7 +965,7 @@ def test_create_service_connections():
         body = c[2] or {}
         assert "authorization" in body
         assert body.get("isShared") is False
-    assert body.get("owner") == "Library"
+        assert body.get("owner") == "Library"
     statuses = {r["step"]: r["status"] for r in setup.results}
     assert all(v == "ok" for v in statuses.values()), f"todos ok, got {statuses}"
 
@@ -974,3 +990,381 @@ def test_create_service_connections():
     # apenas Azure-ARMTemplate é skip, as outras 3 são criadas
     ok_count = sum(1 for s in statuses2.values() if s == "ok")
     assert ok_count == 3, f"esperado 3 ok (novos), got {ok_count}"
+
+
+def test_discover_dedicated_team_and_not_arthemis_team():
+    cfg = _cfg()
+    cfg["team"] = "agent-squad"
+    setup = _build_setup(cfg)
+
+    def fake_get(url):
+        if "_apis/projects/Arthemis?" in url:
+            return {"id": "proj-arthemis", "capabilities": {"processTemplate": {"templateName": "Agile"}}}
+        if "_apis/projects/proj-arthemis/teams?" in url:
+            return {"value": [
+                {"id": "team-default", "name": "Arthemis Team"},
+                {"id": "team-squad", "name": "agent-squad"},
+            ]}
+        if "members?" in url:
+            return {"value": []}
+        if "repositories?" in url:
+            return {"value": [{"id": "repo-1", "name": "agent-squad", "defaultBranch": "refs/heads/main"}]}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get):
+        setup.discover()
+
+    assert setup.team_id == "team-squad"
+    assert setup.team_name == "agent-squad"
+    assert setup.team_id != "team-default"
+
+
+def test_apply_areas_product_area_node():
+    cfg = _cfg()
+    cfg["area_path"] = "Arthemis\\agent-squad"
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    captured_posts = []
+
+    def fake_get(url):
+        return {}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        if method == "POST" and "classificationnodes/areas" in url:
+            captured_posts.append((url, body))
+            return {"name": body["name"], "path": f"\\Arthemis\\Area\\{body['name']}"}
+        return {}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_areas()
+
+    area_names = [body["name"] for _, body in captured_posts]
+    assert "agent-squad" in area_names
+
+
+def test_apply_swimlanes_native_board_rows():
+    cfg = _cfg()
+    cfg["board"]["swimlanes"] = [
+        {"name": "Expedite", "query": "[System.Tags] CONTAINS 'risk-critical'"},
+        {"name": "Standard", "query": "[System.Tags] NOT CONTAINS 'risk-critical'"},
+    ]
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_get(url):
+        if "boards/Stories/rows" in url:
+            return {"value": []}
+        return {}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        if method == "PUT" and "boards/Stories/rows" in url:
+            return body
+        return {"id": "query-id"}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_swimlanes()
+
+    put_rows = [c for c in captured if c[0] == "PUT" and "boards/Stories/rows" in c[1]]
+    assert len(put_rows) == 1
+    assert put_rows[0][2] == [{"name": "Expedite"}, {"name": "Standard"}]
+
+
+def test_apply_branch_policies_comment_resolution():
+    cfg = _cfg()
+    cfg["pr_policy"]["require_comment_resolution"] = True
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    setup.repo_id = "repo-1"
+    captured = []
+
+    def fake_get(url):
+        if "repositories/repo-1" in url:
+            return {"defaultBranch": "refs/heads/main"}
+        if "policy/configurations" in url:
+            return {"value": []}
+        return {}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"id": "policy-id"}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_branch_policies()
+
+    comment_policy = next((c for c in captured if (c[2] or {}).get("type", {}).get("id") == POLICY_COMMENT_RESOLUTION), None)
+    assert comment_policy is not None
+    assert comment_policy[2]["isEnabled"] is True
+    assert comment_policy[2]["isBlocking"] is True
+
+
+def test_assign_iteration_to_team_method():
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    captured = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"id": "iteration-linked"}
+
+    with patch.object(setup, "send", side_effect=fake_send):
+        ok = setup.assign_iteration_to_team("team-squad", "iter-123")
+
+    assert ok is True
+    assert len(captured) == 1
+    assert "team-squad/_apis/work/teamsettings/iterations" in captured[0][1]
+    assert captured[0][2] == {"id": "iter-123", "includeChildren": False}
+
+
+def test_apply_board_columns_sdlc_provisioning():
+    """Provisiona as 7 colunas do SDLC com stateMappings corretos e preservação de IDs."""
+    from azure_devops_project_setup import load_setup_config
+
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_get(url):
+        if "boards/Stories/columns" in url:
+            return {
+                "count": 2,
+                "value": [
+                    {"id": "inc-id-1", "name": "New", "columnType": "incoming", "stateMappings": {"User Story": "New"}},
+                    {"id": "out-id-2", "name": "Closed", "columnType": "outgoing", "stateMappings": {"User Story": "Closed"}},
+                ],
+            }
+        return {}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"value": body}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_board_columns()
+
+    puts = [c for c in captured if c[0] == "PUT" and "boards/Stories/columns" in c[1]]
+    assert len(puts) == 1, f"esperado 1 PUT, got {len(puts)}"
+    cols = puts[0][2]
+    assert len(cols) == 7
+
+    expected = [
+        ("Blueprint", "New", "incoming", "inc-id-1"),
+        ("Scaffolding", "Active", "inProgress", None),
+        ("Implementation", "Active", "inProgress", None),
+        ("Code Security Review", "Active", "inProgress", None),
+        ("Quality Validation", "Resolved", "inProgress", None),
+        ("Governance Release", "Resolved", "inProgress", None),
+        ("Done", "Closed", "outgoing", "out-id-2"),
+    ]
+    for col, (exp_name, exp_state, exp_type, exp_id) in zip(cols, expected):
+        assert col["name"] == exp_name
+        assert col["columnType"] == exp_type
+        assert col["stateMappings"]["User Story"] == exp_state
+        # Com bugs_behavior: asRequirements (padrão em templates/devops.yaml), Bug é mapeado canonicamente
+        assert col["stateMappings"]["Bug"] == exp_state
+        if exp_id:
+            assert col.get("id") == exp_id
+
+    statuses = {r["step"]: r["status"] for r in setup.results}
+    assert statuses["board.columns"] == "ok"
+
+
+def test_apply_team_settings_bugs_behavior():
+    """Valida que bugsBehavior (asRequirements / asTasks) é enviado via PATCH em teamsettings."""
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"id": "ok"}
+
+    with patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_team_settings()
+
+    patches = [c for c in captured if c[0] == "PATCH" and "teamsettings?api-version=7.1" in c[1]]
+    assert len(patches) == 1
+    body = patches[0][2]
+    assert body["bugsBehavior"] == "asRequirements"
+    assert body["backlogVisibilities"]["Microsoft.RequirementCategory"] is True
+
+
+def test_apply_board_columns_with_as_tasks_behavior():
+    """Quando bugs_behavior == 'asTasks', se o board não tiver Bug pré-existente, mapeia apenas User Story."""
+    cfg = _cfg()
+    cfg["board"]["bugs_behavior"] = "asTasks"
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_get(url):
+        if "boards/Stories/columns" in url:
+            return {
+                "count": 2,
+                "value": [
+                    {"id": "inc-id-1", "name": "New", "columnType": "incoming", "stateMappings": {"User Story": "New"}},
+                    {"id": "out-id-2", "name": "Closed", "columnType": "outgoing", "stateMappings": {"User Story": "Closed"}},
+                ],
+            }
+        return {}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"value": body}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_board_columns()
+
+    puts = [c for c in captured if c[0] == "PUT" and "boards/Stories/columns" in c[1]]
+    assert len(puts) == 1
+    cols = puts[0][2]
+    for col in cols:
+        assert "User Story" in col["stateMappings"]
+        assert "Bug" not in col["stateMappings"]
+
+
+def test_apply_card_fields_includes_bug_when_requirements():
+    """Verifica se apply_card_fields configura campos de cards para User Story e Bug quando asRequirements."""
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"id": "ok"}
+
+    with patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_card_fields()
+
+    puts = [c for c in captured if c[0] == "PUT" and "cardsettings" in c[1]]
+    assert len(puts) == 1
+    cards = puts[0][2]["cards"]
+    assert "User Story" in cards
+    assert "Bug" in cards
+    bug_fields = [f["fieldIdentifier"] for f in cards["Bug"]]
+    assert "System.Id" in bug_fields
+    assert "Microsoft.VSTS.Common.Severity" in bug_fields
+
+
+def test_load_setup_config_custom_path(tmp_path):
+    from azure_devops_project_setup import load_setup_config
+
+    custom_cfg = {"provider": "azure-devops", "project": "CustomProj", "identities": {"test": {}}}
+    cfg_file = tmp_path / "custom_devops.yaml"
+    cfg_file.write_text(yaml.dump(custom_cfg), encoding="utf-8")
+
+    loaded = load_setup_config(ROOT, config_path=cfg_file)
+    assert loaded["project"] == "CustomProj"
+
+
+SDLC_COLUMN_NAMES = [
+    "Blueprint",
+    "Scaffolding",
+    "Implementation",
+    "Code Security Review",
+    "Quality Validation",
+    "Governance Release",
+    "Done",
+]
+
+
+def test_apply_portfolio_board_columns_features():
+    """Verifica se apply_portfolio_board_columns usa as 7 colunas SDLC no Features board."""
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_get(url):
+        return {"value": [
+            {"name": "New", "columnType": "incoming", "id": "feat-in-id", "stateMappings": {}},
+            {"name": "Closed", "columnType": "outgoing", "id": "feat-out-id", "stateMappings": {}},
+        ]}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"value": body}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_portfolio_board_columns()
+
+    feat_puts = [c for c in captured if "Features" in c[1] and c[0] == "PUT"]
+    assert len(feat_puts) == 1, "Deve ter exatamente um PUT para Features/columns"
+    feat_cols = feat_puts[0][2]
+    feat_names = [c["name"] for c in feat_cols]
+    # Todas as 7 colunas SDLC canônicas devem estar presentes
+    for col_name in SDLC_COLUMN_NAMES:
+        assert col_name in feat_names, f"Coluna '{col_name}' ausente no Features board"
+    assert len(feat_cols) == 7, f"Features board deve ter 7 colunas, tem {len(feat_cols)}"
+    # WIT correto
+    for col in feat_cols:
+        assert "Feature" in col["stateMappings"], f"WIT 'Feature' ausente em '{col['name']}'"
+
+
+def test_apply_portfolio_board_columns_epics():
+    """Verifica se apply_portfolio_board_columns usa as 7 colunas SDLC no Epics board."""
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = "proj-arthemis"
+    setup.team_id = "team-squad"
+    captured = []
+
+    def fake_get(url):
+        return {"value": [
+            {"name": "New", "columnType": "incoming", "id": "epic-in-id", "stateMappings": {}},
+            {"name": "Closed", "columnType": "outgoing", "id": "epic-out-id", "stateMappings": {}},
+        ]}
+
+    def fake_send(method, url, body=None, content_type="application/json"):
+        captured.append((method, url, body))
+        return {"value": body}
+
+    with patch.object(setup, "get", side_effect=fake_get), \
+         patch.object(setup, "send", side_effect=fake_send):
+        setup.apply_portfolio_board_columns()
+
+    epic_puts = [c for c in captured if "Epics" in c[1] and c[0] == "PUT"]
+    assert len(epic_puts) == 1, "Deve ter exatamente um PUT para Epics/columns"
+    epic_cols = epic_puts[0][2]
+    epic_names = [c["name"] for c in epic_cols]
+    # Todas as 7 colunas SDLC canônicas devem estar presentes
+    for col_name in SDLC_COLUMN_NAMES:
+        assert col_name in epic_names, f"Coluna '{col_name}' ausente no Epics board"
+    assert len(epic_cols) == 7, f"Epics board deve ter 7 colunas, tem {len(epic_cols)}"
+    # WIT correto
+    for col in epic_cols:
+        assert "Epic" in col["stateMappings"], f"WIT 'Epic' ausente em '{col['name']}'"
+
+
+def test_apply_portfolio_board_columns_skips_when_no_team():
+    """Verifica que apply_portfolio_board_columns não executa sem project_id/team_id."""
+    cfg = _cfg()
+    setup = _build_setup(cfg)
+    setup.project_id = ""
+    setup.team_id = ""
+    captured = []
+
+    with patch.object(setup, "send", side_effect=lambda *a, **kw: captured.append(a)):
+        setup.apply_portfolio_board_columns()
+
+    assert len(captured) == 0, "Não deve chamar send sem project_id/team_id"
+
+

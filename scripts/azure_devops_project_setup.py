@@ -38,6 +38,7 @@ POLICY_WORK_ITEM_LINKING = "40e92b44-2f5f-4f01-8f2c-5c1d3a3c3e3a"
 # Official Azure DevOps work item linking policy type id:
 POLICY_WORK_ITEM_LINKING_OFFICIAL = "0e8f31cc-ddff-4371-9c5b-f7437d0433f3"
 POLICY_REQUIRED_REVIEWERS = "fd2167ab-b0be-447a-8ec8-39368250530e"
+POLICY_COMMENT_RESOLUTION = "c6a1889d-b943-4856-b76f-9e46bb6b0df2"
 
 
 def _hex(value: str) -> str:
@@ -95,7 +96,17 @@ class AzureDevOpsProjectSetup:
         self.record("discover.project", "ok", {"id": self.project_id, "process": (proj.get("capabilities") or {}).get("processTemplate")})
 
         teams = self.get(f"{self.org}/_apis/projects/{self.project_id}/teams?api-version=7.1")
-        team = ((teams or {}).get("value") or [None])[0]
+        teams_list = (teams or {}).get("value") or []
+        wanted_team = self.config.get("team") or self.config.get("repo")
+        team = None
+        if wanted_team:
+            team = next((t for t in teams_list if t.get("name") == wanted_team), None)
+        if not team:
+            non_default_teams = [t for t in teams_list if t.get("name") != "Arthemis Team"]
+            if non_default_teams:
+                team = non_default_teams[0]
+            elif teams_list:
+                team = teams_list[0]
         if not team:
             self.record("discover.team", "error", teams)
             return
@@ -133,7 +144,20 @@ class AzureDevOpsProjectSetup:
             )
 
     def apply_areas(self) -> None:
-        for name in self.config.get("areas") or []:
+        areas = list(self.config.get("areas") or [])
+        area_path = self.config.get("area_path")
+        if area_path:
+            parts = [p for p in area_path.replace("/", "\\").split("\\") if p]
+            if len(parts) > 1:
+                prod_area = parts[-1]
+            elif len(parts) == 1:
+                prod_area = parts[0]
+            else:
+                prod_area = None
+            if prod_area and prod_area not in areas and prod_area != "<product-name>":
+                areas.append(prod_area)
+
+        for name in areas:
             existing = self.get(
                 f"{self.client.base_url}/wit/classificationnodes/areas/{quote(name)}?api-version=7.1"
             )
@@ -203,19 +227,29 @@ class AzureDevOpsProjectSetup:
                 self.record(f"team.iterations.{spec['name']}", "skip", "já vinculado ao team")
             else:
                 identifiers.append({"id": nid, "includeChildren": False})
-            if first_iteration_id is None:
-                first_iteration_id = nid
+
+        # Obter nó raiz de iterações do projeto container (ex: Arthemis) para backlogIteration
+        root_url = f"{self.client.base_url}/wit/classificationnodes/iterations?api-version=7.1"
+        root_node = self.get(root_url)
+        root_iteration_id = (root_node or {}).get("identifier")
+
+        if root_iteration_id:
+            # TF400497: PATCH backlogIteration com UUID do nó raiz do projeto.
+            # Evita amarrar o time à Iteration 1 e garante visibilidade de todas as iterações.
+            teamsettings_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings?api-version=7.1"
+            patch_body = {"backlogIteration": root_iteration_id}
+            patch_result = self.send("PATCH", teamsettings_url, patch_body)
+            self.record(
+                "teamsettings.backlog_iteration",
+                "ok" if patch_result else "error",
+                patch_result or root_iteration_id,
+            )
+        else:
+            self.record("teamsettings.backlog_iteration", "error", "nó raiz de iterações ausente")
+
         if not identifiers:
             self.record("team.iterations", "ok", "nada novo a vincular")
             return
-        if first_iteration_id:
-            # TF400497: PATCH backlogIteration com UUID (não path).
-            # A API TeamSettings.Update espera string (uuid), não path string.
-            # https://learn.microsoft.com/en-us/rest/api/azure/devops/work/teamsettings/update
-            teamsettings_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/teamsettings?api-version=7.1"
-            patch_body = {"backlogIteration": first_iteration_id}
-            patch_result = self.send("PATCH", teamsettings_url, patch_body)
-            self.record("teamsettings.backlog_iteration", "ok" if patch_result else "error", patch_result or first_iteration_id)
         results = []
         for ident in identifiers:
             result = self.send(
@@ -226,6 +260,13 @@ class AzureDevOpsProjectSetup:
             results.append(result)
         success = all(r is not None for r in results)
         self.record("team.iterations", "ok" if success else "error", {"count": len(results), "result": results})
+
+    def assign_iteration_to_team(self, team_name_or_id: str, iteration_id: str) -> bool:
+        """Vincula uma iteração a um team específico via REST."""
+        url = f"{self.org}/{self.project_id}/{team_name_or_id}/_apis/work/teamsettings/iterations?api-version=7.1"
+        payload = {"id": iteration_id, "includeChildren": False}
+        result = self.send("POST", url, payload)
+        return result is not None
 
     def apply_queries(self) -> None:
         """US-2 (2026-09-02): cria 5 queries salvas em pasta Shared/Agents Squad/
@@ -239,10 +280,6 @@ class AzureDevOpsProjectSetup:
         if not proj.get("id"):
             self.record("queries", "error", "projeto não resolvido")
             return
-        proj_id = proj["id"]
-        folder_path = "Shared/Agents Squad"
-        parent_folder_path = "Shared"
-
         # Azure DevOps API usa project NAME no path, não GUID
         proj_name = quote(self.project)
         all_queries_url = f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1"
@@ -250,10 +287,18 @@ class AzureDevOpsProjectSetup:
         existing_names = {q.get("name") for q in existing_all.get("value", [])}
         existing_paths = {q.get("path", ""): q for q in existing_all.get("value", [])}
 
-        if parent_folder_path not in existing_paths:
+        has_shared_queries = any(
+            (q.get("path") or "").startswith("Shared Queries") or q.get("name") == "Shared Queries"
+            for q in existing_all.get("value", [])
+        )
+        root_name = "Shared Queries" if has_shared_queries else "Shared"
+        folder_path = f"{root_name}/Agents Squad"
+        parent_folder_path = root_name
+
+        if parent_folder_path not in existing_paths and parent_folder_path != "Shared Queries":
             parent_folder = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries/{parent_folder_path}?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(parent_folder_path, safe='/')}?api-version=7.1",
                 {"name": parent_folder_path, "isFolder": True},
             )
             if parent_folder and parent_folder.get("id"):
@@ -263,7 +308,7 @@ class AzureDevOpsProjectSetup:
         if folder_path not in existing_paths:
             folder = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries/{parent_folder_path}?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(parent_folder_path, safe='/')}?api-version=7.1",
                 {"name": "Agents Squad", "isFolder": True},
             )
             if folder and folder.get("id"):
@@ -335,7 +380,7 @@ class AzureDevOpsProjectSetup:
             payload = {"name": q["name"], "wiql": q["wiql"]}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries/{folder_path}?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -351,8 +396,11 @@ class AzureDevOpsProjectSetup:
             return
         board_cfg = self.config.get("board") or {}
         body: dict[str, Any] = {}
-        if "bugs_behavior" in board_cfg:
-            body["bugsBehavior"] = board_cfg["bugs_behavior"]
+        bugs_behavior = board_cfg.get("bugs_behavior") or board_cfg.get("bugsBehavior")
+        if not bugs_behavior:
+            bugs_behavior = "asRequirements"
+        body["bugsBehavior"] = bugs_behavior
+
         if board_cfg.get("enable_epic_backlog"):
             body["backlogVisibilities"] = {
                 "Microsoft.EpicCategory": True,
@@ -378,6 +426,170 @@ class AzureDevOpsProjectSetup:
                 "values": [{"value": self.project, "includeChildren": True}],
             })
             self.record("teamsettings.area_children", "ok" if tfv else "error", tfv)
+
+    def apply_board_columns(self) -> None:
+        """Provisiona as colunas do SDLC no board Stories do Azure DevOps:
+        Blueprint (New) -> Scaffolding (Active) -> Implementation (Active) ->
+        Code Security Review (Active) -> Quality Validation (Resolved) ->
+        Governance Release (Resolved) -> Done (Closed).
+
+        Mapeia estados nativos do processo Agile para 'User Story' e 'Bug' (quando
+        bugs_behavior for 'asRequirements').
+        Para 'Task', no modelo Agile do Azure Boards, as tarefas residem como filhas
+        no Taskboard/Sprint Board sob as colunas canônicas To Do (New), In Progress (Active)
+        e Done (Closed).
+        """
+        if not self.project_id or not self.team_id:
+            self.record("board.columns", "skip", "projeto/time não descobertos")
+            return
+
+        url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/boards/Stories/columns?api-version=7.1"
+        existing = self.get(url) or {}
+        existing_cols = existing.get("value") or []
+
+        # Identificar tipos de work item suportados no board (ex: User Story, Bug)
+        wit_names = set()
+        for col in existing_cols:
+            wit_names.update((col.get("stateMappings") or {}).keys())
+        if not wit_names:
+            wit_names = {"User Story"}
+
+        # Se bugs_behavior for 'asRequirements' (ou padrão quando não desabilitado explicitamente),
+        # garantir que 'Bug' esteja presente em wit_names para mapear colunas do board Stories
+        board_cfg = self.config.get("board") or {}
+        bugs_behavior = board_cfg.get("bugs_behavior") or board_cfg.get("bugsBehavior") or "asRequirements"
+        if bugs_behavior == "asRequirements":
+            wit_names.add("Bug")
+        wit_names.add("User Story")
+
+        # Identificar colunas existentes para preservar IDs (Azure DevOps rejeita recriação de incoming/outgoing sem ID)
+        existing_by_name = {col.get("name"): col for col in existing_cols}
+        incoming_col = next((col for col in existing_cols if col.get("columnType") == "incoming"), None)
+        outgoing_col = next((col for col in existing_cols if col.get("columnType") == "outgoing"), None)
+
+        wip = ((self.config.get("board") or {}).get("wip")) or {}
+
+        # Mapeamento canônico das fases SDLC para estados Agile:
+        # User Story: New, Active, Resolved, Closed
+        # Bug:        New, Active, Resolved, Closed
+        # Task:       New, Active, Closed (não possui estado Resolved no Agile nativo)
+        target_columns = [
+            ("Blueprint", "New", "incoming"),
+            ("Scaffolding", "Active", "inProgress"),
+            ("Implementation", "Active", "inProgress"),
+            ("Code Security Review", "Active", "inProgress"),
+            ("Quality Validation", "Resolved", "inProgress"),
+            ("Governance Release", "Resolved", "inProgress"),
+            ("Done", "Closed", "outgoing"),
+        ]
+
+        def _map_wit_state(wit: str, st: str) -> str:
+            # Salvaguarda: No template Agile, Task possui apenas New, Active, Closed (sem Resolved)
+            if wit == "Task" and st == "Resolved":
+                return "Active"
+            return st
+
+        payload = []
+        for name, state, col_type in target_columns:
+            col_id = None
+            if name in existing_by_name and existing_by_name[name].get("id"):
+                col_id = existing_by_name[name]["id"]
+            elif col_type == "incoming" and incoming_col and incoming_col.get("id"):
+                col_id = incoming_col["id"]
+            elif col_type == "outgoing" and outgoing_col and outgoing_col.get("id"):
+                col_id = outgoing_col["id"]
+
+            limit = int(wip.get(name) or 0)
+            col_entry: dict[str, Any] = {
+                "name": name,
+                "itemLimit": limit,
+                "stateMappings": {wit: _map_wit_state(wit, state) for wit in wit_names},
+                "columnType": col_type,
+                "isSplit": False,
+                "description": "",
+            }
+            if col_id:
+                col_entry["id"] = col_id
+            payload.append(col_entry)
+
+        result = self.send("PUT", url, payload)
+        if result:
+            col_names = [c.get("name") for c in (result.get("value") or payload)]
+            self.record("board.columns", "ok", {"count": len(payload), "columns": col_names})
+        else:
+            self.record("board.columns", "error", result)
+
+        # Configurar colunas dos boards de Features e Epics (portfolio levels)
+        self.apply_portfolio_board_columns()
+
+    def apply_portfolio_board_columns(self) -> None:
+        """Provisiona as mesmas 7 colunas SDLC canônicas nos boards de Features e Epics.
+
+        As 7 fases do ciclo SDLC se aplicam uniformemente a todos os níveis de backlog:
+          Blueprint (New) -> Scaffolding (Active) -> Implementation (Active) ->
+          Code Security Review (Active) -> Quality Validation (Resolved) ->
+          Governance Release (Resolved) -> Done (Closed)
+
+        Cada nível usa o WIT nativo do Azure DevOps Agile:
+          - Features board: stateMappings com "Feature" (estados: New, Active, Resolved, Closed)
+          - Epics board:    stateMappings com "Epic"    (estados: New, Active, Resolved, Closed)
+        """
+        if not self.project_id or not self.team_id:
+            return
+
+        # 7 colunas SDLC canônicas — idênticas às do Stories board
+        sdlc_columns = [
+            ("Blueprint", "New", "incoming"),
+            ("Scaffolding", "Active", "inProgress"),
+            ("Implementation", "Active", "inProgress"),
+            ("Code Security Review", "Active", "inProgress"),
+            ("Quality Validation", "Resolved", "inProgress"),
+            ("Governance Release", "Resolved", "inProgress"),
+            ("Done", "Closed", "outgoing"),
+        ]
+
+        for board_name, wit_type in (("Features", "Feature"), ("Epics", "Epic")):
+            url = (
+                f"{self.org}/{self.project_id}/{self.team_id}"
+                f"/_apis/work/boards/{board_name}/columns?api-version=7.1"
+            )
+            existing = self.get(url) or {}
+            existing_cols = existing.get("value") or []
+            by_name = {c.get("name"): c for c in existing_cols}
+            incoming_col = next((c for c in existing_cols if c.get("columnType") == "incoming"), None)
+            outgoing_col = next((c for c in existing_cols if c.get("columnType") == "outgoing"), None)
+
+            payload: list[dict[str, Any]] = []
+            for name, state, col_type in sdlc_columns:
+                col_id = None
+                if name in by_name and by_name[name].get("id"):
+                    col_id = by_name[name]["id"]
+                elif col_type == "incoming" and incoming_col and incoming_col.get("id"):
+                    col_id = incoming_col["id"]
+                elif col_type == "outgoing" and outgoing_col and outgoing_col.get("id"):
+                    col_id = outgoing_col["id"]
+
+                entry: dict[str, Any] = {
+                    "name": name,
+                    "itemLimit": 0,
+                    "stateMappings": {wit_type: state},
+                    "columnType": col_type,
+                    "isSplit": False,
+                    "description": "",
+                }
+                if col_id:
+                    entry["id"] = col_id
+                payload.append(entry)
+
+            result = self.send("PUT", url, payload)
+            record_key = f"board.columns.{board_name.lower()}"
+            if result:
+                names = [c.get("name") for c in (result.get("value") or payload)]
+                self.record(record_key, "ok", {"count": len(payload), "columns": names})
+            else:
+                self.record(record_key, "error", result)
+
+
 
     def apply_board_wip(self) -> None:
         if not self.project_id or not self.team_id:
@@ -460,18 +672,28 @@ class AzureDevOpsProjectSetup:
         story_field = ((self.config.get("scoring") or {}).get("story_points") or {}).get(
             "field", "Microsoft.VSTS.Scheduling.StoryPoints"
         )
-        payload = {
-            "cards": {
-                "User Story": [
-                    {"fieldIdentifier": "System.Id"},
-                    {"fieldIdentifier": "System.Title"},
-                    {"fieldIdentifier": "System.AssignedTo", "displayFormat": "AvatarAndFullName"},
-                    {"fieldIdentifier": "System.Tags"},
-                    {"fieldIdentifier": "System.State"},
-                    {"fieldIdentifier": story_field},
-                ]
-            }
+        cards_payload: dict[str, Any] = {
+            "User Story": [
+                {"fieldIdentifier": "System.Id"},
+                {"fieldIdentifier": "System.Title"},
+                {"fieldIdentifier": "System.AssignedTo", "displayFormat": "AvatarAndFullName"},
+                {"fieldIdentifier": "System.Tags"},
+                {"fieldIdentifier": "System.State"},
+                {"fieldIdentifier": story_field},
+            ]
         }
+        board_cfg = self.config.get("board") or {}
+        bugs_behavior = board_cfg.get("bugs_behavior") or board_cfg.get("bugsBehavior") or "asRequirements"
+        if bugs_behavior == "asRequirements":
+            cards_payload["Bug"] = [
+                {"fieldIdentifier": "System.Id"},
+                {"fieldIdentifier": "System.Title"},
+                {"fieldIdentifier": "System.AssignedTo", "displayFormat": "AvatarAndFullName"},
+                {"fieldIdentifier": "System.Tags"},
+                {"fieldIdentifier": "System.State"},
+                {"fieldIdentifier": "Microsoft.VSTS.Common.Severity"},
+            ]
+        payload = {"cards": cards_payload}
         url = (
             f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/boards/"
             f"Stories/cardsettings?api-version=7.1"
@@ -591,6 +813,21 @@ class AzureDevOpsProjectSetup:
             else:
                 result = self.send("POST", f"{self.org}/{self.project_id}/_apis/policy/configurations?api-version=7.1", link_policy)
                 self.record("policy.work_item_linking", "ok" if result else "error", result)
+
+        if pr_policy.get("require_comment_resolution", True):
+            comment_policy = {
+                "isEnabled": True,
+                "isBlocking": True,
+                "type": {"id": POLICY_COMMENT_RESOLUTION},
+                "settings": {
+                    "scope": [{"repositoryId": self.repo_id, "refName": ref_name, "matchKind": "Exact"}],
+                },
+            }
+            if POLICY_COMMENT_RESOLUTION in types_present:
+                self.record("policy.comment_resolution", "skip", "já existe")
+            else:
+                result = self.send("POST", f"{self.org}/{self.project_id}/_apis/policy/configurations?api-version=7.1", comment_policy)
+                self.record("policy.comment_resolution", "ok" if result else "error", result)
 
         if reviewer.get("id"):
             required = {
@@ -783,6 +1020,34 @@ class AzureDevOpsProjectSetup:
         if not self.project_id:
             self.record("swimlanes", "error", "projeto não descoberto")
             return
+
+        if self.team_id:
+            rows_url = f"{self.org}/{self.project_id}/{self.team_id}/_apis/work/boards/Stories/rows?api-version=7.1"
+            existing_rows = (self.get(rows_url) or {}).get("value") or []
+            has_default_in_existing = any(r.get("id") == "00000000-0000-0000-0000-000000000000" for r in existing_rows)
+            rows_payload = []
+            for lane in swimlanes_cfg:
+                name = lane.get("name")
+                if not name:
+                    continue
+                row_item: dict[str, Any] = {"name": name}
+                if has_default_in_existing and name.lower() in ("standard", "default"):
+                    row_item["id"] = "00000000-0000-0000-0000-000000000000"
+                rows_payload.append(row_item)
+
+            rows_result = self.send("PUT", rows_url, rows_payload)
+            if not rows_result and not any(r.get("id") == "00000000-0000-0000-0000-000000000000" for r in rows_payload):
+                for r in rows_payload:
+                    if r.get("name", "").lower() in ("standard", "default"):
+                        r["id"] = "00000000-0000-0000-0000-000000000000"
+                        break
+                else:
+                    if rows_payload:
+                        rows_payload[-1]["id"] = "00000000-0000-0000-0000-000000000000"
+                rows_result = self.send("PUT", rows_url, rows_payload)
+
+            self.record("swimlanes.rows", "ok" if rows_result else "error", rows_result)
+
         proj_url = f"{self.org}/_apis/projects/{quote(self.project)}?api-version=7.1"
         proj = self.get(proj_url) or {}
         if not proj.get("id"):
@@ -790,25 +1055,29 @@ class AzureDevOpsProjectSetup:
             return
         # Azure DevOps API usa project NAME no path, não GUID
         proj_name = quote(self.project)
-        parent_folder = "Shared/Agents Squad"
-        folder_path = "Shared/Agents Squad/SWIMLANES"
+        existing_all = self.get(
+            f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1"
+        ) or {}
+        has_shared_queries = any(
+            (q.get("path") or "").startswith("Shared Queries") or q.get("name") == "Shared Queries"
+            for q in existing_all.get("value", [])
+        )
+        root_name = "Shared Queries" if has_shared_queries else "Shared"
+        parent_folder = f"{root_name}/Agents Squad"
+        folder_path = f"{root_name}/Agents Squad/SWIMLANES"
 
         self.send(
             "POST",
-            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(parent_folder, safe='/')}?api-version=7.1",
+            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(root_name, safe='/')}?api-version=7.1",
             {"name": "Agents Squad", "isFolder": True},
         )
 
         folder = self.send(
             "POST",
-            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
+            f"{self.org}/{proj_name}/_apis/wit/queries/{quote(parent_folder, safe='/')}?api-version=7.1",
             {"name": "SWIMLANES", "isFolder": True},
         )
         self.record("swimlanes.folder", "ok" if folder else "skip", folder_path)
-
-        existing_all = self.get(
-            f"{self.org}/{proj_name}/_apis/wit/queries?api-version=7.1"
-        ) or {}
 
         for lane in swimlanes_cfg:
             name = lane.get("name")
@@ -816,12 +1085,16 @@ class AzureDevOpsProjectSetup:
             if not name or not query:
                 self.record("swimlanes", "error", f"swimlane inválida (sem name/query): {lane}")
                 continue
-            folder_query_path = f"{folder_path}/{name}"
             existing_query = next(
                 (q for q in existing_all.get("value", [])
                  if (q.get("path") or "").startswith(folder_path + "/") and q.get("name") == name),
                 None,
             )
+            if not existing_query:
+                check_url = f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_path, safe='/')}/{quote(name)}?api-version=7.1"
+                chk = self.get(check_url)
+                if chk and chk.get("id"):
+                    existing_query = chk
             if existing_query:
                 self.record(f"swimlanes.{name}", "skip", "query já existe")
                 continue
@@ -833,7 +1106,7 @@ class AzureDevOpsProjectSetup:
             payload = {"name": name, "wiql": wiql, "isFolder": False}
             result = self.send(
                 "POST",
-                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_query_path, safe='/')}?api-version=7.1",
+                f"{self.org}/{proj_name}/_apis/wit/queries/{quote(folder_path, safe='/')}?api-version=7.1",
                 payload,
             )
             if result and result.get("id"):
@@ -1070,6 +1343,7 @@ class AzureDevOpsProjectSetup:
         self.apply_team_iterations()  # US-1
         self.apply_queries()  # US-2
         self.apply_team_settings()
+        self.apply_board_columns()  # SDLC Columns
         self.apply_board_wip()
         self.apply_card_fields()
         self.apply_card_colors()
@@ -1090,23 +1364,43 @@ class AzureDevOpsProjectSetup:
         return {"generated_at": _now(), "project": self.project, "summary": summary, "steps": self.results}
 
 
-def load_setup_config(root: Path) -> dict[str, Any]:
-    cfg = load_devops_config(root)
-    if cfg.get("identities"):
-        return cfg
+def load_setup_config(root: Path, config_path: Optional[str | Path] = None) -> dict[str, Any]:
+    base_cfg = load_devops_config(root)
+    if config_path:
+        p = Path(config_path)
+        if not p.is_absolute():
+            p = (root / p).resolve() if (root / p).is_file() else Path(config_path).resolve()
+        if p.is_file():
+            import yaml
+            payload = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+            if isinstance(payload, dict):
+                merged = {**payload}
+                for k in ("team", "repo", "area_path"):
+                    val = str(merged.get(k) or "")
+                    if "<product-name>" in val or f"<{k.replace('_', '-')}>" in val:
+                        if base_cfg.get(k):
+                            merged[k] = base_cfg[k]
+                        elif k in ("team", "repo"):
+                            merged[k] = "agent-squad"
+                return merged
+
+    if base_cfg.get("identities"):
+        return base_cfg
     template = ROOT / "templates" / "devops.yaml"
     if template.is_file():
         import yaml
         payload = yaml.safe_load(template.read_text(encoding="utf-8")) or {}
         if isinstance(payload, dict):
-            merged = {**payload, **cfg}
+            merged = {**payload, **base_cfg}
             return merged
-    return cfg
+    return base_cfg
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Aplica o processo Azure DevOps do squad em qualquer projeto")
+    parser.add_argument("--config", type=str, default=None, help="Caminho para arquivo de configuração devops.yaml")
     parser.add_argument("--apply", action="store_true", help="Executa as mutações no Azure DevOps")
+    parser.add_argument("--dry-run", action="store_true", help="Apenas descobre e valida sem aplicar alterações")
     parser.add_argument("--json", action="store_true", help="Imprime o relatório em JSON")
     args = parser.parse_args(argv or sys.argv[1:])
 
@@ -1114,9 +1408,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not isinstance(connector.client, AzureDevOpsClient):
         print("ERRO: credenciais Azure DevOps ausentes em .env", file=sys.stderr)
         return 1
-    config = load_setup_config(ROOT)
+    config = load_setup_config(ROOT, config_path=args.config)
     setup = AzureDevOpsProjectSetup(connector.client, config)
-    if not args.apply:
+
+    should_apply = not args.dry_run and (args.apply or (args.config is not None))
+    if not should_apply:
         setup.discover()
         report = {"mode": "dry-run", "project": setup.project, "steps": setup.results}
     else:

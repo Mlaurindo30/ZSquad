@@ -1,0 +1,313 @@
+version: 1-draft
+status: plan-only
+work_item_id: EPIC-SQUAD-EVOLUTION-20260818
+mode: full
+scope:
+  source_squads: 13
+  source_personas: 170
+  source_tasks: 112
+  source_workflows: 26
+  source_checklists: 13
+  source_data: 28
+  source_config: 13
+  source_subordinate_total: 362
+  source_objects_total: 375
+  promoted_cardinality: UNVERIFIED
+  source_gaps:
+    - id: GAP-XQ-CLAUDE-CODE-MASTERY-NO-SQUAD-YAML
+      state: source
+      finding: meta-router destination exists but local squad.yaml is NOT FOUND
+    - id: GAP-XQ-MARKETING-SQUAD-NO-SQUAD-YAML
+      state: source
+      finding: meta-router destination exists but local squad.yaml is NOT FOUND
+    - id: GAP-XQ-TRAFFIC-MARKETING-EQUIVALENCE
+      state: source
+      finding: traffic-masters is not automatically marketing-squad; equivalence is UNVERIFIED
+
+disposition_states: [source, adapt, fuse, reject, proposed, promoted]
+global_rules:
+  create_work_items_with: scripts/agent_squad.py
+  no_manual_work_item_scaffold: true
+  xquads_files_executable: false
+  maximum_chain_links: 5
+  independent_review_risk_medium_or_higher: true
+  promoted_only_in_runtime_registry: true
+  preserve_existing_persona_numbers: true
+
+epics:
+  - id: EPIC-SQUAD-2-RUNTIME
+    title: Governed intake and routing foundation
+    owner: delivery-orchestrator
+    risk: medium
+    depends_on: []
+    gates: [G1-product, G2-design, G3-readiness, G4-code-security, G5-quality, G6-governance-release]
+    stories:
+      - id: US-SQUAD-2-CONTRACTS
+        owner: solution-architect
+        depends_on: []
+        acceptance:
+          - source, disposition, squad, route, brief, verdict, task and workflow schemas specified
+          - exception states and valid work item IDs aligned between schema and script
+          - backward compatibility defined
+        tasks:
+          - id: TASK-SQUAD-2-SCHEMA-GAP
+            owner: solution-architect
+            action: resolve current schema and state inconsistencies
+          - id: TASK-SQUAD-2-CONTRACT-SPECS
+            owner: solution-architect
+            action: specify new JSON schemas and examples
+          - id: TASK-SQUAD-2-CONTRACT-TESTS
+            owner: test-engineer
+            action: specify positive, negative and legacy fixtures
+      - id: US-SQUAD-2-SCAFFOLD
+        owner: software-engineer
+        depends_on: [US-SQUAD-2-CONTRACTS]
+        acceptance:
+          - scaffold creates source, census, dispositions, mappings, candidates and routing folders
+          - old work items validate unchanged
+          - init accepts every work item ID allowed by schema
+        tasks:
+          - id: TASK-SQUAD-2-SCAFFOLD-IMPLEMENT
+            owner: software-engineer
+            action: extend agent_squad.py after plan approval
+          - id: TASK-SQUAD-2-VALIDATOR
+            owner: software-engineer
+            action: extend structural and work item validation
+          - id: TASK-SQUAD-2-LEGACY-SMOKE
+            owner: qa-engineer
+            action: validate old/new work items and rollback
+
+  - id: EPIC-SQUAD-2-INGEST-XQUADS
+    title: Complete governed census and disposition
+    owner: skill-curator
+    risk: medium
+    depends_on: [EPIC-SQUAD-2-RUNTIME]
+    gates: [G1-product, G2-design, G3-readiness, G4-code-security, G5-quality]
+    stories:
+      - id: US-XQ-SNAPSHOT-MANIFEST
+        owner: skill-curator
+        depends_on: []
+        acceptance:
+          - counts equal 13 squads and 362 subordinate objects (170 personas, 112 tasks, 26 workflows, 13 checklists, 28 data, 13 config)
+          - every source object has path, hash, revision and stable source ID
+          - source files remain non-executable
+        tasks:
+          - id: TASK-XQ-CENSUS-SQUADS
+            owner: skill-curator
+            action: inventory 13 squad manifests
+          - id: TASK-XQ-CENSUS-PERSONAS
+            owner: skill-curator
+            action: inventory 170 persona files
+          - id: TASK-XQ-CENSUS-TASKS
+            owner: skill-curator
+            action: inventory 112 task files
+          - id: TASK-XQ-CENSUS-WORKFLOWS
+            owner: skill-curator
+            action: inventory 26 workflow files
+          - id: TASK-XQ-CENSUS-CHECKLISTS
+            owner: skill-curator
+            action: inventory 13 checklist files
+          - id: TASK-XQ-CENSUS-DATA
+            owner: skill-curator
+            action: inventory 28 data files
+          - id: TASK-XQ-CENSUS-CONFIG
+            owner: skill-curator
+            action: inventory 13 config files
+      - id: US-XQ-SOURCE-GAPS
+        owner: requirements-analyst
+        depends_on: [US-XQ-SNAPSHOT-MANIFEST]
+        acceptance:
+          - missing claude-code-mastery and marketing-squad manifests recorded as gaps
+          - no invented persona or squad
+          - traffic-masters marketing equivalence remains unverified until reviewed
+        tasks:
+          - id: TASK-XQ-GAP-META-ROUTER
+            owner: requirements-analyst
+            action: reconcile declared destinations with source manifests
+          - id: TASK-XQ-GAP-DECISION
+            owner: product-owner
+            action: decide whether gaps need separate discovery
+      - id: US-XQ-DISPOSITION-COVERAGE
+        owner: skill-curator
+        depends_on: [US-XQ-SNAPSHOT-MANIFEST, US-XQ-SOURCE-GAPS]
+        acceptance:
+          - all 375 source objects have exactly one current disposition state
+          - every adapt, fuse, reject, proposed or promoted state has evidence and reviewer
+          - coverage report has no unknown source object
+        tasks:
+          - id: TASK-XQ-DISPOSITION-PIPELINE
+            owner: skill-curator
+            action: run governed per-item classification after census approval
+          - id: TASK-XQ-COVERAGE-AUDIT
+            owner: governance-auditor
+            action: independently reconcile 13 squads plus subordinate counts 170/112/26/13/28/13
+
+  - id: EPIC-SQUAD-2-WAVES
+    title: Squad-by-squad adaptation waves
+    owner: delivery-orchestrator
+    risk: medium
+    depends_on: [EPIC-SQUAD-2-INGEST-XQUADS]
+    gates: [G2-design, G3-readiness, G4-code-security, G5-quality]
+    wave_template:
+      story_id_pattern: US-XQ-WAVE-<SOURCE-SQUAD>
+      per_story_tasks:
+        - suffix: SQUAD
+          owner: solution-architect
+          action: disposition source squad mission and composition
+        - suffix: PERSONAS
+          owner: skill-curator
+          action: disposition every persona in the source squad
+        - suffix: TASKS
+          owner: skill-curator
+          action: disposition every task in the source squad
+        - suffix: WORKFLOWS
+          owner: solution-architect
+          action: disposition every workflow in the source squad
+        - suffix: CHECKLISTS
+          owner: test-engineer
+          action: disposition every checklist in the source squad
+        - suffix: DATA
+          owner: skill-curator
+          action: disposition every data artifact in the source squad
+        - suffix: CONFIG
+          owner: solution-architect
+          action: disposition every config artifact in the source squad
+        - suffix: REVIEW
+          owner: governance-auditor
+          action: verify coverage, provenance, SoD and no invented runtime identities
+      acceptance:
+        - source counts reconcile with manifest
+        - every object is adapt, fuse, reject, proposed or promoted with evidence
+        - proposed cardinality is not treated as promoted cardinality
+    waves:
+      - wave: 1
+        rationale: validate mechanism on router and high-overlap technical domains
+        squads:
+          - {id: xquads, personas: 1, tasks: 3, workflows: 1}
+          - {id: data-squad, personas: 7, tasks: 7, workflows: 2}
+          - {id: design-squad, personas: 8, tasks: 8, workflows: 2}
+      - wave: 2
+        rationale: requested capability gaps and controlled security/marketing domains
+        squads:
+          - {id: cybersecurity, personas: 15, tasks: 9, workflows: 2}
+          - {id: traffic-masters, personas: 16, tasks: 9, workflows: 2}
+          - {id: brand-squad, personas: 15, tasks: 9, workflows: 2}
+          - {id: storytelling, personas: 12, tasks: 8, workflows: 2}
+      - wave: 3
+        rationale: heavy overlap, persuasion and duplicate copy capability
+        squads:
+          - {id: copy-squad, personas: 23, tasks: 13, workflows: 2}
+          - {id: copy-master, personas: 33, tasks: 15, workflows: 4}
+          - {id: hormozi-squad, personas: 16, tasks: 10, workflows: 2}
+          - {id: movement, personas: 7, tasks: 7, workflows: 1}
+      - wave: 4
+        rationale: authority, personification and governance-sensitive advisory capability
+        squads:
+          - {id: advisory-board, personas: 11, tasks: 7, workflows: 2}
+          - {id: c-level-squad, personas: 6, tasks: 7, workflows: 2}
+
+  - id: EPIC-SQUAD-2-ROUTING
+    title: Runtime squad composition and shadow routing
+    owner: delivery-orchestrator
+    risk: medium
+    depends_on: [EPIC-SQUAD-2-WAVES]
+    gates: [G1-product, G2-design, G3-readiness, G4-code-security, G5-quality]
+    stories:
+      - id: US-SQUAD-2-COMPOSITION
+        owner: solution-architect
+        depends_on: []
+        acceptance:
+          - runtime squads derive only from reviewed dispositions
+          - chief is virtual and resolves to promoted persona
+          - source-to-runtime mappings preserve provenance
+        tasks:
+          - id: TASK-SQUAD-2-COMPOSE
+            owner: solution-architect
+            action: propose runtime squads after complete 375-object census
+          - id: TASK-SQUAD-2-SOD-REVIEW
+            owner: security-reviewer
+            action: review authority, offensive action, claims and author-review conflicts
+      - id: US-SQUAD-2-SHADOW-ROUTING
+        owner: delivery-orchestrator
+        depends_on: [US-SQUAD-2-COMPOSITION]
+        acceptance:
+          - confidence is explainable and persisted
+          - exactly one question below threshold
+          - source gaps result in no_squad_match or human route
+          - routing verdict remains separate from G4, G5 and G6
+        tasks:
+          - id: TASK-SQUAD-2-GOLDEN-SET
+            owner: requirements-analyst
+            action: prepare human-labelled routing fixtures
+          - id: TASK-SQUAD-2-SHADOW
+            owner: software-engineer
+            action: implement only after approved contracts
+          - id: TASK-SQUAD-2-ROUTE-REVIEW
+            owner: qa-engineer
+            action: independently measure correct, partial, wrong and no-match
+
+  - id: EPIC-SQUAD-2-PROMOTION
+    title: Controlled promotion and migration
+    owner: governance-auditor
+    risk: high
+    depends_on: [EPIC-SQUAD-2-ROUTING]
+    gates: [G1-product, G2-design, G3-readiness, G4-code-security, G5-quality, G6-governance-release]
+    stories:
+      - id: US-SQUAD-2-PROMOTE-PERSONAS
+        owner: skill-curator
+        depends_on: []
+        acceptance:
+          - each persona has PROMPT, manifest, native skill, return contract, tests and provenance
+          - number allocated without changing 00-29
+          - proposed is disabled until G6 and human approval
+        tasks:
+          - id: TASK-SQUAD-2-PERSONA-BATCH
+            owner: skill-curator
+            action: promote a small reviewed batch; cardinality remains decision-derived
+          - id: TASK-SQUAD-2-PERSONA-INDEPENDENT-REVIEW
+            owner: governance-auditor
+            action: verify batch against dispositions and SoD
+      - id: US-SQUAD-2-PROMOTE-TEMPLATES
+        owner: solution-architect
+        depends_on: []
+        acceptance:
+          - adapted tasks and workflows contain no foreign runtime authority
+          - workflows have recovery, evidence, SoD and gate mapping
+        tasks:
+          - id: TASK-SQUAD-2-TASK-TEMPLATE-BATCH
+            owner: software-engineer
+            action: materialize approved task templates
+          - id: TASK-SQUAD-2-WORKFLOW-TEMPLATE-BATCH
+            owner: software-engineer
+            action: materialize approved workflow templates
+      - id: US-SQUAD-2-RELEASE
+        owner: devops-release-engineer
+        depends_on: [US-SQUAD-2-PROMOTE-PERSONAS, US-SQUAD-2-PROMOTE-TEMPLATES]
+        acceptance:
+          - feature flags support off, shadow, advisory and enforced
+          - legacy work items and handoffs remain valid
+          - rollback disables promoted version without deleting evidence
+          - G6 human approval recorded
+        tasks:
+          - id: TASK-SQUAD-2-MIGRATION-SMOKE
+            owner: qa-engineer
+            action: run legacy/new/restart/rollback scenarios
+          - id: TASK-SQUAD-2-GOVERNANCE-AUDIT
+            owner: governance-auditor
+            action: verify traceability from source to promoted runtime
+          - id: TASK-SQUAD-2-RELEASE-PREP
+            owner: devops-release-engineer
+            action: prepare rollout and rollback without external release
+
+exit_criteria:
+  - 13 source squad manifests reconciled
+  - 170 persona dispositions reconciled
+  - 112 task dispositions reconciled
+  - 26 workflow dispositions reconciled
+  - 13 checklist dispositions reconciled
+  - 28 data dispositions reconciled
+  - 13 config dispositions reconciled
+  - source gaps retained without invented identities
+  - promoted cardinality decided only from reviewed census
+  - independent review and all applicable gates evidenced
+  - no deploy, push, credential, spend, publication or offensive action without specific authorization

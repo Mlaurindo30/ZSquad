@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   squad-core:
     build:
@@ -10,6 +8,15 @@ services:
     mem_limit: 1536m
     mem_reservation: 256m
     cpus: 2.0
+    command:
+      - python
+      - -c
+      - |
+        import signal, sys, time
+        signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+        print("Squad runtime standby ready.", flush=True)
+        while True:
+            time.sleep(1)
     volumes:
       - ./banco:/app/banco
       - ./integrations:/app/integrations
@@ -18,15 +25,16 @@ services:
       - ./config:/app/config
     environment:
       - PYTHONUNBUFFERED=1
+      - SQUAD_RUNTIME=/app
       - SQUAD_DB_PATH=/app/banco/squad.db
-    ports:
-      - "8080:8080"
+      - FALKORDB_HOST=graph-memory
+      - FALKORDB_PORT=6379
     depends_on:
       - graph-memory
     healthcheck:
-      test: ["CMD", "python", "-c", "import sqlite3; conn = sqlite3.connect('/app/banco/squad.db'); conn.execute('SELECT 1'); conn.close()"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "python", "scripts/agent_squad.py", "audit"]
+      interval: 30s
+      timeout: 15s
       retries: 3
 
   graph-memory:

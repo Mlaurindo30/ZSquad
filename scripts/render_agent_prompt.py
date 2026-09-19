@@ -64,6 +64,19 @@ def _build_cache_key(
             item_path = root_dir / work_item
         key.append(_get_mtime(item_path / "status.yaml"))
         key.append(_get_mtime(item_path / "epic.md"))
+        try:
+            curr = item_path.parent
+            for _ in range(4):
+                if curr == root_dir or curr == root_dir / "work":
+                    break
+                if (curr / "status.yaml").is_file():
+                    key.append(_get_mtime(curr / "status.yaml"))
+                for sname in ["epic.md", "feature.md", "story.md"]:
+                    if (curr / sname).is_file():
+                        key.append(_get_mtime(curr / sname))
+                curr = curr.parent
+        except Exception:
+            pass
     else:
         key.extend([0.0, 0.0])
     return tuple(key)
@@ -99,14 +112,18 @@ def _extract_work_item_text(work_item_path: Path) -> str:
 
 
 def _build_environment_section(packet: dict[str, Any], squad: AgentSquad) -> str:
-    """Gera a seção com timestamps ISO-8601 e caminhos de execução do agente."""
-    work_item_path = squad._work_base() / packet["work_item"]
+    """Gera a seção com timestamps ISO-8601 e caminhos portáteis de execução do agente."""
+    work_item_rel = packet["work_item"]
+    try:
+        work_base_rel = squad._work_base().resolve().relative_to(squad.root.resolve()).as_posix()
+    except (ValueError, RuntimeError):
+        work_base_rel = "work"
     current_time = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     return (
         f"<environment_details>\n"
         f"Current time: {current_time}\n"
-        f"Working directory: {work_item_path}\n"
-        f"Workspace root folder: {squad._work_base()}\n"
+        f"Working directory: %SQUAD_RUNTIME%/{work_base_rel}/{work_item_rel}\n"
+        f"Workspace root folder: %SQUAD_RUNTIME%/{work_base_rel}\n"
         f"</environment_details>\n"
     )
 
@@ -139,84 +156,276 @@ def _build_skills_section(packet: dict[str, Any], squad: AgentSquad) -> str:
 
 
 def _build_work_item_context(packet: dict[str, Any], squad: AgentSquad) -> str | None:
-    """Constrói o bloco de contexto contendo o status.yaml do work item."""
+    """Constrói o bloco de contexto contendo o status.yaml do work item e a hierarquia ancestral."""
     if "work_item" not in packet:
         return None
     item_dir = squad._work_base() / packet["work_item"]
     status_file = item_dir / "status.yaml"
     if not status_file.exists():
         return None
+
+    sections = [
+        f"# CONTEXTO DO WORK ITEM ({packet['work_item']})\n\n",
+        f"## STATUS DO WORK ITEM\n```yaml\n",
+        f"{status_file.read_text(encoding='utf-8')}\n",
+        f"```\n",
+    ]
+
+    # Resolver hierarquia e carregar contexto dos ancestrais (EPIC -> FEATURE -> STORY)
+    try:
+        from scripts.runtime.work_items.paths import WorkItemPathResolver
+        from scripts.runtime.work_items.hierarchy import HierarchyContextResolver
+
+        project_id = squad.project_name or "default"
+        path_resolver = WorkItemPathResolver(squad.root, project_id)
+        hierarchy_resolver = HierarchyContextResolver(path_resolver)
+        ancestor_chain = hierarchy_resolver.get_ancestor_chain(item_dir)
+        if ancestor_chain:
+            sections.append("\n## LINHAGEM E ESPECIFICAÇÕES ANCESTRAIS\n")
+            for anc in ancestor_chain:
+                anc_path = Path(anc["path"])
+                anc_type = anc.get("type", "unknown").upper()
+                anc_id = anc.get("id", anc_path.name)
+                sections.append(f"- **{anc_type}**: {anc_id}\n")
+                for spec_name in ["epic.md", "feature.md", "story.md", "acceptance-criteria.md"]:
+                    spec_file = anc_path / spec_name
+                    if spec_file.is_file():
+                        content = spec_file.read_text(encoding="utf-8")[:1500]
+                        sections.append(f"  * Especificação ancestral ({spec_name}):\n```markdown\n{content}\n```\n")
+    except Exception:
+        pass
+
+    return "".join(sections)
+
+
+def _build_azure_devops_section(packet: dict[str, Any], squad: Any) -> str:
+    """Injeta contexto operacional do Azure DevOps no prompt do subagente.
+
+    Carrega config ADO do projeto e monta seção instrucional completa com:
+    - Org, Projeto, Team, Area Path, Iteration ativa
+    - Conta ADO vinculada ao papel do agente (squads@ vs arthemis@)
+    - Guia de uso das MCP tools @azure-devops/mcp
+    - Regra ADO-first (proibição de artefatos locais de backlog)
+    """
+    # Tentar carregar devops.yaml do projeto
+    try:
+        from pathlib import Path
+        import yaml as _yaml
+
+        if hasattr(squad, "root"):
+            root = Path(squad.root)
+        elif isinstance(squad, dict):
+            root = Path(squad.get("root_path", squad.get("root", ".")))
+        else:
+            root = Path(".")
+
+        devops_cfg_path = root / "config" / "devops.yaml"
+        if not devops_cfg_path.exists():
+            devops_cfg_path = root / ".agents_squad" / "config" / "devops.yaml"
+        if not devops_cfg_path.exists():
+            devops_cfg_path = root / "templates" / "devops.yaml"
+
+        if not devops_cfg_path.exists():
+            return ""
+
+        cfg = _yaml.safe_load(devops_cfg_path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return ""
+
+    org = cfg.get("org", "cbvgas")
+    project = cfg.get("project", "Arthemis")
+    team = cfg.get("team", "agent-squad")
+    if team == "<product-name>":
+        team = "agent-squad"
+    area_path = cfg.get("area_path", f"Arthemis\\{team}")
+    if "<product-name>" in area_path:
+        area_path = f"Arthemis\\{team}"
+
+    # Determinar conta ADO baseada no papel do agente e modelo SoD (4 contas de automação + human_master)
+    agent_id = packet.get("agent_id") or packet.get("agent", "")
+    identities = cfg.get("identities", {})
+    service_accounts = cfg.get("service_accounts", {})
+    dev_team = identities.get("development_team", {})
+    reviewer = identities.get("pr_and_card_approver", {})
+    cyber_acc = service_accounts.get("cyber_red", {})
+    pii_acc = service_accounts.get("customer_data_pii", {})
+
+    dev_personas = dev_team.get("used_by", [])
+    review_personas = reviewer.get("used_by", [])
+    cyber_personas = cyber_acc.get("used_by", ["offensive-cyber-operator", "34-offensive-cyber-operator"])
+
+    dev_email = dev_team.get("email", "squads@michellaurindooutlook812.onmicrosoft.com")
+    review_email = reviewer.get("email", "arthemis@michellaurindooutlook812.onmicrosoft.com")
+    cyber_email = cyber_acc.get("email", "cyber-red@michellaurindooutlook812.onmicrosoft.com")
+    pii_email = pii_acc.get("email", "customer_data_pii@michellaurindooutlook812.onmicrosoft.com")
+
+    numeric_id = agent_id.split("-")[0] if "-" in agent_id else ""
+    clean_id = agent_id.split("-", 1)[1] if "-" in agent_id else agent_id
+
+    if any(p == agent_id or p == clean_id or (numeric_id and numeric_id in p) for p in cyber_personas):
+        assigned_account = cyber_email
+        account_role = "SEGURANÇA OFENSIVA / RED TEAM"
+    elif any(p == agent_id or p == clean_id or (numeric_id and numeric_id in p) for p in review_personas):
+        assigned_account = review_email
+        account_role = "APROVAÇÃO / REVISÃO (SoD)"
+    else:
+        assigned_account = dev_email
+        account_role = "EXECUÇÃO / DESENVOLVIMENTO"
+
+    lines = [
+        "## Azure DevOps — Contexto Operacional e Modelo de Contas (SoD)",
+        "",
+        "| Parâmetro | Valor |",
+        "|---|---|",
+        f"| Organização | `{org}` |",
+        f"| Projeto Container | `{project}` |",
+        f"| Team | `{team}` |",
+        f"| Area Path | `{area_path}` |",
+        f"| **Conta ADO Atribuída** | `{assigned_account}` ({account_role}) |",
+        "",
+        "### As 4 Contas de Automação Azure DevOps (Segregação de Funções - SoD)",
+        "",
+        f"- `squads@michellaurindooutlook812.onmicrosoft.com` — **Execução Técnica**: 38 personas construtoras/analistas.",
+        f"- `arthemis@michellaurindooutlook812.onmicrosoft.com` — **Revisão / Aprovação**: 5 personas revisoras (`code-reviewer`, `security-reviewer`, `qa-engineer`, `performance-engineer`, `governance-auditor`).",
+        f"- `cyber-red@michellaurindooutlook812.onmicrosoft.com` — **Segurança Ofensiva / Red Team**: dedicada do `34-offensive-cyber-operator` (duplo sign-off em auth/crypto/iac).",
+        f"- `customer_data_pii@michellaurindooutlook812.onmicrosoft.com` — **Dados Sensíveis / PII**: leitura de datasets/pipelines confidenciais (sem voto em PR).",
+        "- `human_master` (`michel.laurindo@outlook.com`) — **Supervisão Humana**: Gates humanos G1/G6, CAB, deploy.",
+        "",
+        "### Regra ADO-First (Inegociável)",
+        "",
+        "Se este projeto tem Azure DevOps configurado:",
+        "- **PROIBIDO** criar `product-goal.md`, `backlog.md`, `board.yaml`, `task_plan.md` locais",
+        "- **TODO backlog e planejamento** = Work Items no Azure Boards (Epic→Feature→Story→Task)",
+        "",
+        "### MCP Tools Disponíveis (`@azure-devops/mcp`)",
+        "",
+        "```",
+        "wit_work_item_write  → criar/atualizar card (Epic, Feature, User Story, Task)",
+        "wit_work_item        → ler card por ID",
+        "wit_query            → buscar cards com WIQL",
+        "repo_pull_request_write → criar PR com reviewers obrigatórios",
+        "```",
+        "",
+        "### Hierarquia obrigatória de Work Items",
+        "",
+        "```",
+        "🔶 Epic → 🟣 Feature → 🔷 User Story (≤8 pts Fibonacci) → 🟡 Task",
+        "```",
+        "",
+        "### 7 Colunas SDLC — quando mover o card",
+        "",
+        "| Fase | Coluna ADO | Estado | Conta |",
+        "|---|---|---|---|",
+        "| Blueprint | Blueprint | New | squads@ |",
+        "| Scaffolding | Scaffolding | Active | squads@ |",
+        "| Implementation | Implementation | Active | squads@ |",
+        "| Code Security Review | Code Security Review | Active | arthemis@ |",
+        "| Quality Validation | Quality Validation | Resolved | arthemis@ |",
+        "| Governance Release | Governance Release | Resolved | arthemis@ |",
+        "| Done | Done | Closed | arthemis@ |",
+    ]
+
+    return "\n".join(lines)
+
+
+def _build_cognitive_contract_section() -> str:
+    """Gera as diretrizes de Contrato Cognitivo, Anti-Alucinação e Qualidade de Execução do Agente."""
     return (
-        f"# CONTEXTO DO WORK ITEM ({packet['work_item']})\n\n"
-        f"## STATUS DO WORK ITEM\n```yaml\n"
-        f"{status_file.read_text(encoding='utf-8')}\n"
-        f"```\n"
+        "\n---\n"
+        "# CONTRATO COGNITIVO, ANTI-ALUCINAÇÃO & QUALIDADE DE EXECUÇÃO\n\n"
+        "Todo agente do squad opera sob regras cognitivas e de engenharia estritas:\n\n"
+        "### 1. Ordem Mandatória de Carga do Subagente (5 Passos)\n"
+        "1. **Persona**: Incorporar `agents/<id>/PROMPT.md` (identidade, axiomas, frameworks e limites).\n"
+        "2. **Manifesto**: Respeitar `agents/<id>/skills/manifest.yaml` (delimitação formal de competências).\n"
+        "3. **Skills**: Consultar skills de controle `%SQUAD_RUNTIME%/skills/agent-squad-mcp/SKILL.md` e `%SQUAD_RUNTIME%/skills/azure-devops-mcp/SKILL.md`, e as skills atribuídas.\n"
+        "4. **Pesquisa Técnica Externa**: Pesquisar documentação oficial antes de propor código ou arquitetura para evitar convenções obsoletas.\n"
+        "5. **DevOps**: Operar Boards e PRs via ferramentas MCP `@azure-devops/mcp` sob segregação de funções.\n\n"
+        "### 2. Requisitos de Qualidade Orientados a Resultado\n"
+        "- **Inspeção de Evidências Concretas**: Analisar código real, logs e artefatos de entrada antes de propor modificações.\n"
+        "- **Avaliação de Alternativas Técnicas**: Para decisões arquiteturais, de design ou correções não-triviais, avaliar e justificar formalmente ao menos 2 caminhos viáveis com base em prós, contras e impacto.\n"
+        "- **Verificação Pré-Conclusão**: Executar testes, linters, checagem de tipos e validação de critérios de aceitação antes de emitir handoff ou considerar a tarefa concluída. Corrigir falhas imediatamente.\n"
+        "- **Evidência Comprovável**: Apresentar comandos exatos executados, saídas completas e diffs verificáveis no handoff. Não é exigido nem permitido divulgar ou simular raciocínio interno privado (cadeias de pensamento privadas pertencem à inferência interna).\n\n"
+        "### 3. Anti-Alucinação Estrito\n"
+        "- Proibição absoluta de inventar bibliotecas, APIs, parâmetros, caminhos de arquivo, comandos CLI ou ferramentas inexistentes.\n"
+        "- Na ausência de dados, dados ambíguos ou impossibilidade de verificação direta, emita explicitamente: `UNVERIFIED` (não verificado), `NOT FOUND` (não localizado) ou `EMPTY` (vazio). Nunca invente ou fabrique fatos.\n"
     )
 
 
 def _build_hive_mind_section() -> str:
-    """Gera as diretrizes de governança de memória compartilhada do Hive-Mind."""
+    """Gera as diretrizes de cognição da arquitetura canônica de memória em 3 pilares."""
+    hive_mind_path = os.environ.get("HIVE_MIND_PATH", "D:/Hive-Mind")
     return (
         "\n---\n"
-        "# SEGUNDO CÉREBRO — HIVE-MIND (D:\\Hive-Mind)\n\n"
-        "O agent_squad usa `D:\\Hive-Mind` como memória persistente compartilhada. "
-        "Ele NÃO é um banco paralelo: é a camada de memória universal onde todos os agentes "
-        "consolidam estado, decisões, aprendizados e trajetória entre sessões.\n\n"
-        "**Acesso canônico:**\n"
-        "- Vault humano/agente-legível: `D:\\Hive-Mind\\cerebro`\n"
-        "- claude-mem (memória temporal/observações): `D:\\Hive-Mind\\claude-mem`\n"
-        "- Servidor MCP sinapse: `D:\\Hive-Mind\\scripts\\services\\sinapse-mcp.py`\n"
-        "- Tools expostas via MCP: 16 tools (sinapse_query, sinapse_save_decision, "
-        "sinapse_save_learning, sinapse_health, sinapse_session_end, "
-        "sinapse_temporal_search, sinapse_temporal_timeline, "
-        "sinapse_temporal_get_observations, sinapse_temporal_save, "
-        "sinapse_zettelkasten_split, sinapse_capture_screen, "
-        "sinapse_plan_goal, sinapse_promote_knowledge, "
-        "sinapse_temporal_graph_search, sinapse_rag_query, search_memories)\n\n"
-        "**Regra obrigatória:**\n"
-         "1. **Antes de agir**: chamar `sinapse_health()` + `sinapse_query('<tópico>')` "
-        "para recuperar estado/histórico/decisões anteriores. Nunca afirmar estado do projeto "
-        "sem consultar primeiro.\n"
-        "2. **Durante o trabalho**: registrar decisões com `sinapse_save_decision` e aprendizados "
-        "com `sinapse_save_learning`. Capturar apenas eventos realmente relevantes com "
-        "`sinapse_temporal_save` (não em loop).\n"
-        "3. **Ao final da sessão/work-item**: chamar `sinapse_session_end(summary)` para atualizar "
-        "`Current State.md` e fechar a observação na UMC.\n"
-        "4. **Nunca chamar backends raw** (`nmem`, `claude-mem`, `graphify`, `falkordb`): "
-        "sempre via `sinapse_query` (Context Fusion com circuit breaker e timeout 8s).\n\n"
-        "**Nota:** O MCP config (`config/mcp_config.json`) expõe todas as 16 tools do "
-        "sinapse-hivemind.\n"
+        "# ARQUITETURA CANÔNICA DE MEMÓRIA EM 3 PILARES\n\n"
+        "O agente opera sob cognição estruturada em três pilares canônicos:\n\n"
+        "### Pilar 1 — Memória Primária do Projeto (Local / Canônica)\n"
+        "- **Banco do Projeto (`banco/squad.db`)**: SQLite WAL local autoritativo com tabelas `memory_facts`, `symbols`, `dependencies` e `workflow_metrics`. Operações via `python scripts/agent_squad.py query-memory --work-item <ID>`.\n"
+        "- **Grafo de Conhecimento / Graphify (`integrations/codebase_knowledge_graph.py`)**: AST, dependências estruturais de código e cálculo determinístico de Blast Radius.\n"
+        "- **Projeção de Compatibilidade**: O arquivo `work/<project_id>/memory/shared/summary.md` possui status `DERIVED_COMPATIBILITY` (projeção gerada a partir do SQLite para inspeção humana, não sendo fonte primária de verdade).\n\n"
+        "### Pilar 2 — Colaboração e Rastreabilidade do Projeto (Azure DevOps)\n"
+        "- **Work Item Discussions**: Discussões de negócio, esclarecimento de critérios e histórico vivo no Azure Boards.\n"
+        "- **Pull Request Reviews**: Pareceres de auditoria (`[NN-persona-id] approve|reject`) e segregação estrita de funções (SoD).\n"
+        "- **Project Wiki**: Especificações duráveis, arquitetura de referência e documentação de produto.\n\n"
+        "### Pilar 3 — Segundo Cérebro Global (Hive-Mind)\n"
+        "Memória corporativa permanente cross-projeto para padrões consolidados e decisões arquiteturais duradouras.\n"
+        f"- Localização do Vault: `{hive_mind_path}` (comportamento de fallback gracioso caso indisponível)\n"
+        "- Ferramentas MCP: `sinapse_query`, `sinapse_save_decision`, `sinapse_save_learning`, `sinapse_health`, `sinapse_session_end`\n\n"
+        "**Protocolo Obrigatório do Passo 0 (Memória)**:\n"
+        "1. **Antes de iniciar a tarefa**: Consultar a memória primária do projeto (`banco/squad.db` via `squad query-memory`, discussões ADO) e consultar o Hive-Mind via `sinapse_query('<tema>')` para decisões corporativas prévias.\n"
+        "2. **Durante e ao concluir**: Persistir novos fatos locais no `banco/squad.db` via `squad record-fact` e promover decisões arquiteturais duradouras ao Hive-Mind via `sinapse_save_decision`.\n"
     )
 
 
-def _build_engines_section(squad: AgentSquad) -> str | None:
-    """Gera o catálogo de motores de integração do diretório integrations/."""
-    engine_rows = []
-    for entry in squad.skills_catalog.get("catalog", []):
-        if entry.get("domain") == "integration-engines":
-            path = entry.get("path", "")
-            name = entry.get("name", Path(path).name)
-            desc = entry.get("description", "")
-            engine_rows.append((name, desc))
-
-    if not engine_rows:
+def _build_engines_section(agent: str, squad: AgentSquad) -> str | None:
+    """Gera o catálogo de motores de integração estritamente declarados no manifesto do agente."""
+    entry = squad.agents.get(agent)
+    if not entry:
         return None
+    manifest_path = squad.root / entry["manifest"]
+    if not manifest_path.exists():
+        return None
+
+    manifest = read_yaml(manifest_path)
+    declared_paths = set()
+    for item in manifest.get("native", []) + manifest.get("assigned", []):
+        p = item.get("path") if isinstance(item, dict) else item
+        if p:
+            declared_paths.add(p)
+
+    cat_engines = {}
+    for cat_entry in squad.skills_catalog.get("catalog", []):
+        if cat_entry.get("domain") == "integration-engines":
+            cat_engines[cat_entry.get("path", "")] = cat_entry
+
+    matched = [cat_engines[p] for p in declared_paths if p in cat_engines]
+    if not matched:
+        return None
+
+    # Ordenação determinística por nome do motor
+    matched.sort(key=lambda e: e.get("name", ""))
 
     lines = [
         "# MOTORES DE INTEGRAÇÃO (`integrations/`)\n",
-        "Os motores abaixo são ferramentas de código que você **deve executar** durante "
+        "Os motores abaixo são ferramentas de código declaradas para seu perfil que você **deve executar** durante "
         "tarefas de engenharia. Eles não são chamados pelo orchestrator automaticamente: "
         "cada agente responsável deve invocá-los no momento apropriado do fluxo.\n",
         "| Engine | Quando usar |\n",
         "|--------|-------------|\n",
     ]
-    for name, desc in engine_rows:
+    for engine in matched:
+        name = engine.get("name", Path(engine.get("path", "")).name)
+        desc = engine.get("description", "")
         first_line = desc.splitlines()[0] if desc else name
         lines.append(f"| `{name}` | {first_line} |\n")
+
+    has_blast_radius = any(e.get("name") == "blast_radius_analyzer" for e in matched)
+    lines.append("\n**Regra obrigatória:**\n")
+    if has_blast_radius:
+        lines.append(
+            "- **`blast_radius_analyzer` é OBRIGATÓRIO** antes de qualquer alteração em produção, "
+            "schema, credencial ou dado sensível. Sem essa chamada, a mudança não pode prosseguir.\n"
+        )
     lines.append(
-        "\n**Regra obrigatória:**\n"
-        "- **`blast_radius_analyzer` é OBRIGATÓRIO** antes de qualquer alteração em produção, "
-        "schema, credencial ou dado sensível. Sem essa chamada, a mudança não pode prosseguir.\n"
         "- Os resultados dos engines devem ser registrados como evidência nos achados/handoffs "
         "correspondentes e, quando relevante, salvos no Hive-Mind via `sinapse_save_decision`.\n"
     )
@@ -248,10 +457,21 @@ def render_agent_prompt(
     project_name: str | None = None,
 ) -> str:
     """Compila o prompt de sistema completo de um agente com suas skills e contexto de work item."""
-    root_dir = Path(__file__).resolve().parent.parent
+    runtime_env = os.environ.get("SQUAD_RUNTIME")
+    root_dir = Path(runtime_env).resolve() if runtime_env else Path(__file__).resolve().parent.parent
 
     effective_project_name = _resolve_project_name(work_item, project_name)
     squad = AgentSquad(root=root_dir, project_name=effective_project_name)
+    if agent not in squad.agents:
+        for aid, entry in squad.agents.items():
+            entry_path = entry.get("path", "")
+            if aid == agent or entry_path.endswith(f"/{agent}") or entry_path.endswith(f"\\{agent}"):
+                agent = aid
+                break
+            if "-" in agent and agent.split("-", 1)[1] == aid:
+                agent = aid
+                break
+
     if agent not in squad.dispatchable_agent_ids and output_path is not None:
         raise SquadError(f"provider-primary host não pode ser despachado: {agent}")
 
@@ -323,15 +543,20 @@ def render_agent_prompt(
         sections.append(_build_environment_section(packet, squad))
 
     sections.append(_build_prompt_section(agent, packet, squad))
+    sections.append(_build_cognitive_contract_section())
     sections.append(_build_skills_section(packet, squad))
 
     work_item_ctx = _build_work_item_context(packet, squad)
     if work_item_ctx:
         sections.append(work_item_ctx)
 
+    ado_section = _build_azure_devops_section(packet, squad)
+    if ado_section:
+        sections.append(ado_section)
+
     sections.append(_build_hive_mind_section())
 
-    engines_section = _build_engines_section(squad)
+    engines_section = _build_engines_section(agent, squad)
     if engines_section:
         sections.append(engines_section)
 

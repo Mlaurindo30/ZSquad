@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/domain-event.schema.json",
+  "title": "DomainEventContracts",
+  "description": "Contracts for Domain Events, Trigger Policies, and Watchdog Findings in the transactional outbox architecture.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/DomainEvent"},
+    {"$ref": "#/$defs/TriggerPolicy"},
+    {"$ref": "#/$defs/WatchdogFinding"}
+  ],
+  "$defs": {
+    "DomainEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_type",
+        "work_item_id",
+        "project_id",
+        "source",
+        "correlation_id",
+        "causation_id",
+        "idempotency_key",
+        "timestamp"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "event_type": {
+          "type": "string",
+          "pattern": "^squad\\.[a-z_]+\\.[a-z_]+$",
+          "description": "Dot-separated hierarchical event type (e.g. squad.stage.transitioned)."
+        },
+        "work_item_id": {"type": "string", "minLength": 1},
+        "project_id": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "correlation_id": {"type": "string", "minLength": 1},
+        "causation_id": {"type": "string", "minLength": 1},
+        "idempotency_key": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 deduplication key."
+        },
+        "timestamp": {"type": "string", "format": "date-time"},
+        "payload": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "TriggerPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trigger_id",
+        "event_type",
+        "condition_expression",
+        "action_kind"
+      ],
+      "properties": {
+        "trigger_id": {"type": "string", "minLength": 1},
+        "event_type": {"type": "string", "minLength": 1},
+        "condition_expression": {"type": "string", "minLength": 1},
+        "action_kind": {
+          "type": "string",
+          "enum": [
+            "ACTIVATE_AGENT",
+            "EVALUATE_GATE",
+            "ADVANCE_STAGE",
+            "REQUEST_HANDOFF_ACK",
+            "DISPATCH_EXTERNAL_SYNC",
+            "ESCALATE_ALERT",
+            "SCHEDULE_RETRY"
+          ]
+        },
+        "target_role": {"type": ["string", "null"]},
+        "payload_mapping": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+    "WatchdogFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "finding_id",
+        "kind",
+        "severity",
+        "description",
+        "recommended_action",
+        "detected_at"
+      ],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "kind": {
+          "type": "string",
+          "enum": [
+            "STALE_LIFECYCLE",
+            "HANDOFF_AWAITING_ACK",
+            "PENDING_SYNC_OVERDUE",
+            "WIP_LIMIT_BREACH",
+            "TIMEBOX_EXPIRED",
+            "UNPROCESSED_EVENT_SPIKE"
+          ]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["INFO", "WARNING", "CRITICAL"]
+        },
+        "work_item_id": {"type": ["string", "null"]},
+        "description": {"type": "string", "minLength": 1},
+        "recommended_action": {"type": "string", "minLength": 1},
+        "detected_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

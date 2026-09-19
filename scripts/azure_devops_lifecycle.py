@@ -92,8 +92,15 @@ class AzureDevOpsLifecycle:
     def _resolve_org_base(self) -> str:
         org = self.org_url
         if not org.startswith("http"):
-            org = f"https://dev.azure.com/{org}"
-        return org.rstrip("/")
+            if "/" in org:
+                org = f"https://{org}"
+            else:
+                org = f"https://dev.azure.com/{org}"
+        if "visualstudio.com" in org and "/_apis" not in org:
+            org = org.rstrip("/")
+        elif "dev.azure.com" in org:
+            org = org.rstrip("/")
+        return org
 
     # -------------------------------------------------------------------------
     # Phase 1 — create project
@@ -200,7 +207,17 @@ class AzureDevOpsLifecycle:
             from azure_devops_repo_importer import import_repo
 
             repo_import_cfg = self.config.get("repo_import", {})
-            repo_name = repo_import_cfg.get("repo_name", self.project_name)
+            repo_name = repo_import_cfg.get("repo_name")
+            if not repo_name:
+                raise ValueError("repo_name é obrigatório em repo_import (não use project_name como repo_name)")
+            if repo_name == self.project_name:
+                import warnings
+                warnings.warn(
+                    f"repo_name '{repo_name}' é igual ao project_name — "
+                    "repo deve ter nome do produto, não do projeto",
+                    UserWarning,
+                    stacklevel=2,
+                )
             credentials = repo_import_cfg.get("credentials", {"type": "none"})
 
             result = import_repo(

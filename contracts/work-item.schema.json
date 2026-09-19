@@ -4,100 +4,367 @@
   "title": "Work Item Status",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "type", "state", "risk", "owner", "active_agents", "next_action", "artifacts"],
+  "required": [
+    "id",
+    "type",
+    "state",
+    "risk",
+    "owner",
+    "active_agents",
+    "next_action",
+    "artifacts"
+  ],
   "properties": {
-    "id": {"type": "string", "pattern": "^(EPIC|US|TASK|BUG|REL|EVOL|STUDY|SPIKE)-[A-Z0-9-]+$"},
-    "type": {"enum": ["epic", "story", "task", "bug", "release", "evolution", "study", "spike"]},
-    "state": {"enum": ["blueprint", "scaffolding", "implementation", "code-security-review", "quality-validation", "governance-release", "done", "intake", "discovery", "product-ready", "design", "design-ready", "ready-for-build", "review", "validation", "documentation", "ready-for-release", "triage", "mitigation", "postmortem"]},
-    "risk": {"enum": ["low", "medium", "high", "critical"]},
-    "story_points": {"enum": [1, 2, 3, 5, 8]},
-    "t_shirt_size": {"enum": ["PP", "P", "M", "G", "GG"]},
-    "mode": {"description": "consult=read-only, light=1 persona no gate, full=gates G1-G6", "enum": ["consult", "light", "full"]},
-    "owner": {"type": "string"},
-    "active_agents": {"type": "array", "maxItems": 10, "items": {"type": "string"}},
-    "current_gate": {"type": ["string", "null"]},
-    "next_action": {"type": "string"},
-
+    "id": {
+      "type": "string",
+      "pattern": "^(EPIC|FEATURE|FEAT|STORY|US|TASK|TK|BUG|RELEASE|REL|EVOLUTION|EVOL|STUDY|SPIKE|INCIDENT|SETUP|PROJECT|NEW-PROJECT)-[A-Z0-9-]+$"
+    },
+    "type": {
+      "enum": [
+        "epic",
+        "feature",
+        "story",
+        "task",
+        "bug",
+        "release",
+        "evolution",
+        "study",
+        "spike",
+        "incident",
+        "new-project"
+      ]
+    },
+    "parent_id": {
+      "type": "string"
+    },
+    "hierarchy_level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "cycle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "enum": [
+        "blueprint",
+        "scaffolding",
+        "implementation",
+        "code-security-review",
+        "quality-validation",
+        "governance-release",
+        "done",
+        "intake",
+        "discovery",
+        "product-ready",
+        "design",
+        "design-ready",
+        "ready-for-build",
+        "review",
+        "validation",
+        "documentation",
+        "ready-for-release",
+        "triage",
+        "mitigation",
+        "postmortem"
+      ]
+    },
+    "risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "story_points": {
+      "enum": [
+        1,
+        2,
+        3,
+        5,
+        8
+      ]
+    },
+    "t_shirt_size": {
+      "enum": [
+        "PP",
+        "P",
+        "M",
+        "G",
+        "GG"
+      ]
+    },
+    "mode": {
+      "description": "consult=read-only, light=1 persona no gate, full=gates G1-G6",
+      "enum": [
+        "consult",
+        "light",
+        "full"
+      ]
+    },
+    "owner": {
+      "type": "string"
+    },
+    "active_agents": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "string"
+      }
+    },
+    "current_gate": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "next_action": {
+      "type": "string"
+    },
     "artifacts": {
       "oneOf": [
-        {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
         {
           "type": "object",
           "additionalProperties": false,
           "minProperties": 1,
           "properties": {
-            "target": {"type": "string"},
-            "research": {"type": "string"},
-            "analyses": {"type": "string"},
-            "workspace": {"type": "string"},
-            "durable_docs": {"type": "array", "items": {"type": "string"}}
+            "target": {
+              "type": "string"
+            },
+            "research": {
+              "type": "string"
+            },
+            "analyses": {
+              "type": "string"
+            },
+            "workspace": {
+              "type": "string"
+            },
+            "durable_docs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         }
       ]
     },
-
-    "title": {"type": "string"},
-    "objective": {"type": "string"},
-    "requested_by": {"type": "string"},
-    "project_root": {"type": "string"},
-    "squad_root": {"type": "string"},
-    "baseline": {"type": "string"},
-    "status_note": {"type": "string"},
-    "devops_id": {"type": ["string", "integer", "null"]},
-
-    "constraints": {"type": "array", "items": {"type": "string"}},
-    "open_conditions": {"type": "array", "items": {"type": "string"}},
-
+    "title": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "requested_by": {
+      "type": "string"
+    },
+    "project_root": {
+      "type": "string"
+    },
+    "squad_root": {
+      "type": "string"
+    },
+    "baseline": {
+      "type": "string"
+    },
+    "status_note": {
+      "type": "string"
+    },
+    "devops_id": {
+      "type": [
+        "string",
+        "integer",
+        "null"
+      ]
+    },
+    "sdd": {
+      "type": "object",
+      "description": "Refer\u00eancias e revis\u00f5es SDD do work item (T4). Opcional: itens legados sem este campo permanecem v\u00e1lidos.",
+      "additionalProperties": false,
+      "properties": {
+        "policy_version": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "description": "Vers\u00e3o da pol\u00edtica SDD vigente quando os gates do item foram avaliados."
+        },
+        "policy_file": {
+          "type": "string",
+          "description": "Caminho da pol\u00edtica SDD do projeto (ex.: .agents_squad/config/sdd-policy.yaml)."
+        },
+        "gate_decisions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "IDs (decision_id) das decis\u00f5es de gate que vinculam este item, ex.: GD-<work-id>-G1-PRODUCT."
+        },
+        "document_revisions": {
+          "type": "object",
+          "description": "Mapa documento -> revis\u00e3o/hash (sha256) vinculada na aprova\u00e7\u00e3o (spec, clarifications, plan, tasks, constitution).",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "open_conditions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "personas": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "orchestrator": {"type": "string"},
-        "active": {"type": "array", "items": {"type": "string"}},
-        "research": {"type": "array", "items": {"type": "string"}},
-        "pending": {"type": "array", "items": {"type": "string"}},
-        "review_completed": {"type": "array", "items": {"type": "string"}}
+        "orchestrator": {
+          "type": "string"
+        },
+        "active": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "research": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pending": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "review_completed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "gates": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "GT-entry": {"type": "string"},
-        "GT-design-review": {"type": "string"},
-        "GT-done": {"type": "string"},
-        "G1": {"type": "string"},
-        "G2": {"type": "string"},
-        "G3": {"type": "string"},
-        "G4": {"type": "string"},
-        "G5": {"type": "string"},
-        "G6": {"type": "string"},
-        "G1-product": {"type": "string"},
-        "G2-design": {"type": "string"},
-        "G3-readiness": {"type": "string"},
-        "G4-code-security": {"type": "string"},
-        "G5-quality": {"type": "string"},
-        "G6-governance-release": {"type": "string"}
+        "GT-entry": {
+          "type": "string"
+        },
+        "GT-design-review": {
+          "type": "string"
+        },
+        "GT-done": {
+          "type": "string"
+        },
+        "G1": {
+          "type": "string"
+        },
+        "G2": {
+          "type": "string"
+        },
+        "G3": {
+          "type": "string"
+        },
+        "G4": {
+          "type": "string"
+        },
+        "G5": {
+          "type": "string"
+        },
+        "G6": {
+          "type": "string"
+        },
+        "G1-product": {
+          "type": "string"
+        },
+        "G2-design": {
+          "type": "string"
+        },
+        "G3-readiness": {
+          "type": "string"
+        },
+        "G4-code-security": {
+          "type": "string"
+        },
+        "G5-quality": {
+          "type": "string"
+        },
+        "G6-governance-release": {
+          "type": "string"
+        }
       }
     },
-
-    "decision_state": {"type": "object", "additionalProperties": {"type": "string"}},
-    "reviews": {"type": "object", "additionalProperties": {"type": "string"}},
-
+    "decision_state": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "reviews": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "retry_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
     "metrics": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "total_prompt_tokens": {"type": "integer"},
-        "total_completion_tokens": {"type": "integer"},
-        "total_cost_usd": {"type": "number"},
-        "total_steps": {"type": "integer"},
-        "convergence_score": {"type": "number"}
+        "total_prompt_tokens": {
+          "type": "integer"
+        },
+        "total_completion_tokens": {
+          "type": "integer"
+        },
+        "total_cost_usd": {
+          "type": "number"
+        },
+        "total_steps": {
+          "type": "integer"
+        },
+        "convergence_score": {
+          "type": "number"
+        }
       }
     },
-
-    "updated_at": {"type": "string", "format": "date-time"},
-    "phase_started_at": {"type": ["string", "null"], "format": "date-time"}
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "phase_started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
   }
 }

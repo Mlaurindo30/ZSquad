@@ -1,0 +1,72 @@
+# Proveniência do snapshot upstream — Spec Kit (Tarefa T1)
+
+schema: spec-kit-upstream-provenance/v1
+work_item: work/agent_squad/TASK-SPECKIT-T1-20260911
+adapter_version: "0.1.0"
+extraction_date: "2026-09-11"
+
+origin:
+  url: "https://github.com/github/spec-kit"
+  base_commit: "c173bf19a6654e3b05386ec3599349a55282b897"
+
+extraction:
+  method: "git archive (git -C <checkout> archive <commit> | tar -x) — nenhum script upstream foi executado"
+  source_checkout: ".temp/spec-kit (read-only, cópia de estudo)"
+  snapshot_dir: "integrations/spec-kit/upstream"
+  file_count: 567
+  git_history_included: false
+  nested_repos_included: false
+
+license:
+  spdx: "MIT"
+  file: "upstream/LICENSE"
+
+manifest:
+  path: "UPSTREAM_FILES.sha256"
+  format: "<sha256_hex>  <caminho_relativo_posix> (duas espaços, estilo git, ordenado por caminho)"
+  entries: 567
+  sha256: "4e585ff779939be491b3f892a57dbcd501935edb9e7a407e276dbf740459d820"
+
+patches:
+  applied: 0
+  register: "PATCHES.md"
+
+verification:
+  verifier: "verify_snapshot.py"
+  command: "python integrations/spec-kit/verify_snapshot.py"
+  tests: "python -m pytest integrations/spec-kit/tests/ -q"
+
+# Apêndice T8 (work/agent_squad/TASK-SPECKIT-T8-20260911, 2026-09-11):
+# prontidão de rollout. Nenhum arquivo do snapshot/adapter foi alterado nesta
+# seção; adapter_version permanece 0.1.0.
+release_readiness:
+  date: "2026-09-11"
+  task: "work/agent_squad/TASK-SPECKIT-T8-20260911"
+  adapter_version: "0.1.0 (inalterada — nenhum arquivo do adapter modificado em T7/T8)"
+  t7_pilot:
+    bdd_scenarios: "12/12 PASS em fixtures isoladas (seção 8 do plano)"
+    suite_adapter: "166 passed, 1 skipped (pytest integrations/spec-kit/tests/)"
+    suite_runtime: "899 passed, 4 skipped (pytest scripts/tests/)"
+    live_devops_validation: "NÃO EXECUTADA — nenhuma validação live de Azure DevOps foi realizada"
+  t8_verification:
+    validate_structure: "VALID structure agents=41 active_skills=148 schemas=15 (exit 0)"
+    audit: "exit 1 — 255 apontamentos 'skill ativa fora do catálogo', todos sob integrations/spec-kit/ (classe conhecida, baseline documentada em docs/spec-kit-operations.md §6.1)"
+    verify_snapshot: "OK: snapshot íntegro (UPSTREAM_FILES.sha256) (exit 0)"
+    snapshot_swap_rehearsal: "PASS — temp fora do repo: A/A-manifesto exit 0; B(simulado novo commit)/A-manifesto exit 1 (MISMATCH: README.md); rollback seguro provado; temp removido"
+  legacy_adoption: "Critérios registrados em docs/spec-kit-operations.md §8 (baseline mínima revisada; sem backfill de aprovações; itens pré-ativação bloqueados fail-closed)"
+  rollout:
+    phase: "pronto para submissão de G6 (humana-gated); NÃO habilitado globalmente"
+    g6_submission: "PREPARADA, NÃO EXECUTADA — depende de autorização humana explícita (decider governance-auditor)"
+  operations_doc: "docs/spec-kit-operations.md"
+  correction_2026_09_11: >-
+    Auditoria pos-entrega (TASK-SPECKIT-AUDIT-20260911) concluiu CHANGES_REQUESTED:
+    integracao operacional parcial, evidencia stale na T5, G6 sem aceite especifico.
+    Epico reaberto; correcao em TASK-SPECKIT-CORRECTION-20260911. O release_readiness
+    acima NAO constitui liberacao.
+  governance_audit_2026_09_12: >-
+    Auditoria de governanca (14-governance-auditor) e parecer de seguranca (10-security-reviewer):
+    G6 de TASK-SPECKIT-CORRECTION-20260911 invalidado (uso indevido de HUMAN-APPROVAL-20260911.md);
+    parecer formal de seguranca emitido (reviews/review-security-correction.md) apontando falha
+    em tempo de execucao no dispatcher (verify kwargs); tarefa de correcao reaberta para implementation;
+    status.yaml de T5 e T8 reconciliados para done com SoD estrito comprovado; G6 do EPIC-SPECKIT-20260911
+    mantido estritamente bloqueado (decision: blocked, NO-GO) aguardando nova aprovacao humana explicita.

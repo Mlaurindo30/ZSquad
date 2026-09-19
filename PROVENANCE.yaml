@@ -1,9 +1,9 @@
 version: 2
 kind: project-squad-provenance
 created_at: '2026-08-19T15:00:00-03:00'
-updated_at: '2026-09-02T01:47:00-03:00'
+updated_at: '2026-09-12T17:42:00-03:00'
 source:
-  path: C:/Users/miche/OneDrive/Documentos/.agents_squad
+  path: .agents_squad
   git_history_copied: false
 governance:
   workflow: config/workflow.yaml
@@ -35,7 +35,8 @@ applied_changes:
       - scripts/tests/test_azure_devops_project_setup.py
   - id: US-17
     date: 2026-09-02
-    description: OPERATING_CONTRACT.md reescrito com §"Quem aprova o quê" e §SoD
+    description: >-
+      OPERATING_CONTRACT.md reescrito com §"Quem aprova o quê" e §SoD
       expandidos. Norma citada: ISO/IEC 27001:2022 A.5.3, A.8.28, A.8.32;
       SOC 2 TSC CC8.1, CC6.1; NIST SP 800-53 CM-5. Auditoria amostral semanal
       adicionada (10% sample, retroativo).
@@ -43,7 +44,6 @@ applied_changes:
       - agents/_shared/OPERATING_CONTRACT.md
       - AGENTS.md
       - CLAUDE.md
-      - CODEX.md
       - GEMINI.md
       - HERMES.md
   - id: US-1
@@ -88,7 +88,8 @@ applied_changes:
       - contracts/devops-config.schema.json
   - id: US-6
     date: 2026-09-02
-    description: Project wiki opt-in (5 pages: Home, Architecture, Onboarding,
+    description: >-
+      Project wiki opt-in (5 pages: Home, Architecture, Onboarding,
       Runbooks, Compliance). Função apply_wiki idempotente.
     affected_files:
       - templates/devops.yaml
@@ -102,6 +103,26 @@ applied_changes:
       test_wiki_and_dashboards_opt_in). 19/19 verde.
     affected_files:
       - scripts/tests/test_azure_devops_project_setup.py
+  - id: EPIC-SPECKIT-20260911
+    date: 2026-09-12
+    description: >-
+      Saneamento de governança e revisão de segurança do Spec Kit: G6 de TASK-SPECKIT-CORRECTION-20260911
+      revogado e invalidado (uso indevido de HUMAN-APPROVAL-20260911.md); parecer independente de segurança
+      emitido por 10-security-reviewer; status de T5 e T8 reconciliados para done com SoD estrito; G6 do
+      épico mantido bloqueado (NO-GO) aguardando resolução de defeito de execução e aprovação humana explícita.
+    affected_files:
+      - work/agent_squad/TASK-SPECKIT-CORRECTION-20260911/gate-decisions/GD-TASK-SPECKIT-CORRECTION-20260911-G6-GOVERNANCE-RELEASE.yaml
+      - work/agent_squad/TASK-SPECKIT-CORRECTION-20260911/status.yaml
+      - work/agent_squad/TASK-SPECKIT-CORRECTION-20260911/reviews/review-security-correction.md
+      - work/agent_squad/TASK-SPECKIT-CORRECTION-20260911/documentation/delivery-ledger.md
+      - work/agent_squad/TASK-SPECKIT-T5-20260911/status.yaml
+      - work/agent_squad/TASK-SPECKIT-T8-20260911/status.yaml
+      - work/agent_squad/EPIC-SPECKIT-20260911/status.yaml
+      - work/agent_squad/EPIC-SPECKIT-20260911/epic.md
+      - work/agent_squad/EPIC-SPECKIT-20260911/documentation/delivery-ledger.md
+      - work/agent_squad/EPIC-SPECKIT-20260911/gate-decisions/GD-EPIC-SPECKIT-20260911-G6-GOVERNANCE-RELEASE.yaml
+      - docs/delivery-ledger.md
+      - integrations/spec-kit/PROVENANCE.yaml
 constraints:
   - Keep work-item state, evidence, handoffs, memory and gates authoritative.
   - Require executed evidence before claiming completion.

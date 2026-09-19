@@ -80,6 +80,22 @@ class TestDevOpsPlatformConnector(unittest.TestCase):
             self.assertEqual(len(splits), 1)
             self.assertEqual(splits[0].id, "202")
 
+    def test_azure_devops_client_pull_ready_items_with_area_path(self):
+        """pull_ready_items filters by area_path when configured."""
+        client = AzureDevOpsClient("myorg", "myproj", "token123", config={"area_path": "Arthemis\\agent-squad"})
+        captured_wiql = {}
+
+        def fake_request(self_client, method, url, body=None, content_type="application/json"):
+            if "wit/wiql" in url:
+                captured_wiql["query"] = body.get("query", "")
+                return {"workItems": []}
+            return {}
+
+        with patch.object(AzureDevOpsClient, "_request", fake_request):
+            client.pull_ready_items()
+
+        self.assertIn("[System.AreaPath] UNDER 'Arthemis\\agent-squad'", captured_wiql["query"])
+
     def test_azure_devops_client_pull_request(self):
         """create_pull_request builds the correct Azure Repos payload and URL."""
         client = AzureDevOpsClient("myorg", "myproj", "token123", config={"repo": "myrepo"})

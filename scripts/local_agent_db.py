@@ -115,6 +115,7 @@ class LocalAgentDB:
         "quorum_votes",
         "ops_recovery",
         "workflow_metrics",
+        "memory_facts",
     )
     _TABLE_COLUMNS = {
         "symbols": ("file_path", "name", "kind", "line_number", "docstring", "complexity", "has_contract", "updated_at"),
@@ -124,6 +125,7 @@ class LocalAgentDB:
         "quorum_votes": ("work_item_id", "gate_id", "voter_agent", "vote", "weight", "rationale", "voted_at"),
         "ops_recovery": ("target_key", "work_item_id", "agent_id", "provider", "model", "phase", "reason", "action", "attempt", "backoff_seconds", "error_message", "rationale", "recorded_at"),
         "workflow_metrics": ("work_item_id", "item_type", "story_points", "t_shirt_size", "phase", "started_at", "ended_at", "cycle_time_hours", "lead_time_hours", "blocked_time_hours", "status", "recorded_at"),
+        "memory_facts": ("work_item_id", "author", "kind", "statement", "source", "confidence", "sensitivity", "invalidates_when", "recorded_at"),
     }
 
     @classmethod
@@ -172,6 +174,11 @@ class LocalAgentDB:
                 "CREATE TABLE workflow_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, item_type TEXT NOT NULL, story_points INTEGER, t_shirt_size TEXT, phase TEXT NOT NULL, started_at REAL NOT NULL, ended_at REAL, cycle_time_hours REAL DEFAULT 0.0, lead_time_hours REAL DEFAULT 0.0, blocked_time_hours REAL DEFAULT 0.0, status TEXT NOT NULL DEFAULT 'active', recorded_at REAL NOT NULL)"
             )
             return
+        if table == "memory_facts":
+            conn.execute(
+                "CREATE TABLE memory_facts (id INTEGER PRIMARY KEY AUTOINCREMENT, project_id TEXT NOT NULL, work_item_id TEXT NOT NULL, author TEXT NOT NULL, kind TEXT NOT NULL, statement TEXT NOT NULL, source TEXT NOT NULL, confidence REAL DEFAULT 1.0, sensitivity TEXT NOT NULL DEFAULT 'internal', invalidates_when TEXT, recorded_at REAL NOT NULL)"
+            )
+            return
         # _validate_table já levantou ValueError para identificadores
         # desconhecidos; o fluxo nunca alcança este ponto.
 
@@ -195,6 +202,8 @@ class LocalAgentDB:
             return {row["name"] for row in conn.execute("PRAGMA table_info(ops_recovery)")}
         if table == "workflow_metrics":
             return {row["name"] for row in conn.execute("PRAGMA table_info(workflow_metrics)")}
+        if table == "memory_facts":
+            return {row["name"] for row in conn.execute("PRAGMA table_info(memory_facts)")}
         return set()
 
     def _init_db(self) -> None:
@@ -396,6 +405,47 @@ class LocalAgentDB:
                 "dependent_files": dependent_files,
                 "symbols_at_risk": [dict(r) for r in symbols],
             }
+
+    def get_project_symbols(self, file_path: str | None = None) -> list[dict[str, Any]]:
+        """Recupera símbolos AST do projeto, opcionalmente filtrados por arquivo.
+
+        Args:
+            file_path: Caminho opcional do arquivo para filtro.
+
+        Returns:
+            list[dict[str, Any]]: Lista de símbolos do projeto.
+        """
+        clauses = ["project_id = ?"]
+        params: list[Any] = [self.project_id]
+        if file_path:
+            clauses.append("file_path = ?")
+            params.append(file_path.replace("\\", "/"))
+
+        query = f"SELECT * FROM symbols WHERE {' AND '.join(clauses)} ORDER BY file_path ASC, line_number ASC"
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_project_dependencies(self, source_file: str | None = None) -> list[dict[str, Any]]:
+        """Recupera dependências do projeto, opcionalmente filtradas por arquivo de origem.
+
+        Args:
+            source_file: Caminho opcional do arquivo de origem para filtro.
+
+        Returns:
+            list[dict[str, Any]]: Lista de dependências do projeto.
+        """
+        clauses = ["project_id = ?"]
+        params: list[Any] = [self.project_id]
+        if source_file:
+            clauses.append("source_file = ?")
+            params.append(source_file.replace("\\", "/"))
+
+        query = f"SELECT * FROM dependencies WHERE {' AND '.join(clauses)} ORDER BY source_file ASC"
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
 
     @staticmethod
     def _compute_biomarkers(
@@ -789,5 +839,120 @@ class LocalAgentDB:
         with self._connection() as conn:
             rows = conn.execute(query, params).fetchall()
         return [dict(r) for r in rows]
+
+    def record_memory_fact(
+        self,
+        project_id: str,
+        work_item_id: str,
+        author: str,
+        kind: str,
+        statement: str,
+        source: str,
+        confidence: float = 1.0,
+        sensitivity: str = "internal",
+        invalidates_when: str | None = None,
+    ) -> int:
+        """Registra um fato de memória (cognição L1/L2) para um work item.
+
+        Args:
+            project_id: Identificador do projeto (valida isolamento multi-tenant).
+            work_item_id: Identificador do work item.
+            author: Persona ou agente emissor do fato.
+            kind: Tipo do fato ('fact', 'decision', 'dependency', 'risk', 'pending').
+            statement: Descrição/conteúdo do fato.
+            source: Origem do fato (ex: handoff, arquivo, comando).
+            confidence: Nível de confiança heurística (0.0 a 1.0).
+            sensitivity: Nível de sensibilidade do dado ('internal', 'public', etc.).
+            invalidates_when: Condição de invalidação do fato, se aplicável.
+
+        Returns:
+            int: ID sequencial do fato inserido.
+        """
+        if project_id != self.project_id:
+            raise ValueError(f"project_id '{project_id}' incompatível com namespace '{self.project_id}'")
+
+        now_ts = time.time()
+        with self._connection() as conn:
+            cursor = conn.execute(
+                "INSERT INTO memory_facts ("
+                "project_id, work_item_id, author, kind, statement, source,"
+                " confidence, sensitivity, invalidates_when, recorded_at"
+                ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    self.project_id,
+                    work_item_id,
+                    author,
+                    kind,
+                    statement,
+                    source,
+                    float(confidence),
+                    sensitivity,
+                    invalidates_when,
+                    now_ts,
+                ),
+            )
+            return int(cursor.lastrowid or 0)
+
+    def get_memory_facts(
+        self,
+        project_id: str,
+        work_item_id: str,
+        kind: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Recupera os fatos de memória registrados para um work item.
+
+        Args:
+            project_id: Identificador do projeto (valida isolamento multi-tenant).
+            work_item_id: Identificador do work item.
+            kind: Filtro opcional por tipo ('fact', 'decision', etc.).
+
+        Returns:
+            list[dict[str, Any]]: Lista de fatos de memória em ordem cronológica.
+        """
+        if project_id != self.project_id:
+            raise ValueError(f"project_id '{project_id}' incompatível com namespace '{self.project_id}'")
+
+        clauses = ["project_id = ?", "work_item_id = ?"]
+        params: list[Any] = [self.project_id, work_item_id]
+        if kind is not None:
+            clauses.append("kind = ?")
+            params.append(kind)
+
+        query = f"SELECT * FROM memory_facts WHERE {' AND '.join(clauses)} ORDER BY recorded_at ASC, id ASC"
+        with self._connection() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_memory_summary(
+        self,
+        project_id: str,
+        work_item_id: str,
+    ) -> dict[str, Any]:
+        """Gera um sumário agregado dos fatos de memória de um work item.
+
+        Args:
+            project_id: Identificador do projeto (valida isolamento multi-tenant).
+            work_item_id: Identificador do work item.
+
+        Returns:
+            dict[str, Any]: Dicionário com total de fatos, contagem por tipo e lista de fatos.
+        """
+        if project_id != self.project_id:
+            raise ValueError(f"project_id '{project_id}' incompatível com namespace '{self.project_id}'")
+
+        facts = self.get_memory_facts(project_id, work_item_id)
+        by_kind: dict[str, int] = {}
+        for f in facts:
+            k = f.get("kind", "unknown")
+            by_kind[k] = by_kind.get(k, 0) + 1
+
+        return {
+            "project_id": self.project_id,
+            "work_item_id": work_item_id,
+            "total_facts": len(facts),
+            "by_kind": by_kind,
+            "facts": facts,
+        }
+
 
 

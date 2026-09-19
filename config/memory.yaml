@@ -1,22 +1,86 @@
-version: 1
-model: private-shared-episodic-semantic
-# <project> é opcional apenas no modo legado (work item solto sem projeto);
-# o fluxo governado sempre resolve para work/<project>/<WORK-ID>/... (ver
-# AgentSquad._work_base() em scripts/agent_squad.py).
-locations:
+version: 2
+model: 3-pillar-memory-architecture
+
+# ==============================================================================
+# 3-Pillar Memory Topology
+# ==============================================================================
+
+topology:
+  # Pilar 1: Memória Primária do Projeto (Local / Canônica)
+  primary_project_memory:
+    engine: sqlite-wal
+    database: banco/squad.db
+    scope: project-local
+    authoritative: true
+    tables:
+      facts: memory_facts
+      symbols: symbols
+      dependencies: dependencies
+      metrics: workflow_metrics
+    knowledge_graph:
+      engine: integrations/codebase_knowledge_graph.py
+      description: AST code graph, symbols, dependencies and blast radius analysis
+      status: active
+
+  # Pilar 2: Colaboração e Rastreabilidade (Azure DevOps)
+  collaboration_traceability:
+    platform: azure-devops
+    scope: project-shared
+    authoritative: true
+    sources:
+      work_item_discussions:
+        type: comments_and_system_updates
+        purpose: contextual-alignment-and-business-decisions
+      pull_requests:
+        type: review_threads_and_votes
+        purpose: code-approval-and-sod-governance
+      wiki:
+        type: markdown-pages
+        purpose: durable-project-documentation-and-blueprints
+
+  # Pilar 3: Segundo Cérebro Global (Hive-Mind)
+  global_second_brain:
+    name: Hive-Mind
+    path: D:/Hive-Mind
+    scope: cross-project-global
+    authoritative_for_project: false
+    purpose: corporate-patterns-and-architectural-decisions
+    interfaces:
+      query: sinapse_query
+      save_decision: sinapse_save_decision
+      orchestrator_only: [session_health, session_end]
+
+# ==============================================================================
+# Deprecated Locations (Backward Compatibility Only)
+# ==============================================================================
+
+deprecated_locations:
+  status: deprecated
+  notice: "work/<project>/<WORK-ID>/memory/ is deprecated. Use banco/squad.db and Azure DevOps for project persistence."
   private: work/<project>/<WORK-ID>/memory/agents/<AGENT-ID>.md
-  shared: work/<project>/<WORK-ID>/memory/shared/summary.md
+  shared:
+    path: work/<project>/<WORK-ID>/memory/shared/summary.md
+    status: DERIVED_COMPATIBILITY
+    projection_source: banco/squad.db
+    semantics: "Deterministic projection of memory_facts from SQLite squad.db. Read-only compatibility artifact, not an authoritative store."
   deltas: work/<project>/<WORK-ID>/memory/deltas/MEM-<SEQ>.yaml
   episodic: work/<project>/<WORK-ID>/handoffs
   durable: docs/knowledge
+
+# ==============================================================================
+# Promotion & Governance
+# ==============================================================================
+
 promotion:
   proposer: any-active-agent
   validator: delivery-orchestrator
   durable_reviewers: [skill-curator, governance-auditor, domain-owner]
+
 required_metadata: [source, recorded_at, confidence, sensitivity, invalidates_when]
 forbidden: [credentials, tokens, unnecessary_personal_data, unverified_claim_as_fact]
+
 retention:
-  private: work-item-lifetime
-  shared: work-item-lifetime
-  episodic: repository-policy
-  durable: version-controlled
+  primary_project_memory: persistent-local-db
+  collaboration_traceability: azure-devops-retention
+  global_second_brain: permanent-cross-project
+  deprecated_storage: retained-for-historical-traceability

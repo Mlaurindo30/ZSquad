@@ -14,7 +14,7 @@ from pathlib import Path
 import yaml
 
 REQUIRED_FILES = [
-    "AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md", "README.md",
+    "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md",
     "config/agent-registry.yaml", "config/workflow.yaml", "config/memory.yaml",
     "config/discovery-policy.yaml", "config/skills-catalog.yaml",
     "contracts/handoff.schema.json", "contracts/gate-decision.schema.json",
@@ -23,7 +23,9 @@ REQUIRED_FILES = [
     "docs/03-catalogo-de-agentes.md", "docs/04-catalogo-de-skills.md",
     "docs/05-memoria-handoffs-e-specs.md", "docs/06-roadmap-de-implantacao.md",
     "docs/07-operacao-e-integracoes.md", "docs/08-padroes-de-codigo.md",
-    "docs/09-governed-vibe-coding-framework.md", "work/README.md",
+    "docs/09-governed-vibe-coding-framework.md",
+    # NOTE: work/ is excluded from git via .gitignore (runtime state).
+    # Do NOT add work/README.md here — it will never exist in a fresh clone.
 ]
 
 
@@ -105,6 +107,11 @@ def _active_skill_paths(root: Path) -> set[str]:
         for path in integrations_root.glob("experimental/*.py")
         if path.name != "__init__.py"
     )
+    paths.update(
+        path.relative_to(root).as_posix()
+        for path in integrations_root.glob("resolvers/*.py")
+        if path.name != "__init__.py"
+    )
     return paths
 
 
@@ -148,11 +155,10 @@ def _validate_legacy_references(root: Path, errors: list[str]) -> None:
             errors.append(f"legacy or permissive reference in {relative}")
 
 
-PROMPT_FILES = ("AGENTS.md", "CLAUDE.md", "CODEX.md", "GEMINI.md")
+PROMPT_FILES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md")
 PROMPT_CHARACTER_BUDGETS = {
     "AGENTS.md": 12_000,
     "CLAUDE.md": 40_000,
-    "CODEX.md": 32 * 1024,
     "GEMINI.md": 12_000,
 }
 COPY_MODEL_PATTERNS = (

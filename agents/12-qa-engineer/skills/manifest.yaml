@@ -2,19 +2,17 @@ agent: qa-engineer
 native:
 - path: agents/12-qa-engineer/skills/native/qa-engineer-native
 assigned:
+- path: integrations/experimental/toon.py
+- path: skills/agent-squad-mcp
+- path: skills/azure-devops-mcp
 - path: skills/engineering/clean-code/verification-before-completion
 - path: skills/memory/agent-memory
 - path: skills/testing/bdd/behavior-driven-development
 - path: skills/testing/browser-automation
 - path: skills/testing/e2e-testing-patterns
 - path: skills/testing/test-fixing
-- path: integrations/experimental/toon.py
 discovery:
   policy: curated-local-first
   maximum_loaded: 3
 handoff:
   schema: contracts/handoff.schema.json
-memory:
-  private: work/<WORK-ID>/memory/agents/qa-engineer.md
-  shared: work/<WORK-ID>/memory/shared/summary.md
-

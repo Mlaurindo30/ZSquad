@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/lifecycle.schema.json",
+  "title": "LifecycleContracts",
+  "description": "Contracts governing the 13 canonical stages, gate decisions, stage policies and handoffs.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/StagePolicy"},
+    {"$ref": "#/$defs/GateDecision"},
+    {"$ref": "#/$defs/Handoff"},
+    {"$ref": "#/$defs/Acknowledgement"}
+  ],
+  "$defs": {
+    "CanonicalStage": {
+      "type": "string",
+      "enum": [
+        "INTAKE",
+        "DISCOVERY",
+        "REQUIREMENTS_PRODUCT",
+        "PLANNING",
+        "ARCHITECTURE_DESIGN",
+        "READINESS_SCAFFOLDING",
+        "IMPLEMENTATION",
+        "CODE_REVIEW",
+        "SECURITY_REVIEW",
+        "TEST_VALIDATION",
+        "QA_VALIDATION",
+        "GOVERNANCE_RELEASE",
+        "DONE"
+      ]
+    },
+    "GateId": {
+      "type": "string",
+      "enum": [
+        "G1-product",
+        "G2-design",
+        "G3-readiness",
+        "G4-code-security",
+        "G5-quality",
+        "G6-governance-release"
+      ]
+    },
+    "StagePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage",
+        "owner_role",
+        "collaborator_roles",
+        "required_receipt_types",
+        "required_artifacts",
+        "required_evidence",
+        "handoff_required",
+        "ack_required",
+        "allowed_next_stages",
+        "wip_policy_ref",
+        "timebox_policy_ref",
+        "trigger_refs"
+      ],
+      "properties": {
+        "stage": {"$ref": "#/$defs/CanonicalStage"},
+        "owner_role": {"type": "string", "minLength": 1},
+        "collaborator_roles": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "required_receipt_types": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "required_artifacts": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "required_evidence": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "handoff_required": {"type": "boolean"},
+        "ack_required": {"type": "boolean"},
+        "required_gate": {
+          "oneOf": [
+            {"$ref": "#/$defs/GateId"},
+            {"type": "null"}
+          ]
+        },
+        "allowed_next_stages": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/CanonicalStage"}
+        },
+        "wip_policy_ref": {"type": "string", "minLength": 1},
+        "timebox_policy_ref": {"type": "string", "minLength": 1},
+        "trigger_refs": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "GateDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "gate_id",
+        "work_item_id",
+        "stage",
+        "evaluator_role",
+        "evaluator_agent_id",
+        "status",
+        "rationale",
+        "evidence_hashes"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "gate_id": {"$ref": "#/$defs/GateId"},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "stage": {"$ref": "#/$defs/CanonicalStage"},
+        "evaluator_role": {"type": "string", "minLength": 1},
+        "evaluator_agent_id": {"type": "string", "minLength": 1},
+        "status": {
+          "type": "string",
+          "enum": ["APPROVED", "REJECTED", "WAIVED"]
+        },
+        "rationale": {"type": "string", "minLength": 1},
+        "evidence_hashes": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "timestamp": {"type": "string", "format": "date-time"}
+      }
+    },
+    "Handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "handoff_id",
+        "work_item_id",
+        "from_stage",
+        "to_stage",
+        "from_agent_id",
+        "to_agent_id",
+        "status"
+      ],
+      "properties": {
+        "handoff_id": {"type": "string", "minLength": 1},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "from_stage": {"$ref": "#/$defs/CanonicalStage"},
+        "to_stage": {"$ref": "#/$defs/CanonicalStage"},
+        "from_agent_id": {"type": "string", "minLength": 1},
+        "to_agent_id": {"type": "string", "minLength": 1},
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACKNOWLEDGED", "REJECTED", "EXPIRED"]
+        },
+        "summary": {"type": "string"},
+        "created_at": {"type": "string", "format": "date-time"},
+        "acknowledged_at": {"type": ["string", "null"], "format": "date-time"}
+      }
+    },
+    "Acknowledgement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ack_id",
+        "handoff_id",
+        "recipient_agent_id",
+        "status"
+      ],
+      "properties": {
+        "ack_id": {"type": "string", "minLength": 1},
+        "handoff_id": {"type": "string", "minLength": 1},
+        "recipient_agent_id": {"type": "string", "minLength": 1},
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "ACKNOWLEDGED", "REJECTED", "EXPIRED"]
+        },
+        "reason": {"type": ["string", "null"]},
+        "timestamp": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

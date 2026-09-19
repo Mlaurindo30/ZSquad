@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/sync-state.schema.json",
+  "title": "SynchronizationAndReconciliationContracts",
+  "description": "Contracts tracking external ALM board synchronization state and bidirectional drift reconciliation.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/SyncState"},
+    {"$ref": "#/$defs/AdoWorkItemBinding"},
+    {"$ref": "#/$defs/ReconciliationDecision"},
+    {"$ref": "#/$defs/ReconciliationOutcome"}
+  ],
+  "$defs": {
+    "SyncStatus": {
+      "type": "string",
+      "enum": [
+        "SYNCED",
+        "PENDING_CREATE",
+        "PENDING_UPDATE",
+        "PENDING_DELETE",
+        "CONFLICT",
+        "FAILED_RETRYABLE",
+        "FAILED_TERMINAL"
+      ]
+    },
+    "ReconciliationAction": {
+      "type": "string",
+      "enum": [
+        "NOOP",
+        "APPLY_LOCAL_TO_REMOTE",
+        "APPLY_REMOTE_TO_LOCAL",
+        "BLOCK_ILLEGAL_REMOTE_TRANSITION",
+        "CONFLICT_REQUIRES_RESOLUTION"
+      ]
+    },
+    "SyncState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "status",
+        "backend_kind"
+      ],
+      "properties": {
+        "work_item_id": {"type": "string", "minLength": 1},
+        "status": {"$ref": "#/$defs/SyncStatus"},
+        "backend_kind": {"type": "string", "minLength": 1},
+        "remote_id": {"type": ["string", "null"]},
+        "retry_count": {"type": "integer", "minimum": 0, "default": 0},
+        "last_error": {"type": ["string", "null"]},
+        "last_synced_at": {"type": ["string", "null"], "format": "date-time"},
+        "updated_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "AdoWorkItemBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "ado_id",
+        "remote_url",
+        "remote_rev"
+      ],
+      "properties": {
+        "work_item_id": {"type": "string", "minLength": 1},
+        "ado_id": {"type": "integer", "minimum": 1},
+        "remote_url": {"type": "string", "minLength": 1},
+        "remote_rev": {"type": "integer", "minimum": 1},
+        "last_synced_at": {"type": "string", "format": "date-time"},
+        "sync_hash": {"type": "string"}
+      }
+    },
+    "ReconciliationDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "action",
+        "reason",
+        "local_state",
+        "remote_state",
+        "detected_at"
+      ],
+      "properties": {
+        "work_item_id": {"type": "string", "minLength": 1},
+        "action": {"$ref": "#/$defs/ReconciliationAction"},
+        "reason": {"type": "string", "minLength": 1},
+        "local_state": {"type": "string"},
+        "remote_state": {"type": "string"},
+        "detected_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "ReconciliationOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "work_item_id",
+        "action_taken",
+        "success",
+        "details",
+        "resolved_at"
+      ],
+      "properties": {
+        "decision_id": {"type": "string", "minLength": 1},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "action_taken": {"$ref": "#/$defs/ReconciliationAction"},
+        "success": {"type": "boolean"},
+        "details": {"type": "string"},
+        "resolved_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -23,6 +25,37 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from agent_squad import AgentSquad, SquadError  # noqa: E402
+
+
+def _link_or_copy(src: Path, dst: Path) -> None:
+    if not src.exists() or dst.exists():
+        return
+    if sys.platform == "win32":
+        try:
+            import _winapi
+
+            _winapi.CreateJunction(str(src), str(dst))
+            return
+        except Exception:
+            pass
+    try:
+        os.symlink(src, dst, target_is_directory=src.is_dir())
+    except Exception:
+        if src.is_dir():
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
+
+
+def make_authorized_runtime(tmp_path: Path, project_id: str = "agent_squad") -> tuple[AgentSquad, Path]:
+    runtime_dir = tmp_path / "runtime"
+    runtime_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("agents", "config", "contracts", "templates", "skills"):
+        _link_or_copy(ROOT / name, runtime_dir / name)
+    work_dir = runtime_dir / "work" / project_id
+    work_dir.mkdir(parents=True, exist_ok=True)
+    squad = AgentSquad(runtime_dir, project_name=project_id)
+    return squad, work_dir
 
 
 WORKFLOW_PATH = ROOT / "config" / "workflow.yaml"
@@ -87,7 +120,7 @@ def test_us_001_work_item_creation_rejects_thirteen_before_writing(tmp_path):
     signature = inspect.signature(squad.init_work_item)
 
     assert "story_points" in signature.parameters
-    with pytest.raises(SquadError, match="story_points"):
+    with pytest.raises(SquadError, match=r"(?i)story[-_ ]points"):
         squad.init_work_item("TASK-P0-SP-13", "low", base=tmp_path, story_points=13)
     assert not (tmp_path / "TASK-P0-SP-13").exists()
 
@@ -111,10 +144,10 @@ def test_us_002_ledger_resolver_rejects_unsafe_paths(tmp_path, unsafe):
 
 
 def test_us_002_same_work_item_id_resolves_to_distinct_project_ledgers(tmp_path):
-    first = AgentSquad(ROOT, project_name="alpha")
-    second = AgentSquad(ROOT, project_name="beta")
-    first_item = first.init_work_item("TASK-P0-SAME", "low", base=tmp_path / "alpha")
-    second_item = second.init_work_item("TASK-P0-SAME", "low", base=tmp_path / "beta")
+    first, first_work = make_authorized_runtime(tmp_path / "env1", project_id="alpha")
+    second, second_work = make_authorized_runtime(tmp_path / "env2", project_id="beta")
+    first_item = first.init_work_item("TASK-P0-SAME", "low", base=first_work)
+    second_item = second.init_work_item("TASK-P0-SAME", "low", base=second_work)
 
     first_ledger = first._ledger_path(first_item)
     second_ledger = second._ledger_path(second_item)

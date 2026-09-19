@@ -8,6 +8,10 @@ ou conversa. Nenhum agente trabalha apenas com contexto oral.
 
 ## Sequência de execução
 
+0. **[Passo 0 — Memória Canônica em 3 Pilares]**:
+   - **Pilar 1 — Memória Primária do Projeto (Local / Canônica)**: Consultar prioritariamente a memória estruturada em SQLite (`banco/squad.db` via `squad query-memory` / `query_memory`, com tabelas `memory_facts`, `symbols`, `dependencies`, `workflow_metrics`) e o grafo de código / Graphify local (`integrations/codebase_knowledge_graph.py`). Fatos locais autoritativos residem no `banco/squad.db`. O arquivo `memory/shared/summary.md` possui status `DERIVED_COMPATIBILITY` (projeção de compatibilidade gerada a partir do SQLite, não fonte autoritativa).
+   - **Pilar 2 — Colaboração e Rastreabilidade do Projeto (Azure DevOps)**: Consultar e atualizar discussões de Work Items no Azure Boards, threads de revisão em Pull Requests e documentação viva na Project Wiki.
+   - **Pilar 3 — Segundo Cérebro Global (Hive-Mind / Sinapse)**: Memória corporativa permanente cross-projeto para padrões e decisões arquiteturais duradouras via `sinapse-mcp`. Consultar decisões prévias via `sinapse_query('<tema>')`. Ao validar novos padrões duradouros, persistir fatos locais no `banco/squad.db` e promover ao Hive-Mind via `sinapse_save_decision`. Degrada graciosamente quando indisponível.
 1. O orquestrador classifica tipo, risco e domínios.
 2. O agente lê seu prompt, skill nativa, manifesto e artefatos referenciados.
 3. O agente carrega apenas as skills atribuídas necessárias.
@@ -16,18 +20,39 @@ ou conversa. Nenhum agente trabalha apenas com contexto oral.
 6. O orquestrador valida schemas, evidências e segregação de função.
 7. O destinatário confirma o recebimento e continua pelo mesmo work item.
 
+## Regra ADO-First (Inegociável)
+
+Quando o projeto possuir `devops.yaml` configurado com Azure DevOps (verificar em `.agents_squad/config/project.yaml`):
+
+**É ESTRITAMENTE PROIBIDO criar os seguintes arquivos locais como substitutos de Work Items no Azure Boards:**
+- `product-goal.md`, `backlog.md`, `epic.md`, `specs/` locais de backlog
+- `board.yaml`, `sprint-goal.md`, `task_plan.md`
+- `plans/delivery-plan.md` como substituto de Delivery Plan ADO
+
+**Todo o backlog, planejamento e rastreamento de progresso DEVE existir exclusivamente como Work Items no Azure Boards** seguindo a hierarquia:
+```
+Epic → Feature → User Story (≤8 pts) → Task (5 técnicas por história)
+```
+
+Artefatos locais permitidos quando ADO está ativo:
+- `status.yaml` (estado local sincronizado com `devops_id`)
+- `gate-decisions/GD-*.yaml` (evidências formais de gate)
+- `docs/delivery-ledger.md` (trilha de auditoria)
+- `work/<ID>/traceability/` (evidências técnicas)
+
 ## Escrita concorrente
 
 - Um artefato tem um único papel editor por estado; demais papéis comentam em
   `reviews/` ou `findings/`.
-- `status.yaml` e `memory/shared/summary.md` são atualizados somente pelo
-  Delivery Orchestrator após handoff válido.
+- `status.yaml` é atualizado pelo Delivery Orchestrator e pelos gates do workflow
+  após handoff válido. Fatos de memória são gravados no SQLite `banco/squad.db`
+  (sendo `summary.md` gerado apenas como projeção de compatibilidade DERIVED_COMPATIBILITY).
 - Decisões de produto pertencem ao Product Owner; decisões técnicas têm ADR;
   aceite de risco exige o aprovador indicado no workflow.
 
 ## Evidência e documentação
 
-Todo tópico concluído deve atualizar `documentation/delivery-ledger.md` com ID,
+Todo tópico concluído deve atualizar `docs/delivery-ledger.md` com ID,
 artefato, decisão, testes, documentação afetada e próximo passo. “Feito” sem essa
 linha é incompleto.
 
@@ -109,7 +134,7 @@ Aprovação segue **três camadas** que refletem `segregation_of_duties` em
   preservada: `squads@` ≠ `arthemis@` ≠ `cyber_red@`.
 - Persona é resolvida pelo **path tocado** (CODEOWNERS), não por votação
   aberta. Cada persona deixa thread na PR com tag `[NN-persona-id] approve|reject`,
-  parseado por `pr_governance.py` e gravado em `documentation/delivery-ledger.md`.
+  parseado por `pr_governance.py` e gravado em `docs/delivery-ledger.md`.
 
 **Card / Board:**
 
@@ -137,7 +162,7 @@ Aprovação segue **três camadas** que refletem `segregation_of_duties` em
   roda `python scripts/audit_weekly_sample.py` semanalmente, amostrando 10%
   dos PRs mergeados, validando SoD via `/_apis/policy/evaluations` e
   `/_apis/git/pullRequests/{id}/reviewers`, gravando em
-  `documentation/audit-reports/YYYY-WW.md`.
+  `docs/audit-reports/YYYY-WW.md`.
 
 ### Pontuação e cores
 

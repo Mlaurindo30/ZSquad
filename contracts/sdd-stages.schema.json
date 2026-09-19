@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-squad.local/contracts/sdd-stages.schema.json",
+  "title": "Estágios SDD (stages.yaml do work item)",
+  "description": "Contrato estrutural do stages.yaml SDD em work/<project_id>/<work_id>/sdd/stages.yaml. Registra a ordem, despacho e conclusão dos 7 estágios governados Spec Kit.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "work_id",
+    "stages"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "work_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constitution",
+        "specify",
+        "clarify",
+        "plan",
+        "tasks",
+        "analyze",
+        "implement"
+      ],
+      "properties": {
+        "constitution": { "$ref": "#/$defs/stage_record" },
+        "specify": { "$ref": "#/$defs/stage_record" },
+        "clarify": { "$ref": "#/$defs/stage_record" },
+        "plan": { "$ref": "#/$defs/stage_record" },
+        "tasks": { "$ref": "#/$defs/stage_record" },
+        "analyze": { "$ref": "#/$defs/stage_record" },
+        "implement": { "$ref": "#/$defs/stage_record" }
+      }
+    }
+  },
+  "$defs": {
+    "stage_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "persona"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["pending", "queued", "dispatched", "completed"]
+        },
+        "persona": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dispatched_at": {
+          "type": ["string", "null"]
+        },
+        "completed_at": {
+          "type": ["string", "null"]
+        },
+        "briefing_sha256": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "output_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_hashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "dispatch_receipt": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["receipt_id", "status", "accepted_at", "request_ref", "request_sha256"],
+          "properties": {
+            "receipt_id": { "type": "string", "minLength": 1 },
+            "status": { "const": "accepted" },
+            "accepted_at": { "type": "string", "minLength": 1 },
+            "request_ref": { "type": "string", "minLength": 1 },
+            "request_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        },
+        "execution_receipt": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

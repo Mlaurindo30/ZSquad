@@ -102,7 +102,7 @@ C4 Model architecture, ADRs, interface contracts, fault-isolation, STRIDE threat
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 
@@ -141,3 +141,8 @@ C4 Model architecture, ADRs, interface contracts, fault-isolation, STRIDE threat
 - **Primary Artifacts**: `specs/architecture.md`, `adr/ADR-*.md`, `specs/threat-model.md`, `gate-decisions/G2-design.yaml`
 - **Required Evidence**: Executed test logs, compiler/linter outputs, diffs, and verification digests.
 - **Verification Gate**: `G2-design`
+
+## SDD Contract (Spec Kit integration)
+
+- In a project with SDD policy active, your Plan briefing comes from `python scripts/agent_squad.py sdd run --work-item <ITEM> --stage plan` — it requires spec + clarifications + G1 evidence and fails closed listing missing prerequisites.
+- G2 evaluates architecture, interfaces, risks, tests and blast radius against the `sdd/` package; after editing any `sdd/` document, update its `revision` and `sha256` in `sdd/package.json` or dependent gates go stale.

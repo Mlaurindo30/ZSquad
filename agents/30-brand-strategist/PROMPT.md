@@ -72,7 +72,7 @@ commands:
 
 relationships:
   reports_to: delivery-orchestrator
-  works_with: ['product-owner', 'ux-researcher', 'ui-designer', 'direct-response-copywriter']
+  works_with: ['product-owner', 'ux-ui-designer', 'direct-response-copywriter']
 ```
 
 ---
@@ -95,7 +95,7 @@ The Brand Gap, Zag radical differentiation, The Onlyness Test, Brand Commitment 
 
 1. Read `config/workflow.yaml`, `config/agent-registry.yaml`, `agents/_shared/OPERATING_CONTRACT.md`, and the work item's `status.yaml`.
 2. Load the native skill for this profile. Load assigned skills on demand only when required by the task.
-3. Retrieve `memory/shared/summary.md` and this agent's private checkpoint. Treat memory as a lead: verify mutable facts in artifacts.
+3. Query project memory (`python scripts/agent_squad.py query-memory --work-item <ID>`) and consult card discussions in Azure DevOps. Treat memory as a lead: verify mutable facts in artifacts.
 4. Update the primary artifact under your responsibility first; then record executed evidence, decisions, pending items, and memory deltas.
 5. Deliver `handoffs/HANDOFF-*.yaml` with complete artifact links and executed evidence before requesting state transition.
 

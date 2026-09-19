@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/backlog-plan.schema.json",
+  "title": "BacklogPlan",
+  "description": "Decomposition plan representing proposed work items prior to physical materialization.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "plan_id",
+    "project_id",
+    "status",
+    "items",
+    "created_by"
+  ],
+  "properties": {
+    "plan_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier of the backlog plan."
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Project binding identifier."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "DRAFT",
+        "VALIDATED",
+        "APPROVED",
+        "MATERIALIZED",
+        "REJECTED"
+      ],
+      "description": "Plan lifecycle state."
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/BacklogPlanItem"
+      },
+      "description": "Proposed work items included in this planning package."
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Agent or user ID who authored the plan."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approved_by": {
+      "type": ["string", "null"],
+      "description": "Agent or PO role approving materialization."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "BacklogPlanItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposed_id", "kind", "title", "description"],
+      "properties": {
+        "proposed_id": {
+          "type": "string",
+          "pattern": "^(EPIC-\\d{3,}|FEATURE-\\d{3,}|STORY-\\d{3,}|TASK-\\d{4,}|(BUG|SPIKE|INCIDENT|RELEASE|SETUP)-\\d{3,})$",
+          "description": "Proposed canonical identifier."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "EPIC",
+            "FEATURE",
+            "STORY",
+            "TASK",
+            "BUG",
+            "SPIKE",
+            "INCIDENT",
+            "RELEASE",
+            "PROJECT_SETUP"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 5
+        },
+        "description": {
+          "type": "string",
+          "minLength": 10
+        },
+        "story_points": {
+          "type": ["integer", "null"],
+          "enum": [1, 2, 3, 5, 8, null],
+          "description": "Estimated complexity (max 8 SP allowed)."
+        },
+        "parent_id": {
+          "type": ["string", "null"]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

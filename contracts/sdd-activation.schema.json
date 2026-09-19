@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-squad.local/contracts/sdd-activation.schema.json",
+  "title": "Registro duravel de ativacao SDD",
+  "description": "Contrato do registro duravel de ativacao SDD por projeto (.agents_squad/config/sdd-activation.yaml), CORR-2/auditoria pós-entrega P1#4. Enquanto o registro existir, a ausencia do arquivo de politica sdd-policy.yaml e falha fechada (SDD_POLICY_INVALID), nunca rebaixamento silencioso para legado. Desativacao legitima somente via 'sdd deactivate', que arquiva o registro. Justificativa de contrato separado (aditivo): sdd-policy.schema.json e additionalProperties:false e declarativo — embutir estado de runtime (timestamp/hash) mudaria o hash da politica na propria ativacao e conflitaria com validate_policy.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "activated_at", "policy_sha256", "policy_version"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Versao do contrato do registro de ativacao."
+    },
+    "activated_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "Instante UTC da ativacao (ISO-8601 com sufixo Z)."
+    },
+    "policy_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "sha256 hexadecimal do conteudo do arquivo de politica no momento da ativacao."
+    },
+    "policy_version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "policy_version declarada na politica ativada."
+    }
+  }
+}

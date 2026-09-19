@@ -1,8 +1,9 @@
 version: 2
-runtime: C:/Users/miche/OneDrive/Documentos/agent_squad
+runtime: "${SQUAD_RUNTIME}"
 project_id: agent_squad
 project_name: agent_squad
-project_root: C:/Users/miche/OneDrive/Documentos/agent_squad
-work_dir: C:/Users/miche/OneDrive/Documentos/agent_squad/work/agent_squad
-db_path: C:/Users/miche/OneDrive/Documentos/agent_squad/banco/squad.db
+project_root: "${PROJECT_ROOT}"
+work_dir: "${SQUAD_RUNTIME}/work/agent_squad"
+db_path: "${SQUAD_RUNTIME}/banco/squad.db"
 overrides: {}
+

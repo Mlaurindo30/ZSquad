@@ -3,12 +3,32 @@ managed_by: agents-squad
 default_cycle: development
 # Um ciclo por função do pedido. Novas funções entram como novas entradas aqui,
 # sem alterar prompts: o orquestrador identifica a função e segue o ciclo correspondente.
+type_to_cycle:
+  epic: development
+  feature: development
+  story: user-story
+  task: development
+  bug: bugfix
+  release: release
+  evolution: evolution
+  study: spike
+  spike: spike
+  incident: incident
+  new-project: new-project
 cycles:
   development:
     description: Ciclo completo de entrega de software (Spec-Driven com gates proporcionais).
     entry: blueprint
     source: config/workflow.yaml
+    # T5 (Spec Kit): estágio SDD autorizado na SAÍDA de cada estado quando o
+    # work item tem pacote SDD e o projeto ativou a política. 'tasking' cobre
+    # G1 via cadeia (conclusão de blueprint exige G1+G2); 'implementation'
+    # cobre G1+G2+G3 (G3 autoriza implementação).
+    sdd_stages:
+      blueprint: tasking
+      scaffolding: implementation
     states:
+      - discovery
       - blueprint         # BDD: especificação nasce aqui
       - scaffolding       # testes RED pré-escritos
       - implementation    # TDD: red-green-refactor, teste falhando primeiro
@@ -38,7 +58,11 @@ cycles:
     description: Golden Path completo de User Story (PO -> UX -> Agile Coach -> UI -> Code -> QA).
     entry: blueprint
     source: config/workflow.yaml
+    sdd_stages:
+      blueprint: tasking
+      scaffolding: implementation
     states:
+      - discovery
       - blueprint
       - scaffolding
       - implementation
@@ -50,7 +74,14 @@ cycles:
     description: Setup & Architecture para novos projetos.
     entry: blueprint
     source: config/workflow.yaml
+    sdd_stages:
+      blueprint: tasking
+      scaffolding: implementation
+    # T5: entra por blueprint, mas o preflight SDD é obrigatório antes de
+    # qualquer implementação governada (plano §5) — reforçado no dispatch.
+    sdd_preflight: true
     states:
+      - discovery
       - blueprint
       - scaffolding
       - done
@@ -58,6 +89,10 @@ cycles:
     description: Correção expressa de incidente.
     entry: implementation
     source: config/workflow.yaml
+    # T5: retomada direta em implementation NÃO contorna o preflight SDD;
+    # o dispatch gerenciado (run-engine) exige authorize G1+G2+G3 antes de
+    # executar qualquer tarefa (plano §5 e §8 cenário 7).
+    sdd_preflight: true
     states:
       - implementation
       - code-security-review
@@ -100,7 +135,11 @@ cycles:
     description: Mudança de longo prazo (deprecation, migration, breaking change). ADR + blast radius + deprecation strategy obrigatórios.
     entry: blueprint
     source: config/workflow.yaml
+    sdd_stages:
+      blueprint: tasking
+      scaffolding: implementation
     states:
+      - discovery
       - blueprint
       - scaffolding
       - implementation

@@ -4,26 +4,19 @@
       "command": "npx",
       "args": [
         "-y",
-        "@azure-devops/mcp"
+        "@azure-devops/mcp@latest",
+        "${AZURE_DEVOPS_ORG}",
+        "--authentication",
+        "envvar"
       ],
       "env": {
-        "AZURE_DEVOPS_ORG": "${AZURE_DEVOPS_ORG}",
-        "AZURE_DEVOPS_PROJECT": "${AZURE_DEVOPS_PROJECT}",
-        "AZURE_DEVOPS_PAT": "${AZURE_DEVOPS_PAT}"
+        "ADO_MCP_AUTH_TOKEN": "${AZURE_DEVOPS_PAT}"
       },
-      "transport": "stdio",
-      "version": "@azure-devops/mcp@latest",
-      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests via transport stdio JSON-RPC."
+      "description": "Servidor MCP oficial do Azure DevOps (@azure-devops/mcp) para gestão de Boards, WIQL, Work Items e Pull Requests."
     },
     "codebase-memory": {
-      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
-      "args": [
-        "-m",
-        "codebase_memory_mcp"
-      ],
-      "env": {
-        "PYTHONPATH": "C:/Users/miche/OneDrive/Documentos/agent_squad/integrations/vendor/codebase-memory-mcp/pkg/pypi/src"
-      },
+      "command": "${SQUAD_RUNTIME}/integrations/vendor/codebase-memory-mcp/build/c/codebase-memory-mcp.exe",
+      "args": [],
       "description": "High-performance persistent structural symbol knowledge graph.",
       "tools": [
         "query_symbol",
@@ -32,7 +25,7 @@
       ]
     },
     "sinapse-hivemind": {
-      "command": "C:\\Users\\miche\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+      "command": "python",
       "args": [
         "D:/Hive-Mind/scripts/services/sinapse-mcp.py"
       ],
