@@ -360,6 +360,50 @@ class ContinuousTriggerEngine:
                     "message": po_check["reason"],
                 }
 
+        # Guarda de Handoff Acknowledgement (R0-LIFE-004)
+        handoff_id = event.payload.get("handoff_id")
+        handoff_file = None
+        if handoff_id:
+            candidate = item_path / "handoffs" / f"{handoff_id}.yaml"
+            if candidate.is_file():
+                handoff_file = candidate
+
+        if handoff_file is None:
+            h_dir = item_path / "handoffs"
+            if h_dir.is_dir():
+                h_files = sorted(h_dir.glob("HANDOFF-*.yaml"), key=lambda f: f.stat().st_mtime, reverse=True)
+                if h_files:
+                    handoff_file = h_files[0]
+
+        if handoff_file and handoff_file.is_file():
+            try:
+                h_data = read_yaml(handoff_file)
+                ack = h_data.get("acknowledgement", {})
+                ack_status = str(ack.get("status", "")).lower()
+                target_recipient = event.payload.get("to") or h_data.get("to")
+                if ack_status in {"pending", "awaiting", ""} and target_recipient in {
+                    "delivery-orchestrator",
+                    "00-delivery-orchestrator",
+                }:
+                    try:
+                        self.squad.ack_handoff(
+                            work_item_id, h_data.get("id", handoff_file.stem), target_recipient
+                        )
+                        ack_status = "accepted"
+                    except Exception as ack_err:
+                        logger.debug("Falha no auto-ack pelo delivery-orchestrator: %s", ack_err)
+
+                if ack_status in {"pending", "awaiting", ""}:
+                    return {
+                        "status": "AWAITING_HANDOFF_ACK",
+                        "message": (
+                            f"Handoff '{h_data.get('id', handoff_file.stem)}' pendente de acknowledgement. "
+                            "Avanço não permitido até aceitação formal do destinatário."
+                        ),
+                    }
+            except Exception as exc:
+                logger.warning("Falha ao verificar handoff acknowledgement: %s", exc)
+
         try:
             advance_result = self.squad.advance_state(work_item_id)
             cb.record_success()
@@ -474,6 +518,33 @@ class ContinuousTriggerEngine:
                 steps += 1
                 break
 
+            # Validação determinística de pré-requisitos canônicos (R0-LIFE-011)
+            from runtime.lifecycle import CanonicalLifecycleService
+            lifecycle_service = CanonicalLifecycleService(root_path=self.squad.root)
+            can_trans, trans_reason = lifecycle_service.can_transition(work_item_id, item_path=item_path)
+            if not can_trans:
+                tripped = cb.record_failure(trans_reason)
+                self._save_circuit_breaker(cb)
+                if tripped:
+                    return {
+                        "status": "HALTED_CIRCUIT_BREAKER",
+                        "work_item_id": work_item_id,
+                        "current_state": current_state,
+                        "steps_executed": steps,
+                        "history": history,
+                        "agent_dispatches": [],
+                        "message": f"Circuit breaker abriu após falhas consecutivas: {trans_reason}",
+                    }
+                return {
+                    "status": "STEP_FAILED",
+                    "work_item_id": work_item_id,
+                    "current_state": current_state,
+                    "steps_executed": steps,
+                    "history": history,
+                    "agent_dispatches": [],
+                    "message": f"Falha ao executar avanço de estado: {trans_reason}",
+                }
+
             try:
                 advance_result = self.squad.advance_state(work_item_id)
                 cb.record_success()
@@ -495,6 +566,7 @@ class ContinuousTriggerEngine:
                         "current_state": current_state,
                         "steps_executed": steps,
                         "history": history,
+                        "agent_dispatches": [],
                         "message": f"Circuit breaker abriu após falhas consecutivas: {exc}",
                     }
                 return {
@@ -503,6 +575,7 @@ class ContinuousTriggerEngine:
                     "current_state": current_state,
                     "steps_executed": steps,
                     "history": history,
+                    "agent_dispatches": [],
                     "message": f"Falha ao executar avanço de estado: {exc}",
                 }
 
@@ -513,5 +586,6 @@ class ContinuousTriggerEngine:
             "current_state": status.get("state"),
             "steps_executed": steps,
             "history": history,
+            "agent_dispatches": [],
             "message": f"Limite de {max_steps} passos atingido.",
         }

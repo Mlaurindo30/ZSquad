@@ -113,13 +113,17 @@ def validate_project_id(project_id: str) -> str:
     return project_id
 
 
-def find_project_root(start: Path) -> Path | None:
-    """Procura o marcador de projeto no diretório inicial e ancestrais."""
+def find_project_root(start: Path | None = None) -> Path | None:
+    """Procura o marcador de projeto no diretório inicial e ancestrais sem fallback cego."""
+    if start is None:
+        return None
     current = start.resolve()
     if current.is_file():
         current = current.parent
     for candidate in (current, *current.parents):
         if (candidate / ".agents_squad" / "config" / "project.yaml").is_file():
+            return candidate
+        if (candidate / ".squad" / "project.yaml").is_file():
             return candidate
     return None
 
@@ -146,7 +150,7 @@ def _expand_marker_variables(
                 runtime_root = Path(env_val).resolve()
             else:
                 try:
-                    runtime_root = resolve_runtime_root()
+                    runtime_root = resolve_runtime_root(project_root)
                 except Exception:
                     runtime_root = project_root
     result = value.replace("${PROJECT_ROOT}", project_root.resolve().as_posix())
@@ -155,9 +159,14 @@ def _expand_marker_variables(
 
 
 def load_project_context(project_root: Path) -> ProjectContext:
-    """Carrega e valida o marcador mínimo criado pelo bootstrap."""
+    """Carrega e valida o marcador criado pelo bootstrap ou configuração declarativa."""
     project_root = project_root.resolve()
     marker = project_root / ".agents_squad" / "config" / "project.yaml"
+    if not marker.is_file():
+        fallback_marker = project_root / ".squad" / "project.yaml"
+        if fallback_marker.is_file():
+            marker = fallback_marker
+
     try:
         payload: Any = yaml.safe_load(marker.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
@@ -165,15 +174,27 @@ def load_project_context(project_root: Path) -> ProjectContext:
     if not isinstance(payload, dict):
         raise ProjectContextError(f"marcador de projeto inválido: {marker}")
 
-    project_id = validate_project_id(str(payload.get("project_id") or payload.get("project_name") or ""))
+    # Suporte a formato hierárquico moderno (project.id) e legado (project_id)
+    proj_section = payload.get("project")
+    if isinstance(proj_section, dict):
+        raw_id = proj_section.get("id") or proj_section.get("project_id") or ""
+    else:
+        raw_id = payload.get("project_id") or payload.get("project_name") or ""
+
+    project_id = validate_project_id(str(raw_id))
     runtime_value = payload.get("runtime")
     recorded_root = payload.get("project_root")
-    if not isinstance(runtime_value, str) or not runtime_value:
-        raise ProjectContextError("runtime ausente no marcador de projeto")
 
-    expanded_runtime = _expand_marker_variables(runtime_value, project_root)
-    runtime_path = Path(expanded_runtime)
-    runtime_root = runtime_path.resolve() if runtime_path.is_absolute() else (project_root / runtime_path).resolve()
+    delivery_section = payload.get("delivery")
+    if isinstance(runtime_value, str) and runtime_value:
+        expanded_runtime = _expand_marker_variables(runtime_value, project_root)
+        runtime_path = Path(expanded_runtime)
+        runtime_root = runtime_path.resolve() if runtime_path.is_absolute() else (project_root / runtime_path).resolve()
+    elif delivery_section is not None:
+        # Formato declarativo moderno R5 com backend de delivery: resolve runtime raiz compartilhado
+        runtime_root = resolve_runtime_root(project_root)
+    else:
+        raise ProjectContextError("runtime ausente no marcador de projeto")
 
     if recorded_root:
         expanded_recorded = _expand_marker_variables(str(recorded_root), project_root, runtime_root)
@@ -186,19 +207,24 @@ def load_project_context(project_root: Path) -> ProjectContext:
     return ProjectContext(runtime_root, project_root, project_id)
 
 
+def resolve_project_context(start: Path | None = None, explicit_project_root: Path | None = None) -> ProjectContext:
+    """Resolve contexto a partir de uma raiz explícita ou do caminho inicial fornecido."""
+    if explicit_project_root is not None:
+        root = explicit_project_root.resolve()
+    elif start is not None:
+        root = find_project_root(start)
+    else:
+        raise ProjectContextError("Nenhum caminho inicial ou raiz explícita informados para resolução de projeto")
 
-def resolve_project_context(start: Path, explicit_project_root: Path | None = None) -> ProjectContext:
-    """Resolve contexto a partir de uma raiz explícita ou do diretório atual."""
-    root = explicit_project_root.resolve() if explicit_project_root else find_project_root(start)
     if root is None:
         raise ProjectContextError("marcador .agents_squad/config/project.yaml não encontrado")
     return load_project_context(root)
 
 
-def resolve_runtime_root() -> Path:
+def resolve_runtime_root(start_path: Path | None = None) -> Path:
     """Resolve o diretório raiz do SQUAD_RUNTIME usando fallback em 4 camadas:
     1. Variável de ambiente SQUAD_RUNTIME (se válida e contiver scripts/ e agents/)
-    2. Marcador do consumidor .agents_squad/config/project.yaml via busca ascendente a partir do cwd
+    2. Marcador do consumidor .agents_squad/config/project.yaml via busca ascendente
     3. Registro global $HOME/.agents_squad/config/active_runtime.json
     4. Auto-descoberta relativa a partir de Path(__file__).resolve().parents[1]
     Lança ProjectContextError se nenhum runtime válido for encontrado.
@@ -210,8 +236,9 @@ def resolve_runtime_root() -> Path:
         if _is_valid_runtime(p):
             return p
 
-    # Tier 2: Consumer project marker via upward search from cwd
-    project_root = find_project_root(Path.cwd())
+    # Tier 2: Consumer project marker via upward search from start_path or cwd
+    search_start = start_path if start_path is not None else Path.cwd()
+    project_root = find_project_root(search_start)
     if project_root:
         try:
             marker = project_root / ".agents_squad" / "config" / "project.yaml"

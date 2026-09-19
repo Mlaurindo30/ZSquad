@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/work-item.schema.json",
+  "title": "WorkItem",
+  "description": "Canonical work item entity representing a demand unit within the Agent Squad.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "work_item_id",
+    "kind",
+    "title",
+    "description",
+    "project_id",
+    "stage",
+    "risk_tier",
+    "definition_of_done",
+    "acceptance_criteria"
+  ],
+  "properties": {
+    "work_item_id": {
+      "type": "string",
+      "pattern": "^(EPIC-\\d{3,}|FEATURE-\\d{3,}|STORY-\\d{3,}|TASK-\\d{4,}|(BUG|SPIKE|INCIDENT|RELEASE|SETUP)-\\d{3,})$",
+      "description": "Canonical identifier following strict prefix and numbering grammar."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "EPIC",
+        "FEATURE",
+        "STORY",
+        "TASK",
+        "BUG",
+        "SPIKE",
+        "INCIDENT",
+        "RELEASE",
+        "PROJECT_SETUP"
+      ],
+      "description": "Hierarchical or operational category of the work item."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "description": "Brief, descriptive title of the work item."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "description": "Comprehensive specification and context of the demand."
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Associated project binding identifier."
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "INTAKE",
+        "DISCOVERY",
+        "REQUIREMENTS_PRODUCT",
+        "PLANNING",
+        "ARCHITECTURE_DESIGN",
+        "READINESS_SCAFFOLDING",
+        "IMPLEMENTATION",
+        "CODE_REVIEW",
+        "SECURITY_REVIEW",
+        "TEST_VALIDATION",
+        "QA_VALIDATION",
+        "GOVERNANCE_RELEASE",
+        "DONE"
+      ],
+      "description": "Current canonical lifecycle stage."
+    },
+    "risk_tier": {
+      "type": "string",
+      "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+      "description": "Governance and SoD risk tier."
+    },
+    "definition_of_done": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "List of verifiable completion conditions."
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AcceptanceCriterion"
+      },
+      "description": "Gherkin-style functional acceptance criteria."
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "pattern": "^(EPIC-\\d{3,}|FEATURE-\\d{3,}|STORY-\\d{3,})$",
+      "description": "Canonical identifier of parent work item in the hierarchy."
+    },
+    "story_points": {
+      "type": ["integer", "null"],
+      "enum": [1, 2, 3, 5, 8, null],
+      "description": "Fibonacci sizing estimate (Max 8 SP)."
+    },
+    "delivery_backend_id": {
+      "type": ["string", "null"],
+      "description": "Remote system of record identifier (e.g. ADO work item id)."
+    },
+    "sync_state": {
+      "type": "string",
+      "enum": [
+        "SYNCED",
+        "PENDING_CREATE",
+        "PENDING_UPDATE",
+        "PENDING_DELETE",
+        "CONFLICT",
+        "FAILED_RETRYABLE",
+        "FAILED_TERMINAL"
+      ],
+      "default": "PENDING_CREATE",
+      "description": "Synchronization status relative to the external ALM board."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "AcceptanceCriterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "scenario", "given", "when", "then"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario": {
+          "type": "string",
+          "minLength": 1
+        },
+        "given": {
+          "type": "string",
+          "minLength": 1
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1
+        },
+        "then": {
+          "type": "string",
+          "minLength": 1
+        },
+        "is_verified": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

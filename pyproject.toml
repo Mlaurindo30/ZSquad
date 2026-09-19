@@ -45,6 +45,7 @@ agent-squad = "scripts.agent_squad:main"
 
 [tool.pytest.ini_options]
 testpaths = ["scripts/tests"]
+pythonpath = ["."]
 markers = [
   "AC_QUALITY_1: critério BDD para rejeição de alegações sem evidência",
   "AC_QUALITY_2: critério BDD para ciclo TDD completo",

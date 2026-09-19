@@ -1,3 +1,8 @@
+"""Context Engine Resolvers for Agent Squad.
+
+Retrieves and proposes facts for memory and context under strict session authority.
+"""
+
 import json
 
 
@@ -7,12 +12,14 @@ def get_context(args, ctx, session_store, db):
     - Definition: get_context resolver function.
     - Responsibility: Retrieves project context.
     - Purpose: Supply agents with required context.
-    - Failure Behavior: Returns empty context on failure.
+    - Failure Behavior: Fails closed if session is invalid or missing.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
     if not session:
-        session = {"project_root": "test_root", "work_item": "test_item"}
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     facts = db.get_context(
         session["project_root"], session["work_item"], args["topics"]
     )
@@ -25,12 +32,14 @@ def memory_query(args, ctx, session_store, db):
     - Definition: memory_query resolver function.
     - Responsibility: Queries memory database for facts.
     - Purpose: Agent recall.
-    - Failure Behavior: Returns empty result.
+    - Failure Behavior: Fails closed if session is invalid or missing.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
     if not session:
-        session = {"project_root": "test_root", "work_item": "test_item"}
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     facts = db.get_context(
         session["project_root"], session["work_item"], args["topics"]
     )
@@ -43,12 +52,14 @@ def memory_propose_delta(args, ctx, session_store, db):
     - Definition: memory_propose_delta resolver function.
     - Responsibility: Proposes changes to memory facts.
     - Purpose: Update agent memory over time.
-    - Failure Behavior: Rejects proposal on DB error.
+    - Failure Behavior: Fails closed if session is invalid or missing.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
     if not session:
-        session = {"project_root": "test_root", "work_item": "test_item"}
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     p_hash = db.record_fact(
         session["project_root"],
         session["work_item"],

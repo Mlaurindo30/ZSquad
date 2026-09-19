@@ -1,5 +1,6 @@
 version: 2
 mode: local-curated
+cognitive_skill_budget: 7
 generated_at: 2026-08-21T10:30:27.0000000-0300
 active_skill_count: 150
 catalog:

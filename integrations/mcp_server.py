@@ -1,6 +1,12 @@
 import json
 import os
+from pathlib import Path
+import sys
 from typing import Dict, Any
+
+_REPO_ROOT = str(Path(__file__).resolve().parents[1])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 try:
     from integrations.mcp_session_store import SessionStore

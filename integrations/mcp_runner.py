@@ -8,9 +8,16 @@ Failure Behavior: Returns valid JSON-RPC 2.0 error responses (-32700) for malfor
 Connections: Integrates with AgentSquadMCPServer and communicates with any compliant MCP client via stdio.
 """
 
+import os
+from pathlib import Path
 import sys
 import json
 import logging
+
+_REPO_ROOT = str(Path(__file__).resolve().parents[1])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
 try:
     from integrations.mcp_server import AgentSquadMCPServer
 except ModuleNotFoundError:

@@ -1,5 +1,13 @@
-import os
 import hashlib
+import os
+from pathlib import Path
+import sys
+
+# Ensure repository root is in sys.path when invoked by standalone MCP runners
+_REPO_ROOT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
 try:
     from integrations.resolvers import load_yaml
 except ModuleNotFoundError:
@@ -9,73 +17,105 @@ except ModuleNotFoundError:
 def get_assignment(args, ctx, session_store):
     """
     Component Contract:
-    - Definition: get_assignment resolver function.
-    - Responsibility: Matches an objective digest to the best agent persona.
-    - Purpose: Dispatch the right agent for a task.
-    - Failure Behavior: Fallback to software-engineer if no match found.
-    - Connections: Agent registry, filesystem, SessionStore.
+    - Definition: get_assignment resolver function (Compatibility facade over R8 SpecialistRouter).
+    - Responsibility: Routes a task to the canonical specialist via R8 SpecialistRouter.
+    - Purpose: Dispatch the right agent for a task without silent fallback.
+    - Failure Behavior: Returns status BLOCKED/NEEDS_ROUTING with persona_id=None. Never silently defaults to software-engineer.
+    - Connections: R8 SpecialistRouter, AgentRegistry, SessionStore.
     """
+    from scripts.domain.delegation import RoutingRequest, RoutingStatus
+    from scripts.runtime.routing.registry import AgentRegistry
+    from scripts.runtime.routing.router import SpecialistRouter
+
     config_dir = ctx.config_dir
     registry_path = os.path.join(config_dir, "agent-registry.yaml")
-    registry = load_yaml(registry_path)
+    registry_data = load_yaml(registry_path)
 
-    agents = registry.get("agents", [])
-    objective = (args.get("objective_digest") or "").lower()
+    agent_registry = AgentRegistry(registry_data)
+    router = SpecialistRouter(agent_registry)
 
-    # Scoring based persona matching
-    best_agent = None
-    best_score = 0
-    words = [w.strip() for w in objective.replace("/", " ").replace("-", " ").split() if len(w.strip()) > 3]
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
+    work_item_id = (session and session.get("work_item")) or args.get("work_item_id") or "WORK-ITEM-LEGACY"
+    project_id = (session and session.get("project_root")) or args.get("project_id") or "default"
 
-    for agent in agents:
-        aid = agent.get("id", "").lower()
-        title = (agent.get("title") or "").lower()
-        purpose = (agent.get("purpose") or "").lower()
+    # Translate legacy args into canonical RoutingRequest
+    objective = (args.get("objective_digest") or "").strip()
+    target_role = args.get("target_role") or args.get("role")
+    required_capability = args.get("required_capability") or args.get("capability")
+    stage = args.get("stage") or "IMPLEMENTATION"
 
-        score = 0
-        if aid in objective:
-            score += 10
-        for w in aid.split("-"):
-            if len(w) > 3 and w in objective:
-                score += 5
-        for w in words:
-            if w in title:
-                score += 3
-            if w in purpose:
-                score += 1
+    if not target_role and objective:
+        resolved_agent = agent_registry.resolve_role(objective)
+        if resolved_agent:
+            target_role = resolved_agent.agent_id
+        else:
+            matched_caps = agent_registry.find_by_capability(objective)
+            if matched_caps:
+                required_capability = objective
+            else:
+                target_role = objective
 
-        if score > best_score:
-            best_score = score
-            best_agent = agent
+    request = RoutingRequest(
+        work_item_id=work_item_id,
+        project_id=project_id,
+        stage=stage,
+        work_item_kind="STORY",
+        cycle_id="development",
+        required_role=target_role,
+        required_capability=required_capability,
+    )
 
-    selected_agent = best_agent if best_score > 0 else None
+    decision = router.route(request)
 
-    # Fallback to software-engineer or first dispatchable agent
-    if not selected_agent:
-        selected_agent = next(
-            (a for a in agents if a.get("id") == "software-engineer"),
-            agents[0] if agents else {"id": "software-engineer", "title": "Software Engineer"}
-        )
+    if decision.status == RoutingStatus.ASSIGNED:
+        selected_id = decision.selected_agent_id
+        selected_agent = agent_registry.get_agent(selected_id)
+        raw_agent = next((a for a in registry_data.get("agents", []) if a.get("id") == selected_id), None) or {}
 
-    # Load skills from agent manifest if available
-    skills = []
-    manifest_rel = selected_agent.get("manifest")
-    if manifest_rel:
-        root_dir = os.path.abspath(os.path.join(config_dir, ".."))
-        manifest_path = os.path.join(root_dir, manifest_rel)
-        manifest = load_yaml(manifest_path)
-        for s in manifest.get("assigned", []) + manifest.get("native", []):
-            if isinstance(s, dict) and "path" in s:
-                skills.append(s["path"])
+        # Preserve minimum compatibility skills shape for legacy callers (R9 will formalize)
+        skills = []
+        manifest_rel = raw_agent.get("manifest")
+        if manifest_rel:
+            root_dir = os.path.abspath(os.path.join(config_dir, ".."))
+            manifest_path = os.path.join(root_dir, manifest_rel)
+            try:
+                manifest = load_yaml(manifest_path)
+                for s in manifest.get("assigned", []) + manifest.get("native", []):
+                    if isinstance(s, dict) and "path" in s:
+                        skills.append(s["path"])
+            except Exception:
+                pass
 
-    rev_content = f"{selected_agent.get('id')}:{len(skills)}"
-    rev_hash = hashlib.sha256(rev_content.encode("utf-8")).hexdigest()
+        rev_content = f"{selected_id}:{len(skills)}"
+        rev_hash = hashlib.sha256(rev_content.encode("utf-8")).hexdigest()
 
+        try:
+            from scripts.runtime.activation.skills import SkillResolver
+            skill_resolver = SkillResolver(root_dir)
+            resolved = skill_resolver.resolve_skills(selected_id)
+            final_skills = resolved.load_order
+        except Exception:
+            max_limit = min(len(skills), 7)
+            final_skills = skills[:max_limit]
+
+        return {
+            "persona_id": selected_id,
+            "title": (selected_agent and selected_agent.title) or raw_agent.get("title"),
+            "skills": final_skills,
+            "revision": rev_hash,
+            "status": "ASSIGNED",
+        }
+
+    # Fail closed: BLOCKED or NEEDS_ROUTING (NEVER software-engineer fallback)
     return {
-        "persona_id": selected_agent.get("id"),
-        "title": selected_agent.get("title"),
-        "skills": skills[:7],  # Max 7 skills budget rule
-        "revision": rev_hash,
+        "persona_id": None,
+        "title": None,
+        "skills": [],
+        "revision": None,
+        "status": decision.status.value,
+        "reason": decision.reason,
+        "candidates": decision.candidates,
     }
 
 
@@ -85,17 +125,22 @@ def prepare_delegation(args, ctx, session_store):
     - Definition: prepare_delegation resolver function.
     - Responsibility: Prepares the canonical briefing for a target role.
     - Purpose: Standardize task briefings for agents.
-    - Failure Behavior: Uses default boundaries if session is missing.
+    - Failure Behavior: Fails closed if session is missing, invalid or expired.
     - Connections: SessionStore.
     """
+    session_id = args.get("session")
+    if not session_id or not str(session_id).strip():
+        raise ValueError("Invalid session: session parameter is missing")
+
+    session = session_store.get_session(session_id) if session_store else None
+    if not session:
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     target_role = args.get("target_role", "software-engineer")
     scope = args.get("scope", "General SDLC execution")
     action = args.get("action", "Implementation")
-    session_id = args.get("session", "unknown")
-
-    session = session_store.get_session(session_id)
-    project_root = session.get("project_root", os.getcwd()) if session else os.getcwd()
-    work_item = session.get("work_item", "UNSPECIFIED") if session else "UNSPECIFIED"
+    project_root = session.get("project_root", os.getcwd())
+    work_item = session.get("work_item", "UNSPECIFIED")
 
     briefing = (
         f"1. Role: {target_role}\n"
@@ -107,17 +152,29 @@ def prepare_delegation(args, ctx, session_store):
         f"7. Anti-fabrication: Rely exclusively on real files and confirmed codebase symbols; emit NOT FOUND/UNVERIFIED if absent.\n"
         f"8. Boundaries: Strict cognitive protection (Max 8 Story Points); no unverified dependencies.\n"
     )
-    b_hash = hashlib.sha256(briefing.encode("utf-8")).hexdigest()
 
     rendered_prompt = ""
     try:
+        from scripts.runtime.activation.errors import CompilationError
         from scripts.render_agent_prompt import render_agent_prompt
         w_item = work_item if work_item != "UNSPECIFIED" else None
         rendered_prompt = render_agent_prompt(agent=target_role, work_item=w_item)
+    except CompilationError:
+        raise
     except Exception:
-        pass
+        try:
+            from scripts.render_agent_prompt import render_agent_prompt
+            rendered_prompt = render_agent_prompt(agent=target_role, work_item=None)
+        except CompilationError:
+            raise
+        except Exception:
+            rendered_prompt = briefing
 
-    return {"hash": b_hash, "briefing": briefing, "rendered_prompt": rendered_prompt}
+    if not rendered_prompt:
+        rendered_prompt = briefing
+
+    p_hash = hashlib.sha256(rendered_prompt.encode("utf-8")).hexdigest()
+    return {"hash": p_hash, "briefing": briefing, "rendered_prompt": rendered_prompt}
 
 
 def create_handoff(args, ctx, session_store, db):
@@ -126,12 +183,17 @@ def create_handoff(args, ctx, session_store, db):
     - Definition: create_handoff resolver function.
     - Responsibility: Records a handoff creation fact.
     - Purpose: Track transitions and evidence hashes.
-    - Failure Behavior: Records against test session if not found.
+    - Failure Behavior: Fails closed with ValueError if session is not found or expired.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    if not session_id or not str(session_id).strip():
+        raise ValueError("Invalid session: session parameter is missing")
+
+    session = session_store.get_session(session_id) if session_store else None
     if not session:
-        session = {"project_root": "test_root", "work_item": "test_item"}
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     h_hash = db.record_fact(
         session["project_root"],
         session["work_item"],

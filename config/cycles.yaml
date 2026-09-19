@@ -14,6 +14,7 @@ type_to_cycle:
   study: spike
   spike: spike
   incident: incident
+  new-project: new-project
 cycles:
   development:
     description: Ciclo completo de entrega de software (Spec-Driven com gates proporcionais).
@@ -27,6 +28,7 @@ cycles:
       blueprint: tasking
       scaffolding: implementation
     states:
+      - discovery
       - blueprint         # BDD: especificação nasce aqui
       - scaffolding       # testes RED pré-escritos
       - implementation    # TDD: red-green-refactor, teste falhando primeiro
@@ -60,6 +62,7 @@ cycles:
       blueprint: tasking
       scaffolding: implementation
     states:
+      - discovery
       - blueprint
       - scaffolding
       - implementation
@@ -78,6 +81,7 @@ cycles:
     # qualquer implementação governada (plano §5) — reforçado no dispatch.
     sdd_preflight: true
     states:
+      - discovery
       - blueprint
       - scaffolding
       - done
@@ -135,6 +139,7 @@ cycles:
       blueprint: tasking
       scaffolding: implementation
     states:
+      - discovery
       - blueprint
       - scaffolding
       - implementation

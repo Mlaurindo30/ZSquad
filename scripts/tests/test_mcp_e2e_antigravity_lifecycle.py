@@ -74,6 +74,8 @@ def test_mcp_lifecycle():
         res_start = send_request(proc, req_start)
         assert "result" in res_start
         assert not res_start["result"]["isError"]
+        start_payload = json.loads(res_start["result"]["content"][0]["text"])
+        session_id = start_payload["session_id"]
         
         # 3) tools/call -> get_assignment
         req_assign = {
@@ -83,7 +85,7 @@ def test_mcp_lifecycle():
             "params": {
                 "name": "get_assignment",
                 "arguments": {
-                    "session": "session123",
+                    "session": session_id,
                     "objective_digest": "digest123"
                 }
             }
@@ -100,7 +102,7 @@ def test_mcp_lifecycle():
             "params": {
                 "name": "prepare_delegation",
                 "arguments": {
-                    "session": "session123",
+                    "session": session_id,
                     "target_role": "11-test-engineer",
                     "scope": "tests",
                     "action": "execute"
@@ -119,7 +121,7 @@ def test_mcp_lifecycle():
             "params": {
                 "name": "record_execution",
                 "arguments": {
-                    "session": "session123",
+                    "session": session_id,
                     "briefing_hash": "bhash",
                     "output_refs": ["ref1"],
                     "receipt": {"status": "ok"}
@@ -138,7 +140,7 @@ def test_mcp_lifecycle():
             "params": {
                 "name": "record_evidence",
                 "arguments": {
-                    "session": "session123",
+                    "session": session_id,
                     "receipt_hash": "rhash",
                     "verifier_refs": ["vref1"]
                 }
@@ -156,7 +158,7 @@ def test_mcp_lifecycle():
             "params": {
                 "name": "evaluate_gate",
                 "arguments": {
-                    "session": "session123",
+                    "session": session_id,
                     "gate": "G5-quality",
                     "evidence_refs": ["vref1"]
                 }

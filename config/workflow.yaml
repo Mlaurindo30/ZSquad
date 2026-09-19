@@ -5,9 +5,9 @@ cadence:
   ceremonies: [refinement, planning, daily-flow-review, review, retrospective]
 flow:
   pull_system: true
-  # US-10 (2026-09-02): removido `review-qa` — estado órfão, não usado em cycles.yaml.
-  columns: [blueprint, scaffolding, implementation, code-security-review, quality-validation, governance-release, done]
+  columns: [discovery, blueprint, scaffolding, implementation, code-security-review, quality-validation, governance-release, done]
   wip_limits:
+    discovery: 3
     blueprint: 2
     scaffolding: 2
     implementation: 3
@@ -17,6 +17,7 @@ flow:
     high_or_critical_risk_total: 1
   required_metrics: [wip, throughput, work-item-age, cycle-time, blocked-time]
   phase_timeboxes:
+    discovery: 45
     blueprint: 45
     scaffolding: 30
     implementation: 90
@@ -43,6 +44,11 @@ work_item:
   ledger: documentation/delivery-ledger.md
   light_artifact: work/<project>/light/<WORK-ID>.md
 states:
+  - id: discovery
+    owner: requirements-analyst
+    collaborators: [solution-architect, agile-coach]
+    outputs: [discovery-notes.md]
+    next: blueprint
   - id: blueprint
     owner: solution-architect
     collaborators: [requirements-analyst, product-owner, ux-researcher, ui-designer, agile-coach, security-reviewer, test-engineer]

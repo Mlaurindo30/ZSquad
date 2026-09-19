@@ -5,12 +5,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+if str(ROOT / "integrations") not in sys.path:
+    sys.path.insert(0, str(ROOT / "integrations"))
 
 from agent_squad import AgentSquad, SquadError, main as squad_main
 from gate_validators import validate_G1_product, validate_G3_readiness, validate_G6_governance_release
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture

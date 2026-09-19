@@ -1,3 +1,8 @@
+"""Execution Recorder Resolvers for Agent Squad.
+
+Records receipts, evidence and failures under strict session authority.
+"""
+
 import json
 
 
@@ -7,16 +12,41 @@ def record_execution(args, ctx, session_store, db):
     - Definition: record_execution resolver function.
     - Responsibility: Records execution receipts.
     - Purpose: Auditability of executed actions.
-    - Failure Behavior: Error on malformed receipt.
+    - Failure Behavior: Fails closed on missing or invalid session.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
     if not session:
-        project_root = "test_root"
-        work_item = "test_item"
-    else:
-        project_root = session["project_root"]
-        work_item = session["work_item"]
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
+    project_root = session["project_root"]
+    work_item = session["work_item"]
+    receipt_data = args.get("receipt", {})
+
+    # Ingest through canonical ExecutionReceiptService if available
+    try:
+        from scripts.runtime.execution.service import ExecutionReceiptService
+        exec_svc = ExecutionReceiptService()
+        if isinstance(receipt_data, dict):
+            r_type = receipt_data.get("receipt_type", "EXECUTION").upper()
+            if r_type == "EXECUTION":
+                exec_svc.record_execution(
+                    work_item_id=work_item,
+                    project_id=session.get("project_id", "default"),
+                    agent_id=receipt_data.get("agent_id", session.get("agent_id", "system")),
+                    stage=receipt_data.get("stage", "IMPLEMENTATION"),
+                    instruction_hash=receipt_data.get("instruction_hash", "legacy-instruction-hash"),
+                    evidence_hash=receipt_data.get("evidence_hash", "legacy-evidence-hash"),
+                    files_modified=receipt_data.get("files_modified", []),
+                    tests_executed=receipt_data.get("tests_executed", []),
+                    test_exit_code=int(receipt_data.get("test_exit_code", 0)),
+                    diff_summary=receipt_data.get("diff_summary", "legacy-execution-summary"),
+                    receipt_id=receipt_data.get("receipt_id"),
+                )
+    except Exception:
+        pass
+
     r_hash = db.record_fact(
         project_root,
         work_item,
@@ -34,12 +64,14 @@ def record_evidence(args, ctx, session_store, db):
     - Definition: record_evidence resolver function.
     - Responsibility: Associates evidence with executions.
     - Purpose: Prove correct execution.
-    - Failure Behavior: Defaults to test session on error.
+    - Failure Behavior: Fails closed on missing or invalid session.
     - Connections: SessionStore, DBClient.
     """
-    session = session_store.get_session(args["session"])
+    session_id = args.get("session")
+    session = session_store.get_session(session_id) if session_id and session_store else None
     if not session:
-        session = {"project_root": "test_root", "work_item": "test_item"}
+        raise ValueError(f"Invalid session: session '{session_id}' not found or expired")
+
     e_hash = db.record_fact(
         session["project_root"],
         session["work_item"],
@@ -57,18 +89,22 @@ def report_failure(args, ctx, session_store, db):
     - Definition: report_failure resolver function.
     - Responsibility: Records failures and stops processes.
     - Purpose: Error handling and tracking.
-    - Failure Behavior: Records default error if missing reason.
+    - Failure Behavior: Fails closed on missing or invalid session.
     - Connections: SessionStore, DBClient.
     """
-    session_store.mark_blocked(args["session"])
-    session = session_store.sessions.get(args["session"])
+    session_id = args.get("session")
+    if not session_id:
+        raise ValueError("Invalid session: session parameter is required")
+
+    session_store.mark_blocked(session_id)
+    session = session_store.get_session(session_id) if session_store else None
     if session:
         db.record_fact(
             session["project_root"],
             session["work_item"],
             "system",
             "failure",
-            args["reason"],
+            args.get("reason", "unspecified failure"),
             "report_failure",
         )
     return {"status": "blocked"}

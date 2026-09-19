@@ -71,7 +71,7 @@ class AgentE2EWorkflowTests(unittest.TestCase):
             )
 
     def test_full_governed_sdlc_lifecycle_g1_to_g6(self):
-        item = self.squad.init_work_item("US-PAYMENT-FLOW", "medium", base=self.work_root)
+        item = self.squad.init_work_item("EPIC-PAYMENT-FLOW", "medium", base=self.work_root)
 
         memory = self.squad.record_memory(
             item, "requirements-analyst",

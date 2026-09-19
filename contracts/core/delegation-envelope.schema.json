@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/delegation-envelope.schema.json",
+  "title": "DelegationEnvelopeContracts",
+  "description": "Authoritative delegation payloads, activation packets and hierarchical work contexts.",
+  "type": "object",
+  "oneOf": [
+    {"$ref": "#/$defs/DelegationEnvelope"},
+    {"$ref": "#/$defs/ActivationPacket"},
+    {"$ref": "#/$defs/WorkContext"}
+  ],
+  "$defs": {
+    "DelegationEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delegation_id",
+        "sender_role",
+        "target_role",
+        "work_item_id",
+        "scope_summary",
+        "action_requested",
+        "compiled_instruction",
+        "instruction_hash"
+      ],
+      "properties": {
+        "delegation_id": {"type": "string", "minLength": 1},
+        "sender_role": {"type": "string", "minLength": 1},
+        "target_role": {"type": "string", "minLength": 1},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "scope_summary": {"type": "string"},
+        "action_requested": {"type": "string", "minLength": 1},
+        "compiled_instruction": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Authoritative fully rendered prompt for the specialist subagent."
+        },
+        "instruction_hash": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 digest of compiled_instruction (R0-DEL-004)."
+        }
+      }
+    },
+    "ActivationPacket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_id",
+        "agent_id",
+        "role_name",
+        "work_item_id",
+        "work_context",
+        "skill_manifest",
+        "compiled_instruction",
+        "instruction_hash",
+        "created_at"
+      ],
+      "properties": {
+        "session_id": {"type": "string", "minLength": 1},
+        "agent_id": {"type": "string", "minLength": 1},
+        "role_name": {"type": "string", "minLength": 1},
+        "work_item_id": {"type": "string", "minLength": 1},
+        "work_context": {"$ref": "#/$defs/WorkContext"},
+        "skill_manifest": {"type": "object", "additionalProperties": true},
+        "compiled_instruction": {"type": "string", "minLength": 1},
+        "instruction_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "created_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "WorkContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "project_id",
+        "current_stage",
+        "title",
+        "description",
+        "definition_of_done",
+        "acceptance_criteria",
+        "ancestors",
+        "ancestor_artifacts",
+        "active_receipts",
+        "filesystem_scope"
+      ],
+      "properties": {
+        "work_item_id": {"type": "string", "minLength": 1},
+        "project_id": {"type": "string", "minLength": 1},
+        "current_stage": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "definition_of_done": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "ancestors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["work_item_id", "kind", "title", "stage", "spec_summary"],
+            "properties": {
+              "work_item_id": {"type": "string"},
+              "kind": {"type": "string"},
+              "title": {"type": "string"},
+              "stage": {"type": "string"},
+              "spec_summary": {"type": "string"}
+            }
+          }
+        },
+        "ancestor_artifacts": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "active_receipts": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "filesystem_scope": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  }
+}

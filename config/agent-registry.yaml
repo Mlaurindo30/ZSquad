@@ -18,6 +18,11 @@ agents:
   singleton: true
   provider_primary: true
   dispatchable: false
+  capabilities:
+  - gate-verification
+  - handoff-enforcement
+  - sdlc-orchestration
+  - wip-control
 - id: requirements-analyst
   path: agents/01-requirements-analyst
   title: Requirements & Specification Engineer
@@ -25,6 +30,14 @@ agents:
   purpose: INVEST user stories, BDD/Gherkin specifications, non-functional requirements
     (NFRs), discovery briefs, edge-case elicitation.
   manifest: agents/01-requirements-analyst/skills/manifest.yaml
+  capabilities:
+  - bdd
+  - discovery
+  - gherkin
+  - invest
+  - nfr
+  - specifications
+  - user-stories
 - id: product-owner
   path: agents/02-product-owner
   title: Product Value & Discovery Strategist
@@ -32,6 +45,11 @@ agents:
   purpose: Product Goal definition, value vs risk prioritization, backlog ordering,
     scope negotiation, G1-product gate decisions.
   manifest: agents/02-product-owner/skills/manifest.yaml
+  capabilities:
+  - backlog-ordering
+  - g1-gate
+  - product-goal
+  - value-prioritization
 - id: scrum-master
   path: agents/03-scrum-master
   title: Flow & Kanban Master
@@ -39,6 +57,12 @@ agents:
   purpose: WIP limit enforcement, cycle time reduction, blocker removal, cumulative
     flow diagrams (CFD), flow efficiency.
   manifest: agents/03-scrum-master/skills/manifest.yaml
+  capabilities:
+  - cfd
+  - cycle-time
+  - flow
+  - kanban
+  - wip-limits
 - id: solution-architect
   path: agents/04-solution-architect
   title: Clean Architecture & Systems Pioneer
@@ -46,6 +70,13 @@ agents:
   purpose: C4 Model architecture, ADRs, interface contracts, fault-isolation, STRIDE
     threat modeling, rollback design, G2-design evaluation.
   manifest: agents/04-solution-architect/skills/manifest.yaml
+  capabilities:
+  - adr
+  - c4-model
+  - g2-gate
+  - interface-contracts
+  - systems-architecture
+  - threat-modeling
 - id: data-ai-architect
   path: agents/05-data-ai-architect
   title: Lakehouse & AI Systems Architect
@@ -53,6 +84,11 @@ agents:
   purpose: Medallion Lakehouse architecture, Data Mesh domain contracts, AI pipeline
     topologies, MLflow tracing, LLM safety guardrails.
   manifest: agents/05-data-ai-architect/skills/manifest.yaml
+  capabilities:
+  - data-mesh
+  - lakehouse
+  - llm-guardrails
+  - mlflow
 - id: software-engineer
   path: agents/06-software-engineer
   title: Clean Code & TDD Craftsman
@@ -60,6 +96,13 @@ agents:
   purpose: Red-Green-Refactor TDD, SOLID design principles, clean code contracts,
     component failure handling, unit & integration tests.
   manifest: agents/06-software-engineer/skills/manifest.yaml
+  capabilities:
+  - clean-code
+  - integration-testing
+  - refactoring
+  - solid
+  - tdd
+  - unit-testing
 - id: data-engineer
   path: agents/07-data-engineer
   title: Idempotent Pipeline & ETL Specialist
@@ -67,6 +110,13 @@ agents:
   purpose: Idempotent DAGs, dbt transformations, Airflow orchestration, data quality
     testing (Great Expectations), schema drift management.
   manifest: agents/07-data-engineer/skills/manifest.yaml
+  capabilities:
+  - airflow
+  - dags
+  - data-quality
+  - dbt
+  - etl
+  - schema-drift
 - id: mlops-llmops-engineer
   path: agents/08-mlops-llmops-engineer
   title: MLflow & LLM Observability Engineer
@@ -74,6 +124,12 @@ agents:
   purpose: MLflow tracking & registry, LLM tracing, prompt versioning, automated evaluation
     harnesses, data & concept drift detection, latency/token profiling.
   manifest: agents/08-mlops-llmops-engineer/skills/manifest.yaml
+  capabilities:
+  - drift-detection
+  - evaluations
+  - llm-tracing
+  - mlflow
+  - prompt-versioning
 - id: code-reviewer
   path: agents/09-code-reviewer
   title: Static Analysis & Code Quality Auditor
@@ -81,6 +137,12 @@ agents:
   purpose: Spec conformance, clean code standards, component contract verification,
     cognitive complexity, dead code removal, G4-code gate decisions.
   manifest: agents/09-code-reviewer/skills/manifest.yaml
+  capabilities:
+  - clean-code
+  - cognitive-complexity
+  - g4-code-gate
+  - sod
+  - static-analysis
 - id: security-reviewer
   path: agents/10-security-reviewer
   title: AppSec & Threat Modeling Specialist
@@ -88,6 +150,14 @@ agents:
   purpose: OWASP Top 10, ASVS 4.0, STRIDE threat modeling, dependency CVE auditing,
     CSAF 2.0 / VEX, cryptographic hygiene, G4-security evaluation.
   manifest: agents/10-security-reviewer/skills/manifest.yaml
+  capabilities:
+  - appsec
+  - cryptography
+  - csaf
+  - cve-audit
+  - g4-security-gate
+  - owasp
+  - stride
 - id: test-engineer
   path: agents/11-test-engineer
   title: Test Automation & Quality Strategist
@@ -95,6 +165,12 @@ agents:
   purpose: Test automation pyramid, contract testing (Pact), mutation testing, E2E
     test suites, edge case generation, test data management.
   manifest: agents/11-test-engineer/skills/manifest.yaml
+  capabilities:
+  - contract-testing
+  - e2e
+  - mutation-testing
+  - test-automation
+  - test-pyramid
 - id: qa-engineer
   path: agents/12-qa-engineer
   title: Exploratory & Resilience QA Specialist
@@ -102,6 +178,11 @@ agents:
   purpose: Exploratory testing, session-based test management (SBTM), boundary value
     analysis, error recovery testing, G5-quality gate evaluation.
   manifest: agents/12-qa-engineer/skills/manifest.yaml
+  capabilities:
+  - boundary-testing
+  - exploratory-testing
+  - g5-quality-gate
+  - sbtm
 - id: devops-release-engineer
   path: agents/13-devops-release-engineer
   title: GitOps & Safe Deployment Engineer
@@ -109,6 +190,14 @@ agents:
   purpose: Canary & Blue-Green deployments, automated rollback, CI/CD hardening, Terraform/IaC,
     container build security, G6-release evaluation.
   manifest: agents/13-devops-release-engineer/skills/manifest.yaml
+  capabilities:
+  - blue-green
+  - canary
+  - ci-cd
+  - g6-gate
+  - gitops
+  - iac
+  - terraform
 - id: governance-auditor
   path: agents/14-governance-auditor
   title: Compliance & Segregation of Duties Auditor
@@ -116,6 +205,12 @@ agents:
   purpose: Delivery ledger integrity, SoD enforcement, gate decision verification,
     compliance checklists, G6 gate authoring.
   manifest: agents/14-governance-auditor/skills/manifest.yaml
+  capabilities:
+  - audit
+  - compliance
+  - g6-gate
+  - ledger-integrity
+  - segregation-of-duties
 - id: ai-analyst
   path: agents/15-ai-analyst
   title: AI Evaluation & Metrics Analyst
@@ -123,6 +218,10 @@ agents:
   purpose: LLM benchmarking, hallucination rate scoring, cost vs accuracy Pareto frontiers,
     prompt sensitivity analysis, statistical significance testing.
   manifest: agents/15-ai-analyst/skills/manifest.yaml
+  capabilities:
+  - hallucination-scoring
+  - llm-benchmarking
+  - sensitivity-analysis
 - id: dba-databricks-engineer
   path: agents/16-dba-databricks-engineer
   title: Lakehouse DBA & Unity Catalog Specialist
@@ -130,6 +229,11 @@ agents:
   purpose: Delta Lake optimization, Liquid Clustering, Unity Catalog RBAC, DBSQL Serverless,
     Vector Search indexing, data retention & vacuuming.
   manifest: agents/16-dba-databricks-engineer/skills/manifest.yaml
+  capabilities:
+  - dbsql
+  - delta-lake
+  - unity-catalog
+  - vector-search
 - id: ai-engineer
   path: agents/17-ai-engineer
   title: Agentic AI & LangGraph Architect
@@ -137,6 +241,11 @@ agents:
   purpose: LangGraph multi-agent workflows, ReAct/Reflexion loops, structured tool
     calling, prompt engineering, prompt injection firewalls, token cost optimization.
   manifest: agents/17-ai-engineer/skills/manifest.yaml
+  capabilities:
+  - langgraph
+  - multi-agent
+  - prompt-engineering
+  - react-reflexion
 - id: skill-curator
   path: agents/18-skill-curator
   title: Skill Ecosystem & Sandbox Curator
@@ -144,6 +253,10 @@ agents:
   purpose: Skill vetting, sandbox checksum verification, license validation, prompt
     injection quarantine, skill catalog optimization, intake management.
   manifest: agents/18-skill-curator/skills/manifest.yaml
+  capabilities:
+  - checksum-verification
+  - quarantine
+  - skill-vetting
 - id: technical-writer
   path: agents/19-technical-writer
   title: Docs-as-Code & Diátaxis Architect
@@ -151,6 +264,10 @@ agents:
   purpose: Diátaxis framework (Tutorials, How-To Guides, Reference, Explanation),
     OpenAPI 3.1 specs, architecture documentation, delivery ledger maintenance.
   manifest: agents/19-technical-writer/skills/manifest.yaml
+  capabilities:
+  - diataxis
+  - docs-as-code
+  - openapi
 - id: ux-researcher
   path: agents/20-ux-researcher
   title: Principal UX Researcher & Cognitive Ergonomics Authority
@@ -159,6 +276,11 @@ agents:
     Analysis, Low-Fidelity Wireframes, Information Architecture, Usability Testing
     (SUS/UMUX), Friction Point Diagnosis.
   manifest: agents/20-ux-researcher/skills/manifest.yaml
+  capabilities:
+  - heuristics
+  - journey-mapping
+  - sus-umux
+  - wireframes
 - id: frontend-engineer
   path: agents/21-frontend-engineer
   title: Modern Web & Web Vitals Specialist
@@ -166,6 +288,11 @@ agents:
   purpose: Core Web Vitals (LCP, FID, CLS, INP), React Server Components (RSC), accessible
     semantic HTML, client state management, responsive UI styling.
   manifest: agents/21-frontend-engineer/skills/manifest.yaml
+  capabilities:
+  - react
+  - responsive-ui
+  - semantic-html
+  - web-vitals
 - id: backend-engineer
   path: agents/22-backend-engineer
   title: High-Throughput Distributed API Specialist
@@ -173,6 +300,11 @@ agents:
   purpose: REST/gRPC API contracts, asynchronous non-blocking I/O, database transactions
     & pooling, Redis caching, circuit breakers, distributed tracing.
   manifest: agents/22-backend-engineer/skills/manifest.yaml
+  capabilities:
+  - async-io
+  - caching
+  - database-pooling
+  - rest-grpc
 - id: data-architect
   path: agents/23-data-architect
   title: Enterprise Data Modeling Architect
@@ -180,6 +312,11 @@ agents:
   purpose: Dimensional modeling (Fact & Dimension tables), 3NF normalization, schema
     migration strategies, data lineage, master data management.
   manifest: agents/23-data-architect/skills/manifest.yaml
+  capabilities:
+  - 3nf
+  - data-lineage
+  - dimensional-modeling
+  - schema-migration
 - id: ml-engineer
   path: agents/24-ml-engineer
   title: Feature Store & Deep Learning Specialist
@@ -187,6 +324,11 @@ agents:
   purpose: Feature engineering pipelines, cross-validation, data leakage prevention,
     hyperparameter optimization, model quantization & ONNX export, inference speedup.
   manifest: agents/24-ml-engineer/skills/manifest.yaml
+  capabilities:
+  - cross-validation
+  - feature-engineering
+  - model-quantization
+  - onnx
 - id: agent-rag-engineer
   path: agents/25-agent-rag-engineer
   title: Advanced RAG & Vector Indexing Engineer
@@ -194,6 +336,12 @@ agents:
   purpose: Hybrid search (Dense + BM25), contextual chunking, Cohere/BGE reranking,
     GraphRAG, vector index tuning (HNSW), retrieval evaluation (Recall/Precision).
   manifest: agents/25-agent-rag-engineer/skills/manifest.yaml
+  capabilities:
+  - dense-bm25
+  - graphrag
+  - hybrid-search
+  - reranking
+  - vector-indexing
 - id: sre-observability-engineer
   path: agents/26-sre-observability-engineer
   title: Reliability & OpenTelemetry Engineer
@@ -201,6 +349,12 @@ agents:
   purpose: SLI/SLO/SLA definition, Error Budgets, OpenTelemetry (Traces, Metrics,
     Logs), Prometheus/Grafana, incident response playbooks, chaos engineering.
   manifest: agents/26-sre-observability-engineer/skills/manifest.yaml
+  capabilities:
+  - chaos
+  - grafana
+  - opentelemetry
+  - prometheus
+  - sli-slo-sla
 - id: platform-engineer
   path: agents/27-platform-engineer
   title: Internal Developer Platform (IDP) Architect
@@ -208,6 +362,11 @@ agents:
   purpose: Internal Developer Platforms (IDP), Kubernetes Operator patterns, reproducible
     dev environments, developer self-service, cognitive load reduction.
   manifest: agents/27-platform-engineer/skills/manifest.yaml
+  capabilities:
+  - dev-environments
+  - developer-self-service
+  - idp
+  - kubernetes-operators
 - id: performance-engineer
   path: agents/28-performance-engineer
   title: Tail Latency & Load Testing Specialist
@@ -215,6 +374,11 @@ agents:
   purpose: p95/p99 tail latency, high-concurrency load testing (k6/Gatling), CPU/memory
     profiling, flame graphs, throughput limits, bottleneck isolation.
   manifest: agents/28-performance-engineer/skills/manifest.yaml
+  capabilities:
+  - flame-graphs
+  - k6-gatling
+  - profiling
+  - tail-latency
 - id: integration-engineer
   path: agents/29-integration-engineer
   title: Enterprise Integration Patterns Specialist
@@ -222,6 +386,11 @@ agents:
   purpose: Enterprise Integration Patterns (EIP), idempotent consumers, webhooks,
     message queues (Kafka/RabbitMQ), correlation IDs, retry/dead-letter queues.
   manifest: agents/29-integration-engineer/skills/manifest.yaml
+  capabilities:
+  - eip
+  - idempotent-consumers
+  - message-queues
+  - webhooks
 - id: brand-strategist
   path: agents/30-brand-strategist
   title: Brand Gap Pioneer & Radical Differentiation Strategist
@@ -229,6 +398,10 @@ agents:
   purpose: The Brand Gap, Zag radical differentiation, The Onlyness Test, Brand Commitment
     Matrix, Brand Tribes.
   manifest: agents/30-brand-strategist/skills/manifest.yaml
+  capabilities:
+  - brand-gap
+  - brand-matrix
+  - zag-differentiation
 - id: direct-response-copywriter
   path: agents/31-direct-response-copywriter
   title: Direct Response & Conversion Copywriter
@@ -236,6 +409,10 @@ agents:
   purpose: Five Stages of Customer Awareness, Headline Formulas, Hook-Story-Offer,
     Core Value Propositions, Call-to-Action (CTA) optimization.
   manifest: agents/31-direct-response-copywriter/skills/manifest.yaml
+  capabilities:
+  - cta-optimization
+  - customer-awareness
+  - headline-formulas
 - id: growth-marketing-strategist
   path: agents/32-growth-marketing-strategist
   title: Growth Engineering & Pirate Metrics Strategist
@@ -243,6 +420,11 @@ agents:
   purpose: Pirate Metrics (AARRR), Growth Loops, Product-Led Growth (PLG), Onboarding
     Activation Rate, Retention Cohorts, Viral Coefficients.
   manifest: agents/32-growth-marketing-strategist/skills/manifest.yaml
+  capabilities:
+  - growth-loops
+  - pirate-metrics
+  - plg
+  - retention
 - id: storytelling-strategist
   path: agents/33-storytelling-strategist
   title: Narrative Architecture & StoryBrand Strategist
@@ -250,6 +432,10 @@ agents:
   purpose: StoryBrand 7-Part Framework (SB7), Duarte Sparkline (What Is vs What Could
     Be), Executive Pitch Decks, Product Vision Narratives.
   manifest: agents/33-storytelling-strategist/skills/manifest.yaml
+  capabilities:
+  - pitch-decks
+  - sparkline
+  - storybrand
 - id: offensive-cyber-operator
   path: agents/34-offensive-cyber-operator
   title: Adversary Emulation & Penetration Testing Specialist
@@ -257,6 +443,11 @@ agents:
   purpose: MITRE ATT&CK adversary emulation, penetration testing, automated exploit
     validation, privilege escalation, fuzzing, red team reporting.
   manifest: agents/34-offensive-cyber-operator/skills/manifest.yaml
+  capabilities:
+  - exploit-validation
+  - mitre-attack
+  - penetration-testing
+  - red-team
 - id: swarm-consensus-coordinator
   path: agents/35-swarm-consensus-coordinator
   title: Byzantine Swarm & Distributed Consensus Coordinator
@@ -265,6 +456,11 @@ agents:
     quorum, distributed key generation (DKG), neural pattern learning, swarm topology
     optimization.
   manifest: agents/35-swarm-consensus-coordinator/skills/manifest.yaml
+  capabilities:
+  - bft
+  - crdt
+  - dkg
+  - quorum
 - id: fullstack-engineer
   path: agents/37-fullstack-engineer
   title: Principal Fullstack & Next.js Systems Engineer
@@ -272,6 +468,11 @@ agents:
   purpose: Next.js App Router, React Server Components, Server Actions, tRPC/Zod type
     contracts, Prisma/Drizzle ORMs, Fastify/Node.js backends, TDD/BDD automated testing.
   manifest: agents/37-fullstack-engineer/skills/manifest.yaml
+  capabilities:
+  - fullstack
+  - nextjs
+  - prisma-drizzle
+  - trpc-zod
 - id: mobile-engineer
   path: agents/38-mobile-engineer
   title: Principal Mobile & Cross-Platform Engineer
@@ -280,6 +481,12 @@ agents:
     Offline-First sync, SQLite/WatermelonDB, Push Notifications, Biometrics, Mobile
     CI/CD.
   manifest: agents/38-mobile-engineer/skills/manifest.yaml
+  capabilities:
+  - flutter
+  - kotlin-compose
+  - mobile
+  - react-native
+  - swift-swiftui
 - id: cloud-architect
   path: agents/39-cloud-architect
   title: Principal Multi-Cloud & Distributed Systems Architect
@@ -288,6 +495,12 @@ agents:
     Kubernetes, Service Mesh, Zero-Trust Network Architecture, FinOps, Multi-Region
     DR, Chaos Engineering.
   manifest: agents/39-cloud-architect/skills/manifest.yaml
+  capabilities:
+  - finops
+  - multi-cloud
+  - terraform
+  - well-architected
+  - zero-trust
 - id: agile-coach
   path: agents/40-agile-coach
   title: Enterprise Agile Coach & Flow Master
@@ -296,6 +509,12 @@ agents:
     sizing, Little's Law, Cumulative Flow Diagrams (CFD), DORA metrics, Continuous
     Refinement, Retrospectives.
   manifest: agents/40-agile-coach/skills/manifest.yaml
+  capabilities:
+  - cfd
+  - dora-metrics
+  - fibonacci-sizing
+  - littles-law
+  - max-8-sp
 - id: ui-designer
   path: agents/41-ui-designer
   title: Principal UI Designer & Design Systems Architect
@@ -303,3 +522,8 @@ agents:
   purpose: Atomic Design, W3C Design Tokens, fluid responsive typography, micro-interactions,
     WCAG 2.2 AAA contrast, component variant matrices, CSS Architecture.
   manifest: agents/41-ui-designer/skills/manifest.yaml
+  capabilities:
+  - atomic-design
+  - css-architecture
+  - design-tokens
+  - wcag-aaa

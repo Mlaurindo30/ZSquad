@@ -822,7 +822,8 @@ def test_e2e_cli_development_cycle_to_done(squad, project_root, capsys):
     assert rc == 0, err
     assert _read_state(item) == "implementation"
 
-    # 7. implementation -> code-security-review (sem gate associado ao estado).
+    # 7. implementation -> code-security-review (com evidências de execução obrigatórias - R0-LIFE-005).
+    _write_execution_evidence(item)
     rc, out, err = _run_cli(capsys, project_root, "advance-state", "--work-item", work_id)
     assert rc == 0, err
     assert _read_state(item) == "code-security-review"

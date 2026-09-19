@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/host-capabilities.schema.json",
+  "title": "HostCapabilities",
+  "description": "Abstract runtime capabilities matrix decoupling agent orchestration from host platform names.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "has_subagent_dispatch",
+    "has_filesystem_write",
+    "has_terminal_execution",
+    "has_mcp_client",
+    "has_background_tasks",
+    "max_token_context"
+  ],
+  "properties": {
+    "has_subagent_dispatch": {
+      "type": "boolean",
+      "description": "Whether the host can spawn nested autonomous subagents."
+    },
+    "has_filesystem_write": {
+      "type": "boolean",
+      "description": "Whether the host provides workspace file creation and editing tools."
+    },
+    "has_terminal_execution": {
+      "type": "boolean",
+      "description": "Whether the host allows shell command execution in the workspace."
+    },
+    "has_mcp_client": {
+      "type": "boolean",
+      "description": "Whether the host runtime supports Model Context Protocol tool routing."
+    },
+    "has_background_tasks": {
+      "type": "boolean",
+      "description": "Whether the host can launch and monitor long-running background tasks."
+    },
+    "max_token_context": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Token window ceiling supported by the client runtime."
+    }
+  }
+}

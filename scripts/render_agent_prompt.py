@@ -64,6 +64,19 @@ def _build_cache_key(
             item_path = root_dir / work_item
         key.append(_get_mtime(item_path / "status.yaml"))
         key.append(_get_mtime(item_path / "epic.md"))
+        try:
+            curr = item_path.parent
+            for _ in range(4):
+                if curr == root_dir or curr == root_dir / "work":
+                    break
+                if (curr / "status.yaml").is_file():
+                    key.append(_get_mtime(curr / "status.yaml"))
+                for sname in ["epic.md", "feature.md", "story.md"]:
+                    if (curr / sname).is_file():
+                        key.append(_get_mtime(curr / sname))
+                curr = curr.parent
+        except Exception:
+            pass
     else:
         key.extend([0.0, 0.0])
     return tuple(key)
@@ -143,19 +156,46 @@ def _build_skills_section(packet: dict[str, Any], squad: AgentSquad) -> str:
 
 
 def _build_work_item_context(packet: dict[str, Any], squad: AgentSquad) -> str | None:
-    """Constrói o bloco de contexto contendo o status.yaml do work item."""
+    """Constrói o bloco de contexto contendo o status.yaml do work item e a hierarquia ancestral."""
     if "work_item" not in packet:
         return None
     item_dir = squad._work_base() / packet["work_item"]
     status_file = item_dir / "status.yaml"
     if not status_file.exists():
         return None
-    return (
-        f"# CONTEXTO DO WORK ITEM ({packet['work_item']})\n\n"
-        f"## STATUS DO WORK ITEM\n```yaml\n"
-        f"{status_file.read_text(encoding='utf-8')}\n"
-        f"```\n"
-    )
+
+    sections = [
+        f"# CONTEXTO DO WORK ITEM ({packet['work_item']})\n\n",
+        f"## STATUS DO WORK ITEM\n```yaml\n",
+        f"{status_file.read_text(encoding='utf-8')}\n",
+        f"```\n",
+    ]
+
+    # Resolver hierarquia e carregar contexto dos ancestrais (EPIC -> FEATURE -> STORY)
+    try:
+        from scripts.runtime.work_items.paths import WorkItemPathResolver
+        from scripts.runtime.work_items.hierarchy import HierarchyContextResolver
+
+        project_id = squad.project_name or "default"
+        path_resolver = WorkItemPathResolver(squad.root, project_id)
+        hierarchy_resolver = HierarchyContextResolver(path_resolver)
+        ancestor_chain = hierarchy_resolver.get_ancestor_chain(item_dir)
+        if ancestor_chain:
+            sections.append("\n## LINHAGEM E ESPECIFICAÇÕES ANCESTRAIS\n")
+            for anc in ancestor_chain:
+                anc_path = Path(anc["path"])
+                anc_type = anc.get("type", "unknown").upper()
+                anc_id = anc.get("id", anc_path.name)
+                sections.append(f"- **{anc_type}**: {anc_id}\n")
+                for spec_name in ["epic.md", "feature.md", "story.md", "acceptance-criteria.md"]:
+                    spec_file = anc_path / spec_name
+                    if spec_file.is_file():
+                        content = spec_file.read_text(encoding="utf-8")[:1500]
+                        sections.append(f"  * Especificação ancestral ({spec_name}):\n```markdown\n{content}\n```\n")
+    except Exception:
+        pass
+
+    return "".join(sections)
 
 
 def _build_azure_devops_section(packet: dict[str, Any], squad: Any) -> str:

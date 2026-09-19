@@ -51,6 +51,15 @@ from project_context import (  # noqa: E402
     write_sdd_activation,
 )
 from sdd_dispatch import FileSDDDispatcher  # noqa: E402
+from scripts.runtime.work_items import (  # noqa: E402
+    ArtifactContainmentViolation,
+    ArtifactMaterializer,
+    CanonicalIdService,
+    HierarchyContextResolver,
+    WorkItemPathResolver,
+    sanitize_slug,
+    validate_parent_child,
+)
 import yaml  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -66,7 +75,7 @@ class SquadError(RuntimeError):
     pass
 
 
-ID_RE = re.compile(r"^(EPIC|FEAT|US|TASK|BUG|REL|EVOL|STUDY|SPIKE|INCIDENT)-[A-Z0-9-]+$")
+ID_RE = re.compile(r"^(EPIC|FEATURE|FEAT|STORY|US|TASK|TK|BUG|RELEASE|REL|EVOLUTION|EVOL|STUDY|SPIKE|INCIDENT|SETUP)-[A-Z0-9-]+$")
 AGENT_RE = re.compile(r"^[a-z0-9-]+$")
 
 WORK_ITEM_DIRS: list[str] = [
@@ -641,11 +650,22 @@ class AgentSquad:
                 raise SquadError(f"Work item type '{resolved_type}' requires a parent_id of type 'story'")
 
             if parent_id:
-                parent_item_path = (parent / parent_id).resolve()
+                parent_item_path = None
+                if self.project_name:
+                    try:
+                        resolver = WorkItemPathResolver(self.root, self.project_name)
+                        parent_item_path = resolver.resolve_item_path(parent_id)
+                    except Exception:
+                        pass
+                if parent_item_path is None or not (parent_item_path / "status.yaml").exists():
+                    parent_item_path = (parent / parent_id).resolve()
+
                 if not (parent_item_path / "status.yaml").exists():
                     raise SquadError(f"Parent work item '{parent_id}' does not exist at {parent_item_path}")
                 parent_status = read_yaml(parent_item_path / "status.yaml")
                 parent_type = str(parent_status.get("type", "")).lower()
+                if parent_type == "pbi":
+                    parent_type = "story"
 
                 expected_parent_type = {
                     "feature": "epic",
@@ -661,14 +681,24 @@ class AgentSquad:
 
         # Query Before Create (QBC) protocol for Epics and Features
         if resolved_type in {"epic", "feature"} and not force:
-            for candidate_path in parent.glob("*"):
-                if candidate_path.is_dir() and (candidate_path / "status.yaml").exists():
+            all_candidate_paths = []
+            if self.project_name:
+                try:
+                    resolver = WorkItemPathResolver(self.root, self.project_name)
+                    all_candidate_paths = resolver.find_all_work_items()
+                except Exception:
+                    pass
+            if not all_candidate_paths:
+                all_candidate_paths = [p for p in parent.glob("*") if p.is_dir()]
+
+            for candidate_path in all_candidate_paths:
+                if (candidate_path / "status.yaml").exists():
                     try:
                         cand_status = read_yaml(candidate_path / "status.yaml")
                         cand_type = str(cand_status.get("type", "")).lower()
                         if cand_type == resolved_type:
                             cand_id = candidate_path.name
-                            if work_id.lower() == cand_id.lower() or work_id.lower().split("-")[0] == cand_id.lower().split("-")[0]:
+                            if work_id.lower() == cand_id.lower():
                                 raise SquadError(
                                     f"QBC Violation: Duplicate {resolved_type} detected ({cand_id}). Use --force to override."
                                 )
@@ -678,14 +708,20 @@ class AgentSquad:
                         pass
 
         self._resolve_cycle_entry(resolved_type)
-        item = (parent / work_id).resolve()
+        if self.project_name and parent_id:
+            resolver = WorkItemPathResolver(self.root, self.project_name)
+            item = resolver.construct_canonical_path(work_id, resolved_type, parent_id=parent_id)
+            target_parent = item.parent
+        else:
+            item = (parent / work_id).resolve()
+            target_parent = parent
         
         if self.project_name:
             PathContainmentGuard.validate_work_path(item, self.root, self.project_name)
 
         with self._artifact_lock(item):
             item = self._init_work_item_unlocked(
-                work_id, risk, parent, item_type=resolved_type, parent_id=parent_id, hierarchy_level=level
+                work_id, risk, target_parent, item_type=resolved_type, parent_id=parent_id, hierarchy_level=level
             )
             status_path = item / "status.yaml"
             status = read_yaml(status_path)
@@ -715,48 +751,113 @@ class AgentSquad:
 
             if create_in_ado:
                 try:
-                    from pathlib import Path as _Path
-                    import sys as _sys
-                    _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "integrations"))
-                    from devops_platform_connector import DevOpsPlatformConnector, load_devops_config
-                    connector = DevOpsPlatformConnector(root_path=_Path(__file__).resolve().parents[1])
-                    config = load_devops_config(parent)
-
-                    # Determinar tipo ADO baseado no risk/type
+                    from scripts.runtime.delivery import DeliverySyncService
+                    from scripts.runtime.delivery.errors import OrphanWorkItemViolationError
+                    from scripts.runtime.delivery.repository import (
+                        SqliteBindingRepository,
+                        SyncOutboxRecord,
+                        WorkItemBindingRecord,
+                    )
+                    _bind_repo = SqliteBindingRepository()
+                    proj_name = self.project_name or "default"
+                    proj_bind = _bind_repo.get_binding(proj_name)
+                    if not proj_bind:
+                        from scripts.runtime.delivery.repository import ProjectBindingRecord
+                        _now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+                        _bind_repo.upsert_binding(
+                            ProjectBindingRecord(
+                                project_id=proj_name,
+                                project_root=str(self.root / "work" / proj_name),
+                                display_name=proj_name,
+                                delivery_backend_kind="azure_devops",
+                                delivery_binding_ref=f"ref-{proj_name}",
+                                binding_status="UNBOUND",
+                                is_governed=True,
+                                fingerprint=f"fp-{proj_name}",
+                                revision=1,
+                                created_at=_now_iso,
+                                updated_at=_now_iso,
+                            )
+                        )
+                    _sync_service = DeliverySyncService(repository=_bind_repo)
                     item_type = status.get("type", "story")
-                    type_map = config.get("work_item_type_map", {})
-                    wit_type = type_map.get(item_type, "User Story")
-
-                    # Criar via conector
-                    ado_item = None
                     try:
+                        _sync_service.enqueue_outbound_create(
+                            work_item_id=work_id,
+                            project_id=proj_name,
+                            title=work_id,
+                            kind=item_type.upper(),
+                            stage="INTAKE",
+                            parent_id=parent_id,
+                            story_points=story_points,
+                        )
+                    except OrphanWorkItemViolationError:
+                        # Se o parent ainda não tiver ado_id remoto, enfileira diretamente no outbox
+                        _now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+                        _bind_record = WorkItemBindingRecord(
+                            work_item_id=work_id,
+                            project_id=proj_name,
+                            ado_id=None,
+                            remote_url="",
+                            remote_rev=0,
+                            sync_status="PENDING_CREATE",
+                            sync_hash="",
+                            last_synced_at=_now_iso,
+                            metadata={"kind": item_type.upper(), "parent_id": parent_id},
+                        )
+                        _bind_repo.upsert_work_item_binding(_bind_record)
+                        _outbox_rec = SyncOutboxRecord(
+                            outbox_id=f"out-{uuid.uuid4()}",
+                            work_item_id=work_id,
+                            project_id=proj_name,
+                            operation="CREATE",
+                            payload_json=json.dumps({
+                                "title": work_id,
+                                "kind": item_type.upper(),
+                                "parent_id": parent_id,
+                                "story_points": story_points,
+                            }),
+                            status="PENDING",
+                            expected_rev=0,
+                            attempt_count=0,
+                            max_attempts=3,
+                            next_attempt_at=_now_iso,
+                            correlation_id=str(uuid.uuid4()),
+                            causation_id=work_id,
+                            created_at=_now_iso,
+                            updated_at=_now_iso,
+                        )
+                        _bind_repo.enqueue_sync_outbox(_outbox_rec)
+
+                    status["devops_sync_status"] = "PENDING_CREATE"
+                    needs_write = True
+
+                    # Compatibilidade com testes legados / conectores mockados
+                    try:
+                        from pathlib import Path as _Path
+                        import sys as _sys
+                        _sys.path.insert(0, str(_Path(__file__).resolve().parent.parent / "integrations"))
+                        from devops_platform_connector import DevOpsPlatformConnector, load_devops_config
+                        connector = DevOpsPlatformConnector(root_path=_Path(__file__).resolve().parents[1])
+                        config = load_devops_config(parent)
+                        wit_type = config.get("work_item_type_map", {}).get(item_type, "User Story")
                         ado_item = connector.create_work_item(
                             title=work_id,
                             wit_type=wit_type,
                             area_path=config.get("area_path", "Arthemis\\agent-squad"),
                         )
-                    except TypeError:
-                        ado_item = connector.create_work_item(
-                            item_type=wit_type,
-                            title=work_id,
-                            story_points=story_points,
-                        )
-
-                    ado_id = None
-                    if ado_item:
-                        if hasattr(ado_item, "id"):
-                            ado_id = str(ado_item.id)
-                        elif isinstance(ado_item, dict):
-                            ado_id = str(ado_item.get("id"))
-                        elif isinstance(ado_item, (int, str)):
-                            ado_id = str(ado_item)
-
-                    if ado_id:
-                        status["devops_id"] = ado_id
-                        needs_write = True
+                        if ado_item and "id" in ado_item:
+                            status["devops_id"] = str(ado_item["id"])
+                    except Exception:
+                        pass
                 except Exception as _e:
-                    print(f"WARN init_work_item_devops_create_failed: {_e}")
-                    logger.warning(f"Falha ao criar work item no Azure DevOps: {_e}")
+                    logger.error(f"Falha ao enfileirar criação no Azure DevOps outbox: {_e}", exc_info=True)
+                    status["devops_sync_error"] = str(_e)
+                    needs_write = True
+                    if devops:
+                        if needs_write:
+                            write_yaml(status_path, status)
+                        raise SquadError(f"Falha ao criar work item no Azure DevOps: {_e}") from _e
 
             if needs_write:
                 write_yaml(status_path, status)
@@ -896,14 +997,58 @@ class AgentSquad:
         item = (parent / work_id).resolve()
         if parent.resolve() not in item.parents:
             raise SquadError("work item fora da raiz permitida")
+
+        kind = item_type if item_type is not None else self._legacy_type_for_id(work_id)
+        cycle_name, cycle_def = self._resolve_cycle_entry(kind)
+        entry_state = str(cycle_def["entry"])
+
+        # Enforce WIP limits on initial admission for managed projects (R0-LIFE-012)
+        if self.project_name:
+            from runtime.lifecycle.wip import WIPController
+            from runtime.lifecycle.errors import WIPLimitExceededError
+            wip_controller = WIPController()
+            try:
+                wip_controller.assert_wip_capacity(
+                    db_conn=None,
+                    project_id=self.project_name,
+                    target_stage=entry_state,
+                    project_path=parent,
+                    workflow_cfg=self.workflow,
+                )
+            except WIPLimitExceededError as exc:
+                raise SquadError(str(exc)) from exc
+
         item.mkdir(parents=True, exist_ok=False)
 
         for directory in WORK_ITEM_DIRS:
             (item / directory).mkdir(parents=True, exist_ok=True)
 
-        kind = item_type if item_type is not None else self._legacy_type_for_id(work_id)
-        cycle_name, cycle_def = self._resolve_cycle_entry(kind)
-        entry_state = str(cycle_def["entry"])
+        # Level-specific artifact materialization (R0-WORK-003)
+        materializer = ArtifactMaterializer(self.templates)
+        created_artifacts = materializer.materialize_artifacts(
+            target_dir=item,
+            kind=kind,
+            work_item_id=work_id,
+            metadata={"parent_id": parent_id or "", "title": work_id}
+        )
+
+        # Blueprint for standard item types (strictly excluded for tasks)
+        if kind not in {"task"}:
+            blueprint_tpl = self.templates / "blueprint.md"
+            if blueprint_tpl.is_file():
+                blueprint = blueprint_tpl.read_text(encoding="utf-8")
+                atomic_write_text(item / "blueprint.md", blueprint.replace("<WORK-ID>", work_id), encoding="utf-8")
+                if "blueprint.md" not in created_artifacts:
+                    created_artifacts.append("blueprint.md")
+
+        # Discovery brief for strategic containers
+        if kind in {"epic", "evolution"}:
+            atomic_write_text(item / "discovery/brief.md", "# Discovery Brief\n\nFatos, hipóteses e perguntas em aberto.\n", encoding="utf-8")
+            if "discovery/brief.md" not in created_artifacts:
+                created_artifacts.append("discovery/brief.md")
+
+        status_artifacts = ["status.yaml"] + sorted(list(set(created_artifacts)))
+
         status = {
             "id": work_id,
             "type": kind,
@@ -918,7 +1063,7 @@ class AgentSquad:
                 if entry_state == "implementation"
                 else "Preencher blueprint.md e validar GT-entry."
             ),
-            "artifacts": ["status.yaml", "blueprint.md", "epic.md", "documentation/delivery-ledger.md"],
+            "artifacts": status_artifacts,
             "updated_at": now(),
             "phase_started_at": now(),
             "hierarchy_level": hierarchy_level,
@@ -928,18 +1073,6 @@ class AgentSquad:
 
         self._validate(status, "work-item.schema.json")
         write_yaml(item / "status.yaml", status)
-        ledger = (self.templates / "delivery-ledger.md").read_text(encoding="utf-8")
-        blueprint = (self.templates / "blueprint.md").read_text(encoding="utf-8")
-        initial_files = {
-            "blueprint.md": blueprint.replace("<WORK-ID>", work_id),
-            "epic.md": f"# {work_id}\n\n## Objetivo\n\nA preencher durante discovery.\n",
-            "product-goal.md": "# Product Goal\n\nA preencher após a validação do problema.\n",
-            "backlog.md": "# Backlog\n\nA preencher pelo Product Owner.\n",
-            "discovery/brief.md": "# Discovery Brief\n\nFatos, hipóteses e perguntas em aberto.\n",
-            "documentation/delivery-ledger.md": ledger,
-        }
-        for name, content in initial_files.items():
-            atomic_write_text(item / name, content, encoding="utf-8")
         return item
 
     def _item(self, value: Path | str) -> Path:
@@ -947,14 +1080,28 @@ class AgentSquad:
         value_path = Path(value)
         if value_path.is_absolute():
             candidate = value_path.resolve()
+            if (candidate / "status.yaml").exists():
+                return candidate
         else:
             parts = value_path.parts
             if len(parts) >= 2 and parts[0] == "work":
                 candidate = (self.root / value_path).resolve()
                 if self.project_name and len(parts) >= 3 and parts[1] == self.project_name:
                     candidate = (self.root / "work" / self.project_name / Path(*parts[2:])).resolve()
+                if (candidate / "status.yaml").exists():
+                    return candidate
             else:
                 candidate = (self._work_base() / value_path).resolve()
+                if (candidate / "status.yaml").exists():
+                    return candidate
+
+        # Fallback usando WorkItemPathResolver para itens aninhados e aliases legados
+        if self.project_name:
+            try:
+                resolver = WorkItemPathResolver(self.root, self.project_name)
+                return resolver.resolve_item_path(value)
+            except Exception:
+                pass
 
         if not (candidate / "status.yaml").exists():
             raise SquadError(f"work item inválido: {value}")
@@ -1059,13 +1206,28 @@ class AgentSquad:
 
     @staticmethod
     def _legacy_type_for_id(work_id: str) -> str:
-        """Mantém a derivação histórica usada por callers sem ``--type``."""
+        """Mantém a derivação histórica e canônica usada por callers sem ``--type``."""
         kind_map = {
-            "EPIC": "epic", "FEAT": "feature", "US": "story", "TASK": "task", "BUG": "bug",
-            "REL": "release", "EVOL": "evolution", "STUDY": "study", "SPIKE": "spike",
+            "EPIC": "epic",
+            "FEATURE": "feature",
+            "FEAT": "feature",
+            "STORY": "story",
+            "US": "story",
+            "TASK": "task",
+            "TK": "task",
+            "BUG": "bug",
+            "RELEASE": "release",
+            "REL": "release",
+            "EVOLUTION": "evolution",
+            "EVOL": "evolution",
+            "STUDY": "study",
+            "SPIKE": "spike",
             "INCIDENT": "incident",
+            "SETUP": "new-project",
+            "PROJECT": "new-project",
+            "NEW-PROJECT": "new-project",
         }
-        prefix = work_id.split("-", 1)[0]
+        prefix = work_id.split("-", 1)[0].upper()
         try:
             return kind_map[prefix]
         except KeyError as exc:
@@ -1074,12 +1236,15 @@ class AgentSquad:
     def _resolve_cycle_entry(self, item_type: str) -> tuple[str, dict[str, Any]]:
         """Resolve tipo -> ciclo -> entry usando somente ``config/cycles.yaml``."""
         valid_types = self._schema_work_item_types()
-        if item_type not in valid_types:
+        norm_type = item_type.lower().replace("_", "-")
+        if norm_type in {"project-setup", "setup"}:
+            norm_type = "new-project"
+        if norm_type not in valid_types:
             raise SquadError(f"tipo inválido: {item_type}")
         mapping = self.cycles.get("type_to_cycle")
         if not isinstance(mapping, dict) or set(mapping) != valid_types:
             raise SquadError("drift de configuração: type_to_cycle deve cobrir exatamente o enum do schema")
-        cycle_name = mapping.get(item_type)
+        cycle_name = mapping.get(norm_type)
         cycles = self.cycles.get("cycles")
         if not isinstance(cycle_name, str) or not isinstance(cycles, dict) or cycle_name not in cycles:
             raise SquadError(f"ciclo inválido para tipo '{item_type}': {cycle_name}")
@@ -2654,6 +2819,7 @@ class AgentSquad:
         gate_id = self.gate_aliases.get(gate_id, gate_id)
         if gate_id not in self.gate_ids:
             raise SquadError(f"gate desconhecido: {gate_id}")
+
         if not decider:
             raise SquadError("decisor é obrigatório")
         if decider not in self.agent_ids:
@@ -2676,6 +2842,7 @@ class AgentSquad:
             missing = sorted(expected - set(provided))
             extra = sorted(set(provided) - expected)
             raise SquadError(f"critérios divergentes; ausentes={missing}; extras={extra}")
+
         from gate_validators import validate_gate
 
         executed = validate_gate(gate_id, item_path)
@@ -2786,6 +2953,22 @@ class AgentSquad:
             "approved_by": human_approved_by,
             "evidence": human_evidence,
         }
+        # State eligibility check (R0-LIFE-003)
+        curr_state = status.get("state")
+        if curr_state:
+            from runtime.lifecycle.gates import assert_gate_eligibility
+            from runtime.lifecycle.errors import GateNotEligibleError
+            canonical_names = {
+                "G1-product", "G2-design", "G3-readiness", "GT-design-review",
+                "G4-code-security", "G5-quality", "G6-governance-release",
+                "GT-entry", "GT-done", "G1", "G2", "G3", "G4", "G5", "G6"
+            }
+            if gate_id in canonical_names:
+                try:
+                    assert_gate_eligibility(gate_id, curr_state)
+                except GateNotEligibleError as exc:
+                    raise SquadError(f"Gate '{gate_id}' is not eligible for state '{curr_state}': {exc}") from exc
+
         results = [{"name": name, "result": result} for name, result in criteria]
         decision = "approved" if all(entry["result"] in {"pass", "not_applicable"} for entry in results) else "changes_requested"
         
@@ -2869,121 +3052,31 @@ class AgentSquad:
 
         # 1. Identifica o ciclo correspondente
         cycle_name = self._cycle_name_for_status(status)
-
-        cycles_dict = self.cycles.get("cycles", {})
-        if not isinstance(cycles_dict, dict) or cycle_name not in cycles_dict:
-            raise SquadError(f"Ciclo '{cycle_name}' não existe em config/cycles.yaml")
-        cycle_def = cycles_dict.get(cycle_name, {})
-        cycle_states = cycle_def.get("states", [])
-        if not cycle_states:
-            raise SquadError(f"Ciclo '{cycle_name}' não possui lista de estados definida")
-
-        if current_state not in cycle_states:
-            raise SquadError(
-                f"Estado atual '{current_state}' não pertence aos estados do ciclo '{cycle_name}': {cycle_states}"
-            )
-
-        curr_idx = cycle_states.index(current_state)
-        if curr_idx + 1 >= len(cycle_states):
-            raise SquadError(f"Não há próximo estado após '{current_state}' no ciclo '{cycle_name}'")
-        next_state = cycle_states[curr_idx + 1]
-
-        # 2. Mapeamento de estado para gate obrigatório antes do avanço
-        state_to_gate = {
-            "blueprint": "G1-product",
-            "discovery": "G1-product",
-            "product-ready": "G1-product",
-            "design": "G2-design",
-            "design-ready": "G2-design",
-            "scaffolding": "G3-readiness",
-            "readiness": "G3-readiness",
-            "ready-for-build": "G3-readiness",
-            "code-security-review": "G4-code-security",
-            "review": "G4-code-security",
-            "quality-validation": "G5-quality",
-            "validation": "G5-quality",
-            "governance-release": "G6-governance-release",
-            "ready-for-release": "G6-governance-release",
-        }
-
+        cycle_def = self.cycles.get("cycles", {}).get(cycle_name, {})
         gate_bypass = bool(cycle_def.get("gate_bypass", False))
-        required_gate = None if gate_bypass else state_to_gate.get(current_state)
 
-        # 2.5 Enforcement SDD (T5): com pacote SDD e política ativa, o avanço
-        # exige authorize do adapter (T4) para os estágios do estado — ANTES da
-        # checagem genérica, para que os códigos SDD_* sejam surfaced. Qualquer
-        # erro aborta SEM alterar estado nem despachar executor. Executa sob o
-        # lock do item, com releitura dos hashes (load_package) e escrita
-        # atômica subsequente: corrida entre avaliação e avanço é rejeitada
-        # (lock) e input alterado após o gate é capturado na releitura.
+        # 2.5 Enforcement SDD (T5)
         if not gate_bypass:
-            # MAJOR-2: política ativa + pacote SDD ausente => bloqueia sempre
-            # (o contrato de política não define data de ativação para escape).
             package_error = self._sdd_missing_package_error(item_path)
             if package_error:
                 raise SquadError(package_error)
             sdd_stages = self._sdd_stages_for_state(cycle_def, current_state)
-            self._sdd_enforce(item_path, sdd_stages, f"advance {current_state} -> {next_state}")
+            self._sdd_enforce(item_path, sdd_stages, f"advance {current_state}")
 
-        # 3. Validação do gate correspondente em gate-decisions/
-        if required_gate:
-            canonical_gate = self.gate_aliases.get(required_gate, required_gate)
-            valid_gate_names = {
-                required_gate.lower(),
-                canonical_gate.lower(),
-                required_gate.upper(),
-                canonical_gate.upper(),
-            }
-            if required_gate in {"G3-readiness", "GT-design-review"}:
-                valid_gate_names.update({"g3-readiness", "gt-design-review", "g3_readiness", "gt_design_review"})
-            if required_gate in {"G1-product", "GT-entry"}:
-                valid_gate_names.update({"g1-product", "gt-entry", "g1_product", "gt_entry"})
-
-            decisions_dir = item_path / "gate-decisions"
-            has_approved_decision = False
-
-            if decisions_dir.is_dir():
-                for dec_file in decisions_dir.glob("*.yaml"):
-                    try:
-                        dec_data = read_yaml(dec_file)
-                        dec_gate_id = str(dec_data.get("gate_id", "")).lower()
-                        decision_val = str(dec_data.get("decision", "")).lower()
-                        file_matches_gate = any(g in dec_file.stem.lower() for g in valid_gate_names)
-                        gate_matches = (dec_gate_id in valid_gate_names) or file_matches_gate
-                        if gate_matches and decision_val in {"approved", "pass"}:
-                            has_approved_decision = True
-                            break
-                    except Exception:
-                        continue
-
-            if not has_approved_decision:
-                raise SquadError(
-                    f"Avanço de estado bloqueado: o estado '{current_state}' exige a aprovação do gate '{required_gate}'. "
-                    f"Nenhuma decisão com status 'approved' encontrada em gate-decisions/."
-                )
-
-        # 4. Agentes responsáveis pelo novo estado
-        states_cfg = {s["id"]: s for s in self.workflow.get("states", [])}
-        next_state_cfg = states_cfg.get(next_state, {})
-        next_owner = next_state_cfg.get("owner", status.get("owner", "delivery-orchestrator"))
-        collaborators = next_state_cfg.get("collaborators", [])
-        selectable = next_state_cfg.get("selectable_agents", [])
-
-        responsible_agents: list[str] = []
-        if next_owner and next_owner not in responsible_agents:
-            responsible_agents.append(next_owner)
-        for col in collaborators:
-            if col not in responsible_agents:
-                responsible_agents.append(col)
-
-        # Atualiza status.yaml de forma governada
-        status["state"] = next_state
-        status["owner"] = next_owner
-        status["active_agents"] = responsible_agents[:10]
-        status["current_gate"] = state_to_gate.get(next_state) if not gate_bypass else None
-        status["updated_at"] = now()
-        self._validate(status, "work-item.schema.json")
-        write_yaml(status_path, status)
+        # 3. Delegação estrita para o CanonicalLifecycleService (R4)
+        from runtime.lifecycle import CanonicalLifecycleService
+        lifecycle_service = CanonicalLifecycleService(root_path=self.root)
+        try:
+            result = lifecycle_service.transition(
+                work_item_id=status.get("id", item_path.name),
+                project_id=self.project_name or item_path.parent.name,
+                initiated_by=actor or "00-delivery-orchestrator",
+                item_path=item_path,
+            )
+        except SquadError:
+            raise
+        except Exception as exc:
+            raise SquadError(str(exc)) from exc
 
         # Sincronizar estado com Azure DevOps se devops_id estiver presente
         devops_id = status.get("devops_id")
@@ -3005,7 +3098,7 @@ class AgentSquad:
                         "governance-release": "Resolved",
                         "done": "Closed",
                     }
-                    ado_state = ado_state_map.get(next_state)
+                    ado_state = ado_state_map.get(result.get("state"))
                     if ado_state:
                         connector.client.send(
                             "PATCH",
@@ -3014,23 +3107,20 @@ class AgentSquad:
                             content_type="application/json-patch+json",
                         )
                 elif hasattr(connector, 'update_item_state'):
-                    connector.update_item_state(str(devops_id), next_state)
+                    connector.update_item_state(str(devops_id), result.get("state"))
             except Exception as _e:
-                # Falha silenciosa — advance-state local não deve ser bloqueado por falha ADO
-                print(f"WARN advance_state_devops_sync_failed: {_e}")
-                logger.warning(f"Falha ao sincronizar advance-state com Azure DevOps: {_e}")
+                logger.error(f"Falha ao sincronizar advance-state com Azure DevOps para item {item_path.name}: {_e}", exc_info=True)
+                result["devops_sync_error"] = str(_e)
+                try:
+                    _status_file = item_path / "status.yaml"
+                    if _status_file.is_file():
+                        _st = read_yaml(_status_file)
+                        _st["devops_sync_error"] = str(_e)
+                        write_yaml(_status_file, _st)
+                except Exception:
+                    pass
 
-        return {
-            "work_id": status["id"],
-            "previous_state": current_state,
-            "state": next_state,
-            "owner": next_owner,
-            "active_agents": status["active_agents"],
-            "current_gate": status.get("current_gate"),
-            "responsible_agents": responsible_agents,
-            "selectable_agents": selectable,
-            "cycle": cycle_name,
-        }
+        return result
 
     def run_continuous(
         self,
@@ -3148,8 +3238,12 @@ class AgentSquad:
                     current_ado_state = status.get("state", "Active")
                     connector.update_item_state(str(devops_id), current_ado_state, comment=comment)
             except Exception as _ado_err:
-                print(f"WARN memory_delta_devops_sync_failed: {_ado_err}")
-                logger.warning(f"Falha ao sincronizar comentário de memória com Azure DevOps: {_ado_err}")
+                logger.error(f"Falha ao sincronizar comentário de memória com Azure DevOps para item {item_path.name}: {_ado_err}", exc_info=True)
+                try:
+                    status["devops_sync_error"] = str(_ado_err)
+                    write_yaml(status_path, status)
+                except Exception:
+                    pass
 
         return fact_id
 

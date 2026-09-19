@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsquad.io/schemas/core/project-binding.schema.json",
+  "title": "ProjectBinding",
+  "description": "Defines local project repository binding and delivery backend configuration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_id",
+    "project_root",
+    "display_name",
+    "delivery_backend_kind",
+    "delivery_binding_ref"
+  ],
+  "properties": {
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique canonical project identifier."
+    },
+    "project_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Absolute filesystem root path of the project."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable name of the project or product."
+    },
+    "delivery_backend_kind": {
+      "type": "string",
+      "enum": ["AZURE_DEVOPS", "LOCAL_ONLY", "MOCK"],
+      "description": "Type of external ALM delivery backend."
+    },
+    "delivery_binding_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Key or reference to specific backend credentials/configuration."
+    },
+    "is_governed": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this project enforces strict gate and SoD compliance."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Optional project-level metadata."
+    }
+  },
+  "$defs": {
+    "AdoBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "organization_url",
+        "team_project",
+        "area_path",
+        "iteration_path",
+        "assigned_team"
+      ],
+      "properties": {
+        "organization_url": {
+          "type": "string",
+          "pattern": "^https://",
+          "description": "Base HTTPS URL of the Azure DevOps organization."
+        },
+        "team_project": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Azure DevOps Team Project container name."
+        },
+        "area_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Target board area path."
+        },
+        "iteration_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Current sprint or release iteration path."
+        },
+        "assigned_team": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Target team name owning the backlog."
+        },
+        "repository_name": {
+          "type": ["string", "null"],
+          "description": "Optional Azure Repos Git repository name."
+        },
+        "service_hook_secret_ref": {
+          "type": ["string", "null"],
+          "description": "Vault or environment reference for Webhook HMAC validation (SEC-R1-01)."
+        }
+      }
+    }
+  }
+}

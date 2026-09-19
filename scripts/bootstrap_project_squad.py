@@ -90,27 +90,6 @@ def bootstrap(
             f"{runtime_root.as_posix()}/config/cycles.yaml.\n",
             encoding="utf-8",
         )
-
-    # Scaffold MCP Plugin configuration for Antigravity host
-    mcp_plugin_dir = target_root / ".agents" / "plugins" / "agent-squad"
-    mcp_plugin_dir.mkdir(parents=True, exist_ok=True)
-    
-    import json
-    mcp_config = {
-        "mcpServers": {
-            "agent-squad-core": {
-                "command": "python",
-                "args": [(runtime_root / "integrations" / "mcp_runner.py").as_posix()],
-                "env": {
-                    "SQUAD_RUNTIME": runtime_root.as_posix(),
-                    "AZURE_DEVOPS_MCP_TRANSPORT": "azure-devops",
-                    "PYTHONUNBUFFERED": "1"
-                }
-            }
-        }
-    }
-    (mcp_plugin_dir / "mcp_config.json").write_text(json.dumps(mcp_config, indent=2), encoding="utf-8")
-
     return destination
 
 
