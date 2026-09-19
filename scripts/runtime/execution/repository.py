@@ -289,3 +289,18 @@ class ExecutionReceiptRepository:
                     "created_at": row["created_at"],
                 })
             return results
+
+    def get_work_item_current_stage(self, work_item_id: str) -> Optional[str]:
+        """Queries current lifecycle stage for work item from work_item_lifecycle_state if present."""
+        with self.connection() as conn:
+            try:
+                cursor = conn.execute(
+                    "SELECT current_stage FROM work_item_lifecycle_state WHERE work_item_id = ?",
+                    (work_item_id,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return row[0]
+            except sqlite3.OperationalError:
+                return None
+        return None

@@ -65,6 +65,26 @@ class ExecutionReceiptService:
         self.repository = repository or ExecutionReceiptRepository(db_path)
         self.event_store = event_store
 
+    def _assert_stage_binding(
+        self,
+        work_item_id: str,
+        expected_stage: LifecycleStage,
+        passed_stage: LifecycleStage,
+        receipt_name: str,
+    ) -> None:
+        if passed_stage != expected_stage:
+            raise InvalidEvidenceError(
+                f"{receipt_name} must be recorded for stage '{expected_stage.value}', got '{passed_stage.value}'"
+            )
+        current_stage_str = self.repository.get_work_item_current_stage(work_item_id)
+        if current_stage_str:
+            current_stage_norm = normalize_stage(current_stage_str)
+            if current_stage_norm != expected_stage:
+                raise StageIneligibleError(
+                    f"Work item '{work_item_id}' is currently in stage '{current_stage_norm.value}'. "
+                    f"Cannot record {receipt_name} which belongs exclusively to stage '{expected_stage.value}'."
+                )
+
     def record_execution(
         self,
         work_item_id: str,
@@ -80,6 +100,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> ExecutionReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.IMPLEMENTATION, canonical_stage, "ExecutionReceipt")
         r_id = receipt_id or f"rcpt-exec-{uuid.uuid4().hex[:12]}"
 
         receipt = ExecutionReceipt(
@@ -115,6 +136,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> ReviewReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.CODE_REVIEW, canonical_stage, "ReviewReceipt")
         r_id = receipt_id or f"rcpt-rev-{uuid.uuid4().hex[:12]}"
 
         receipt = ReviewReceipt(
@@ -166,6 +188,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> SecurityReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.SECURITY_REVIEW, canonical_stage, "SecurityReceipt")
         r_id = receipt_id or f"rcpt-sec-{uuid.uuid4().hex[:12]}"
 
         receipt = SecurityReceipt(
@@ -219,6 +242,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> TestReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.TEST_VALIDATION, canonical_stage, "TestReceipt")
         r_id = receipt_id or f"rcpt-tst-{uuid.uuid4().hex[:12]}"
 
         receipt = TestReceipt(
@@ -271,6 +295,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> QAReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.QA_VALIDATION, canonical_stage, "QAReceipt")
         r_id = receipt_id or f"rcpt-qa-{uuid.uuid4().hex[:12]}"
 
         receipt = QAReceipt(
@@ -321,6 +346,7 @@ class ExecutionReceiptService:
         receipt_id: Optional[str] = None,
     ) -> GovernanceReceipt:
         canonical_stage = normalize_stage(stage)
+        self._assert_stage_binding(work_item_id, LifecycleStage.GOVERNANCE_RELEASE, canonical_stage, "GovernanceReceipt")
         r_id = receipt_id or f"rcpt-gov-{uuid.uuid4().hex[:12]}"
 
         receipt = GovernanceReceipt(

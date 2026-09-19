@@ -636,17 +636,17 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
         )
         self.assertEqual(exec_receipt.receipt_type, ReceiptType.EXECUTION.value)
 
-        # Lifecycle advances from implementation to code-security-review
-        t_review = self.lifecycle_service.transition(
+        # 8.2 Lifecycle advances from implementation to code-review
+        t_code_rev = self.lifecycle_service.transition(
             work_item_id="STORY-001",
             project_id=project_id,
-            target_stage=LifecycleStage.SECURITY_REVIEW,
+            target_stage=LifecycleStage.CODE_REVIEW,
             initiated_by="00-delivery-orchestrator",
         )
-        self.assertEqual(t_review["state"], "code-security-review")
+        self.assertEqual(t_code_rev["canonical_state"], LifecycleStage.CODE_REVIEW.value)
 
-        # 8.2 Independent Code Review (09-code-reviewer) - SoD enforced
-        self.execution_service.record_review(
+        # Independent Code Review (09-code-reviewer) - SoD enforced
+        rev_receipt = self.execution_service.record_review(
             work_item_id="STORY-001",
             project_id=project_id,
             agent_id="09-code-reviewer",
@@ -658,9 +658,19 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
             comments=["Clean implementation conforming to SOLID and TDD."],
             reviewed_files=["src/payments/authorizer.py"],
         )
+        self.assertEqual(rev_receipt.verdict, "APPROVED")
 
-        # 8.3 Independent Security Review (10-security-reviewer)
-        self.execution_service.record_security(
+        # 8.3 Lifecycle advances from code-review to security-review
+        t_sec_rev = self.lifecycle_service.transition(
+            work_item_id="STORY-001",
+            project_id=project_id,
+            target_stage=LifecycleStage.SECURITY_REVIEW,
+            initiated_by="00-delivery-orchestrator",
+        )
+        self.assertEqual(t_sec_rev["canonical_state"], LifecycleStage.SECURITY_REVIEW.value)
+
+        # Independent Security Review (10-security-reviewer)
+        sec_receipt = self.execution_service.record_security(
             work_item_id="STORY-001",
             project_id=project_id,
             agent_id="10-security-reviewer",
@@ -673,24 +683,27 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
             sast_tool_output="Bandit 0 issues found.",
             verdict="APPROVED",
         )
+        self.assertEqual(sec_receipt.verdict, "APPROVED")
 
-        # Exit code-security-review requires G4-code-security approval
+        # Exit security-review requires G4-code-security approval
         self._record_gate_decision(
             item_path=story_path,
             gate_id=GateId.G4_CODE_SECURITY,
             decider="10-security-reviewer",
             decision="approved",
         )
-        t_qa = self.lifecycle_service.transition(
+
+        # 8.4 Lifecycle advances from security-review to test-validation
+        t_test_val = self.lifecycle_service.transition(
             work_item_id="STORY-001",
             project_id=project_id,
-            target_stage=LifecycleStage.QA_VALIDATION,
+            target_stage=LifecycleStage.TEST_VALIDATION,
             initiated_by="00-delivery-orchestrator",
         )
-        self.assertEqual(t_qa["state"], "quality-validation")
+        self.assertEqual(t_test_val["canonical_state"], LifecycleStage.TEST_VALIDATION.value)
 
-        # 8.4 Independent Test Validation (11-test-engineer)
-        self.execution_service.record_test(
+        # Independent Test Validation (11-test-engineer)
+        tst_receipt = self.execution_service.record_test(
             work_item_id="STORY-001",
             project_id=project_id,
             agent_id="11-test-engineer",
@@ -703,9 +716,20 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
             failed_tests=0,
             coverage_percentage=94.5,
         )
+        self.assertEqual(tst_receipt.failed_tests, 0)
+        self.assertEqual(tst_receipt.passed_tests, 12)
 
-        # 8.5 Independent QA Validation (12-qa-engineer)
-        self.execution_service.record_qa(
+        # 8.5 Lifecycle advances from test-validation to qa-validation
+        t_qa_val = self.lifecycle_service.transition(
+            work_item_id="STORY-001",
+            project_id=project_id,
+            target_stage=LifecycleStage.QA_VALIDATION,
+            initiated_by="00-delivery-orchestrator",
+        )
+        self.assertEqual(t_qa_val["canonical_state"], LifecycleStage.QA_VALIDATION.value)
+
+        # Independent QA Validation (12-qa-engineer)
+        qa_receipt = self.execution_service.record_qa(
             work_item_id="STORY-001",
             project_id=project_id,
             agent_id="12-qa-engineer",
@@ -717,6 +741,7 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
             bdd_exit_code=0,
             verdict="APPROVED",
         )
+        self.assertEqual(qa_receipt.verdict, "APPROVED")
 
         # Exit quality-validation requires G5-quality approval
         self._record_gate_decision(
@@ -725,15 +750,17 @@ class TestR14ProductionPipelineE2E(unittest.TestCase):
             decider="12-qa-engineer",
             decision="approved",
         )
+
+        # 8.6 Lifecycle advances from qa-validation to governance-release
         t_gov = self.lifecycle_service.transition(
             work_item_id="STORY-001",
             project_id=project_id,
             target_stage=LifecycleStage.GOVERNANCE_RELEASE,
             initiated_by="00-delivery-orchestrator",
         )
-        self.assertEqual(t_gov["state"], "governance-release")
+        self.assertEqual(t_gov["canonical_state"], LifecycleStage.GOVERNANCE_RELEASE.value)
 
-        # 8.6 Governance Release Sign-off (14-governance-auditor)
+        # Governance Release Sign-off (14-governance-auditor)
         gov_receipt = self.execution_service.record_governance(
             work_item_id="STORY-001",
             project_id=project_id,

@@ -197,20 +197,29 @@ class CanonicalLifecycleService:
 
         if raw_states and current_state_str in raw_states:
             curr_idx = raw_states.index(current_state_str)
+            curr_policy = get_stage_policy(current_stage)
             if target_stage is not None:
                 target_str = stage_to_legacy_name(target_stage) if isinstance(target_stage, LifecycleStage) else str(target_stage)
+                try:
+                    target_norm = normalize_stage(target_stage if isinstance(target_stage, LifecycleStage) else target_str)
+                except Exception as exc:
+                    return False, str(exc)
                 if target_str in raw_states:
                     next_legacy_state = target_str
+                    next_stage = target_norm
+                elif target_norm in curr_policy.allowed_next_stages or target_norm in CANONICAL_CYCLES.get(cycle_name, []):
+                    next_legacy_state = target_str
+                    next_stage = target_norm
                 else:
-                    next_legacy_state = stage_to_legacy_name(normalize_stage(target_stage))
+                    return False, f"Target stage '{target_str}' is not part of cycle '{cycle_name}'"
             else:
                 if curr_idx + 1 >= len(raw_states):
                     return False, f"No subsequent stage after '{current_state_str}' in cycle '{cycle_name}'"
                 next_legacy_state = raw_states[curr_idx + 1]
-            try:
-                next_stage = normalize_stage(next_legacy_state)
-            except Exception as exc:
-                return False, str(exc)
+                try:
+                    next_stage = normalize_stage(next_legacy_state)
+                except Exception as exc:
+                    return False, str(exc)
         else:
             try:
                 cycle_stages = get_cycle_stages(cycle_name, self.cycles_cfg)
@@ -218,15 +227,22 @@ class CanonicalLifecycleService:
                 return False, str(exc)
 
             if current_stage not in cycle_stages:
-                return False, f"Current stage '{current_stage.value}' not in cycle '{cycle_name}'"
+                canonical_stages = CANONICAL_CYCLES.get(cycle_name, [])
+                if current_stage in canonical_stages:
+                    cycle_stages = canonical_stages
+                elif current_stage == LifecycleStage.INTAKE and len(cycle_stages) > 0:
+                    cycle_stages = [LifecycleStage.INTAKE] + [s for s in cycle_stages if s != LifecycleStage.INTAKE]
+                else:
+                    return False, f"Current stage '{current_stage.value}' not in cycle '{cycle_name}'"
 
             curr_idx = cycle_stages.index(current_stage)
+            curr_policy = get_stage_policy(current_stage)
             if target_stage is not None:
                 try:
                     next_stage = normalize_stage(target_stage)
                 except Exception as exc:
                     return False, str(exc)
-                if next_stage not in cycle_stages:
+                if next_stage not in cycle_stages and next_stage not in curr_policy.allowed_next_stages:
                     return False, f"Target stage '{next_stage.value}' is not part of cycle '{cycle_name}'"
             else:
                 if curr_idx + 1 >= len(cycle_stages):
@@ -245,16 +261,29 @@ class CanonicalLifecycleService:
             return False, t_reason
 
         # 5. Check Receipts
-        if current_stage == LifecycleStage.IMPLEMENTATION:
-            if not self._has_execution_proof(path, work_item_id=work_item_id):
-                return False, "Execution receipt or proof required before exiting implementation"
-        elif current_stage in {LifecycleStage.CODE_REVIEW, LifecycleStage.SECURITY_REVIEW}:
-            if not self._has_review_proof(path, work_item_id=work_item_id):
-                return False, "Review receipt or reviewer proof required before exiting review"
-
-        # 6. Check Governance Gate prerequisites
         cycle_def = self.cycles_cfg.get("cycles", {}).get(cycle_name, {})
         gate_bypass = bool(cycle_def.get("gate_bypass", False))
+        if not gate_bypass:
+            if current_stage == LifecycleStage.IMPLEMENTATION:
+                if not self._has_execution_proof(path, work_item_id=work_item_id):
+                    return False, "Execution receipt or proof required before exiting implementation"
+            elif current_stage == LifecycleStage.CODE_REVIEW:
+                if not self._has_review_proof(path, work_item_id=work_item_id):
+                    return False, "Review receipt or reviewer proof required before exiting code review"
+            elif current_stage == LifecycleStage.SECURITY_REVIEW:
+                if not self._has_security_proof(path, work_item_id=work_item_id):
+                    return False, "Security receipt or security proof required before exiting security review"
+            elif current_stage == LifecycleStage.TEST_VALIDATION:
+                if not self._has_test_proof(path, work_item_id=work_item_id):
+                    return False, "Test receipt or test proof required before exiting test validation"
+            elif current_stage == LifecycleStage.QA_VALIDATION:
+                if not self._has_qa_proof(path, work_item_id=work_item_id):
+                    return False, "QA receipt or QA proof required before exiting QA validation"
+            elif current_stage == LifecycleStage.GOVERNANCE_RELEASE:
+                if not self._has_governance_proof(path, work_item_id=work_item_id):
+                    return False, "Governance receipt or governance proof required before exiting governance release"
+
+        # 6. Check Governance Gate prerequisites
         if not gate_bypass:
             # Check G1/G2 on blueprint exit to scaffolding
             is_blueprint_exit = (
@@ -350,32 +379,41 @@ class CanonicalLifecycleService:
 
         if raw_states and current_state_str in raw_states:
             curr_idx = raw_states.index(current_state_str)
+            curr_policy = get_stage_policy(current_stage)
             if target_stage is not None:
                 target_str = stage_to_legacy_name(target_stage) if isinstance(target_stage, LifecycleStage) else str(target_stage)
-                if target_str not in raw_states:
+                target_norm = normalize_stage(target_stage if isinstance(target_stage, LifecycleStage) else target_str)
+                if target_str in raw_states:
+                    target_idx = raw_states.index(target_str)
+                    if target_idx == curr_idx:
+                        raise InvalidTransitionError(f"Transição inválida: estado de destino '{target_str}' é idêntico ao estado atual")
+                    if target_idx < curr_idx:
+                        if target_norm not in curr_policy.allowed_next_stages:
+                            raise InvalidTransitionError(f"Transição arbitrária para trás de '{current_state_str}' para '{target_str}' rejeitada")
+                    elif target_idx > curr_idx + 1:
+                        if target_norm not in curr_policy.allowed_next_stages:
+                            raise InvalidTransitionError(f"Salto arbitrário para o futuro de '{current_state_str}' para '{target_str}' rejeitado")
+                    next_legacy_state = target_str
+                    next_stage = target_norm
+                elif target_norm in curr_policy.allowed_next_stages or target_norm in CANONICAL_CYCLES.get(cycle_name, []):
+                    next_legacy_state = target_str
+                    next_stage = target_norm
+                else:
                     raise InvalidTransitionError(f"Estado de destino '{target_str}' não pertence aos estados do ciclo '{cycle_name}'")
-                target_idx = raw_states.index(target_str)
-                if target_idx == curr_idx:
-                    raise InvalidTransitionError(f"Transição inválida: estado de destino '{target_str}' é idêntico ao estado atual")
-                target_norm = normalize_stage(target_str)
-                if target_idx < curr_idx:
-                    curr_policy = get_stage_policy(current_stage)
-                    if target_norm not in curr_policy.allowed_next_stages:
-                        raise InvalidTransitionError(f"Transição arbitrária para trás de '{current_state_str}' para '{target_str}' rejeitada")
-                elif target_idx > curr_idx + 1:
-                    raise InvalidTransitionError(f"Salto arbitrário para o futuro de '{current_state_str}' para '{target_str}' rejeitado")
-                next_legacy_state = target_str
             else:
                 if curr_idx + 1 >= len(raw_states):
                     raise InvalidTransitionError(
                         f"Não há próximo estado após '{current_state_str}' no ciclo '{cycle_name}'"
                     )
                 next_legacy_state = raw_states[curr_idx + 1]
-            next_stage = normalize_stage(next_legacy_state)
+                next_stage = normalize_stage(next_legacy_state)
         else:
             cycle_stages = get_cycle_stages(cycle_name, self.cycles_cfg)
             if current_stage not in cycle_stages:
-                if current_stage == LifecycleStage.INTAKE and len(cycle_stages) > 0:
+                canonical_stages = CANONICAL_CYCLES.get(cycle_name, [])
+                if current_stage in canonical_stages:
+                    cycle_stages = canonical_stages
+                elif current_stage == LifecycleStage.INTAKE and len(cycle_stages) > 0:
                     cycle_stages = [LifecycleStage.INTAKE] + [s for s in cycle_stages if s != LifecycleStage.INTAKE]
                 else:
                     raise InvalidTransitionError(
@@ -383,28 +421,31 @@ class CanonicalLifecycleService:
                     )
 
             curr_idx = cycle_stages.index(current_stage)
+            curr_policy = get_stage_policy(current_stage)
             if target_stage is not None:
                 next_stage = normalize_stage(target_stage)
-                if next_stage not in cycle_stages:
+                if next_stage not in cycle_stages and next_stage not in curr_policy.allowed_next_stages:
                     raise InvalidTransitionError(
                         f"Target stage '{next_stage.value}' is not part of cycle '{cycle_name}'"
                     )
-                target_idx = cycle_stages.index(next_stage)
-                if target_idx == curr_idx:
-                    raise InvalidTransitionError(f"Transição inválida: estado de destino '{next_stage.value}' é idêntico ao estado atual")
-                if target_idx < curr_idx:
-                    curr_policy = get_stage_policy(current_stage)
-                    if next_stage not in curr_policy.allowed_next_stages:
-                        raise InvalidTransitionError(f"Transição arbitrária para trás de '{current_stage.value}' para '{next_stage.value}' rejeitada")
-                elif target_idx > curr_idx + 1:
-                    raise InvalidTransitionError(f"Salto arbitrário para o futuro de '{current_stage.value}' para '{next_stage.value}' rejeitado")
+                if next_stage in cycle_stages:
+                    target_idx = cycle_stages.index(next_stage)
+                    if target_idx == curr_idx:
+                        raise InvalidTransitionError(f"Transição inválida: estado de destino '{next_stage.value}' é idêntico ao estado atual")
+                    if target_idx < curr_idx:
+                        if next_stage not in curr_policy.allowed_next_stages:
+                            raise InvalidTransitionError(f"Transição arbitrária para trás de '{current_stage.value}' para '{next_stage.value}' rejeitada")
+                    elif target_idx > curr_idx + 1:
+                        if next_stage not in curr_policy.allowed_next_stages:
+                            raise InvalidTransitionError(f"Salto arbitrário para o futuro de '{current_stage.value}' para '{next_stage.value}' rejeitado")
+                next_legacy_state = stage_to_legacy_name(next_stage)
             else:
                 if curr_idx + 1 >= len(cycle_stages):
                     raise InvalidTransitionError(
                         f"Não há próximo estado após '{current_state_str}' no ciclo '{cycle_name}'"
                     )
                 next_stage = cycle_stages[curr_idx + 1]
-            next_legacy_state = stage_to_legacy_name(next_stage)
+                next_legacy_state = stage_to_legacy_name(next_stage)
 
         # 1. Enforce Timebox
         timebox_ok, t_reason = self._check_timebox_status(status_data, current_stage, now=now)
@@ -463,16 +504,37 @@ class CanonicalLifecycleService:
             current_state_str == "mitigation"
             or gate_bypass
         )
-        if current_stage == LifecycleStage.IMPLEMENTATION and not is_incident_mitigation:
-            if not self._has_execution_proof(path, work_item_id=work_item_id):
-                raise LifecycleError(
-                    "Avanço bloqueado: saindo de 'implementation' exige ExecutionReceipt / execution receipt / prova de execução válida (execution proof)."
-                )
-        elif current_stage in {LifecycleStage.CODE_REVIEW, LifecycleStage.SECURITY_REVIEW}:
-            if not self._has_review_proof(path, work_item_id=work_item_id):
-                raise LifecycleError(
-                    "Avanço bloqueado: saindo de revisão de código exige ReviewReceipt / review receipt / reviewer execution comprovada."
-                )
+        if not gate_bypass:
+            if current_stage == LifecycleStage.IMPLEMENTATION and not is_incident_mitigation:
+                if not self._has_execution_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de 'implementation' exige ExecutionReceipt / execution receipt / prova de execução válida (execution proof)."
+                    )
+            elif current_stage == LifecycleStage.CODE_REVIEW:
+                if not self._has_review_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de revisão de código exige ReviewReceipt com aprovação válida (SoD)."
+                    )
+            elif current_stage == LifecycleStage.SECURITY_REVIEW and not is_incident_mitigation:
+                if not self._has_security_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de revisão de segurança exige SecurityReceipt com aprovação."
+                    )
+            elif current_stage == LifecycleStage.TEST_VALIDATION:
+                if not self._has_test_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de teste/validação exige TestReceipt com testes aprovados."
+                    )
+            elif current_stage == LifecycleStage.QA_VALIDATION:
+                if not self._has_qa_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de QA exige QAReceipt com aprovação."
+                    )
+            elif current_stage == LifecycleStage.GOVERNANCE_RELEASE:
+                if not self._has_governance_proof(path, work_item_id=work_item_id):
+                    raise LifecycleError(
+                        "Avanço bloqueado: saindo de governança exige GovernanceReceipt em conformidade."
+                    )
 
         # 4. Enforce Handoff Acknowledgement (PENDING blocks!)
         handoff_req = require_handoff or bool(status_data.get("handoff_required", False))
@@ -609,8 +671,8 @@ class CanonicalLifecycleService:
         if work_item_id:
             try:
                 exec_receipt = self.execution_service.repository.get_latest_execution_receipt(work_item_id)
-                if exec_receipt and exec_receipt.test_exit_code == 0 and exec_receipt.diff_summary:
-                    return True
+                if exec_receipt:
+                    return exec_receipt.test_exit_code == 0 and bool(exec_receipt.diff_summary)
             except Exception:
                 pass
 
@@ -648,8 +710,7 @@ class CanonicalLifecycleService:
                     # Enforce SoD: Author cannot review own work!
                     if exec_receipt and latest["agent_id"] == exec_receipt.agent_id:
                         return False
-                    if latest.get("verdict") == "APPROVED":
-                        return True
+                    return latest.get("verdict") == "APPROVED"
             except Exception:
                 pass
 
@@ -668,6 +729,115 @@ class CanonicalLifecycleService:
             for e in evidence_dir.glob("*"):
                 if "review" in e.name.lower():
                     return True
+        return False
+
+    def _has_security_proof(self, item_path: Path, work_item_id: Optional[str] = None) -> bool:
+        """Verifies if work item has registered security proof or security receipts."""
+        if work_item_id:
+            try:
+                secs = self.execution_service.repository.get_validation_receipts(
+                    work_item_id=work_item_id,
+                    receipt_type="SECURITY",
+                )
+                if secs:
+                    latest = secs[0]
+                    return latest.get("verdict") == "APPROVED"
+            except Exception:
+                pass
+
+        receipts_dir = item_path / "receipts"
+        if receipts_dir.is_dir():
+            for r in receipts_dir.glob("*"):
+                if "security" in r.stem.lower() or "sec" in r.stem.lower():
+                    return True
+        if (item_path / "security-scan.md").is_file():
+            return True
+        reviews_dir = item_path / "reviews"
+        if reviews_dir.is_dir() and any(reviews_dir.glob("*")):
+            return True
+        evaluation_dir = item_path / "evaluation"
+        if evaluation_dir.is_dir() and any(evaluation_dir.glob("*.json")):
+            return True
+        return False
+
+    def _has_test_proof(self, item_path: Path, work_item_id: Optional[str] = None) -> bool:
+        """Verifies if work item has registered test proof or test receipts."""
+        if work_item_id:
+            try:
+                tests = self.execution_service.repository.get_validation_receipts(
+                    work_item_id=work_item_id,
+                    receipt_type="TEST",
+                )
+                if tests:
+                    latest = tests[0]
+                    det = latest.get("details", {})
+                    failed = det.get("failed_tests", 0)
+                    return latest.get("verdict") == "APPROVED" and failed == 0
+            except Exception:
+                pass
+
+        receipts_dir = item_path / "receipts"
+        if receipts_dir.is_dir():
+            for r in receipts_dir.glob("*"):
+                if "test" in r.stem.lower():
+                    return True
+        if (item_path / "test-results.xml").is_file():
+            return True
+        evaluation_dir = item_path / "evaluation"
+        if evaluation_dir.is_dir() and any(evaluation_dir.glob("*.json")):
+            return True
+        return False
+
+    def _has_qa_proof(self, item_path: Path, work_item_id: Optional[str] = None) -> bool:
+        """Verifies if work item has registered QA proof or QA receipts."""
+        if work_item_id:
+            try:
+                qas = self.execution_service.repository.get_validation_receipts(
+                    work_item_id=work_item_id,
+                    receipt_type="QA",
+                )
+                if qas:
+                    latest = qas[0]
+                    return latest.get("verdict") == "APPROVED"
+            except Exception:
+                pass
+
+        receipts_dir = item_path / "receipts"
+        if receipts_dir.is_dir():
+            for r in receipts_dir.glob("*"):
+                if "qa" in r.stem.lower():
+                    return True
+        if (item_path / "qa-acceptance-report.md").is_file():
+            return True
+        evaluation_dir = item_path / "evaluation"
+        if evaluation_dir.is_dir() and any(evaluation_dir.glob("*.json")):
+            return True
+        return False
+
+    def _has_governance_proof(self, item_path: Path, work_item_id: Optional[str] = None) -> bool:
+        """Verifies if work item has registered governance proof or governance receipts."""
+        if work_item_id:
+            try:
+                govs = self.execution_service.repository.get_validation_receipts(
+                    work_item_id=work_item_id,
+                    receipt_type="GOVERNANCE",
+                )
+                if govs:
+                    latest = govs[0]
+                    return latest.get("verdict") == "COMPLIANT"
+            except Exception:
+                pass
+
+        receipts_dir = item_path / "receipts"
+        if receipts_dir.is_dir():
+            for r in receipts_dir.glob("*"):
+                if "governance" in r.stem.lower() or "gov" in r.stem.lower():
+                    return True
+        if (item_path / "release-manifest.yaml").is_file() or (item_path / "audit-ledger.json").is_file():
+            return True
+        evaluation_dir = item_path / "evaluation"
+        if evaluation_dir.is_dir() and any(evaluation_dir.glob("*.json")):
+            return True
         return False
 
     def _check_handoff_status(
