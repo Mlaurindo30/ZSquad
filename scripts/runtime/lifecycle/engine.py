@@ -375,9 +375,12 @@ class CanonicalLifecycleService:
         else:
             cycle_stages = get_cycle_stages(cycle_name, self.cycles_cfg)
             if current_stage not in cycle_stages:
-                raise InvalidTransitionError(
-                    f"Estado atual '{current_state_str}' não pertence aos estados do ciclo '{cycle_name}': {[s.value for s in cycle_stages]}"
-                )
+                if current_stage == LifecycleStage.INTAKE and len(cycle_stages) > 0:
+                    cycle_stages = [LifecycleStage.INTAKE] + [s for s in cycle_stages if s != LifecycleStage.INTAKE]
+                else:
+                    raise InvalidTransitionError(
+                        f"Estado atual '{current_state_str}' não pertence aos estados do ciclo '{cycle_name}': {[s.value for s in cycle_stages]}"
+                    )
 
             curr_idx = cycle_stages.index(current_stage)
             if target_stage is not None:

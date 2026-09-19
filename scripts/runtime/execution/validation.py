@@ -123,3 +123,18 @@ def validate_qa_receipt(
         )
     if execution_receipt:
         validate_sod(execution_receipt, receipt)
+
+
+def validate_governance_receipt(
+    receipt: GovernanceReceipt,
+    execution_receipt: Optional[ExecutionReceipt] = None,
+) -> None:
+    """Validates governance release receipt and enforces compliance signoff and SoD."""
+    if receipt.compliance_verdict not in ("COMPLIANT", "APPROVED"):
+        raise InvalidEvidenceError(
+            f"Governance receipt verdict is neither COMPLIANT nor APPROVED (found '{receipt.compliance_verdict}')"
+        )
+    if not receipt.ledger_entry_id or not receipt.ledger_entry_id.strip():
+        raise InvalidEvidenceError("Governance receipt missing ledger_entry_id")
+    if execution_receipt:
+        validate_sod(execution_receipt, receipt)

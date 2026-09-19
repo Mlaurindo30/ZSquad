@@ -42,6 +42,7 @@ from scripts.runtime.execution.stage_policy import (
 from scripts.runtime.execution.validation import (
     normalize_logical_agent_id,
     validate_execution_receipt,
+    validate_governance_receipt,
     validate_qa_receipt,
     validate_review_receipt,
     validate_security_receipt,
@@ -303,6 +304,56 @@ class ExecutionReceiptService:
             details=details,
         )
         self._emit_event("agent_squad.qa.receipt_recorded", receipt, project_id)
+        return receipt
+
+    def record_governance(
+        self,
+        work_item_id: str,
+        project_id: str,
+        agent_id: str,
+        stage: Union[str, LifecycleStage],
+        instruction_hash: str,
+        evidence_hash: str,
+        auditor_role: str,
+        ledger_entry_id: str,
+        gate_approvals: Optional[List[str]] = None,
+        compliance_verdict: str = "COMPLIANT",
+        receipt_id: Optional[str] = None,
+    ) -> GovernanceReceipt:
+        canonical_stage = normalize_stage(stage)
+        r_id = receipt_id or f"rcpt-gov-{uuid.uuid4().hex[:12]}"
+
+        receipt = GovernanceReceipt(
+            receipt_id=r_id,
+            receipt_type=ReceiptType.GOVERNANCE.value,
+            work_item_id=work_item_id,
+            agent_id=agent_id,
+            instruction_hash=instruction_hash,
+            evidence_hash=evidence_hash,
+            auditor_role=auditor_role,
+            gate_approvals=gate_approvals or [],
+            ledger_entry_id=ledger_entry_id,
+            compliance_verdict=compliance_verdict,
+        )
+
+        exec_receipt = self.repository.get_latest_execution_receipt(work_item_id)
+        validate_governance_receipt(receipt, exec_receipt)
+
+        details = {
+            "auditor_role": auditor_role,
+            "gate_approvals": gate_approvals or [],
+            "ledger_entry_id": ledger_entry_id,
+            "compliance_verdict": compliance_verdict,
+        }
+        self.repository.save_validation_receipt(
+            receipt=receipt,
+            project_id=project_id,
+            stage=canonical_stage.value,
+            role=auditor_role,
+            verdict=compliance_verdict,
+            details=details,
+        )
+        self._emit_event("agent_squad.governance.receipt_recorded", receipt, project_id)
         return receipt
 
     def is_stage_satisfied(
